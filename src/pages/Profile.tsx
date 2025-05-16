@@ -38,8 +38,9 @@ const Profile: React.FC = () => {
           <div className="px-6 py-4 flex flex-col md:flex-row">
             <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 z-10">
               <img
-                src={user.profilePicture}
-                alt={user.name}
+              src='https://kristalle.com/wp-content/uploads/2020/07/dummy-profile-pic-1.jpg'
+                // src={user.profilePicture}
+                // alt={user.name}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover"
               />
             </div>
@@ -47,8 +48,8 @@ const Profile: React.FC = () => {
             <div className="flex-1 md:ml-6 md:mt-0">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                 <div>
-                  <h1 className="text-2xl font-bold">{user.name}</h1>
-                  <p className="text-gray-500">@{user.username}</p>
+                  {/* <h1 className="text-2xl font-bold">{user.name}</h1> */}
+                  <p className="text-gray-500 text-2xl font-bold">@{user.username}</p>
                 </div>
                 
                 <div className="mt-3 md:mt-0 flex space-x-2">

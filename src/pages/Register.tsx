@@ -13,8 +13,7 @@ const Register: React.FC = () => {
     name: '',
     username: '',
     email: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,7 +62,7 @@ const Register: React.FC = () => {
     );
     
     if (success) {
-      navigate('/');
+      navigate('/profile');
     }
   };
 
