@@ -42,9 +42,9 @@ const Welcome: React.FC = () => {
       </div>
 
       {/* Right Grid - Auth Forms (1/3) */}
-      <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-sky-50 to-white">
+      <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-navy-50 to-sky-400">
         <div className="w-full max-w-md animate-fade-in" style={{ animationDelay: '0.7s' }}>
-          <div className="bg-sky-100/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
+          <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
             <div className="text-center">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">
                 Welcome to Hobby Sphere
@@ -57,7 +57,7 @@ const Welcome: React.FC = () => {
                 <Button
                   variant="primary"
                   fullWidth
-                  className="flex items-center justify-center space-x-3 py-3 text-lg rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                  className="flex items-center justify-center space-x-3 py-3 text-md rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                 >
                   <LogIn className="w-6 h-6" />
                   <span>Sign In</span>
@@ -68,7 +68,7 @@ const Welcome: React.FC = () => {
                 <Button
                   variant="secondary"
                   fullWidth
-                  className="flex items-center justify-center space-x-3 py-3 text-lg rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                  className="flex items-center justify-center space-x-3 py-3 text-md rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                 >
                   <UserPlus className="w-6 h-6" />
                   <span>Create Account</span>
@@ -80,19 +80,19 @@ const Welcome: React.FC = () => {
                   <div className="w-full border-t-2 border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-base">
-                  <span className="px-4 bg-sky-100/80 text-gray-500">
+                  <span className="px-4 bg-sky-100/70 text-gray-700">
                     Or continue with
                   </span>
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-6 py-3 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-6 h-6"
                 />
-                <span className="text-lg">Sign in with Google</span>
+                <span className="text-md">Sign in with Google</span>
               </button>
             </div>
           </div>
