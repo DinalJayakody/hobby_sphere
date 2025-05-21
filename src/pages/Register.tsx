@@ -8,59 +8,85 @@ import { User, AtSign, Mail, Lock } from 'lucide-react';
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register: registerUser, loading } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: '',
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [strength, setStrength] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setStrength(checkStrength(formData.password));
+  };
+
+  const checkStrength = (pwd: string) => {
+    // Regular Expressions for password strength
+    const strongRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    const mediumRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
+
+    // NEW ADDITION strong PW logic by DJ
+    if (strongRegex.test(pwd)) return 'Strong';
+    if (mediumRegex.test(pwd)) return 'Medium';
+    return 'Weak';
+
+  };
+
+  const getColor = () => {
+    switch (strength) {
+      case 'Strong': return 'green';
+      case 'Medium': return 'orange';
+      case 'Weak': return 'red';
+      default: return 'gray';
+    }
   };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    
+
+
+
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.username.trim()) newErrors.username = 'Username is required';
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
-    
+
     const success = await registerUser(
       formData.name,
       formData.username,
       formData.email,
       formData.password
     );
-    
+
     if (success) {
       navigate('/profile');
     }
@@ -70,7 +96,7 @@ const Register: React.FC = () => {
     <div className="min-h-screen flex">
       {/* Left Grid - Animated Background (2/3) */}
       <div className="hidden lg:flex lg:w-2/3 relative">
-        <div 
+        <div
           className="absolute inset-0 bg-gradient-to-br from-navy-600/90 to-sky-500/90"
           style={{
             backgroundImage: "url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg')",
@@ -81,7 +107,7 @@ const Register: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-full text-white p-12">
             <h1 className="text-6xl font-bold mb-8 animate-fade-in">Join Hobby Sphere</h1>
             <p className="text-2xl text-center mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>Start sharing your passions with the world</p>
-            
+
             <div className="grid grid-cols-2 gap-6 w-full max-w-3xl">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 transform hover:scale-105 transition-transform duration-300 hover:bg-white/20 animate-fade-in animate-float" style={{ animationDelay: '0.3s' }}>
                 <h3 className="text-xl font-semibold mb-3">Create Your Profile</h3>
@@ -112,7 +138,7 @@ const Register: React.FC = () => {
               <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">Create Account</h2>
               <p className="text-gray-600">Join our community today</p>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
                 <User className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
@@ -127,7 +153,7 @@ const Register: React.FC = () => {
                   fullWidth
                 />
               </div>
-              
+
               <div className="relative">
                 <AtSign className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
@@ -141,7 +167,7 @@ const Register: React.FC = () => {
                   fullWidth
                 />
               </div>
-              
+
               <div className="relative">
                 <Mail className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
@@ -155,7 +181,7 @@ const Register: React.FC = () => {
                   fullWidth
                 />
               </div>
-              
+
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
@@ -168,8 +194,13 @@ const Register: React.FC = () => {
                   className="pl-10"
                   fullWidth
                 />
+                {strength && (
+                  <p className="font-semibold text-sm" style={{ color: getColor() }}>
+                    Strength: {strength}
+                  </p>
+                )}
               </div>
-              
+
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
@@ -183,12 +214,12 @@ const Register: React.FC = () => {
                   fullWidth
                 />
               </div>
-              
+
               <div className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  id="terms" 
-                  className="form-checkbox text-navy-600 rounded" 
+                <input
+                  type="checkbox"
+                  id="terms"
+                  className="form-checkbox text-navy-600 rounded"
                   required
                 />
                 <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
@@ -196,8 +227,8 @@ const Register: React.FC = () => {
                   <a href="#" className="text-navy-600 hover:underline">Privacy Policy</a>
                 </label>
               </div>
-              
-              <Button 
+
+              <Button
                 type="submit"
                 variant="primary"
                 fullWidth
@@ -227,7 +258,7 @@ const Register: React.FC = () => {
                 <span className="text-md">Sign up with Google</span>
               </button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Already have an account?{' '}

@@ -6,7 +6,7 @@
 //   user: User | null;
 //   isAuthenticated: boolean;
 //   login: (username: string, password: string) => Promise<boolean>;
-//   register: (name: string, username: string, email: string, password: string) => Promise<boolean>;
+//   register: (name: string, username: string , email: string, password: string) => Promise<boolean>;
 //   logout: () => void;
 //   loading: boolean;
 // }
@@ -201,12 +201,18 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { posts } from '../data/mockData';
 
 // Define User interface to match your backend /userDetail response
 export interface User {
   id: number;
   username: string;
   email: string;
+  name: string,
+  profilePicture: string,
+  // posts: any[], // Adjust type based on your posts structure
+  followers: any[],
+  following: any[],
   // add other fields if needed
 }
 
@@ -234,7 +240,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const fetchUserDetails = async () => {
     try {
       const response = await axios.get<User>('/api/users/userDetail');
-      setUser(response.data);
+                  const json = {
+        id: 1,
+        email: 'Dinal@example.com',
+        username: 'dj123',
+        name: 'Dinal Jay',
+        profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+        posts: posts,
+        followers: [5],
+        following: [2],
+      };
+      setUser(json);
+      // console.log('AUth response:', user);
+      // return { success: true, data: user };
+
     } catch (error) {
       console.error('Failed to fetch user details:', error);
       logout(); // Clear auth if token invalid
@@ -320,8 +339,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+
+// export const useAuth = () => useContext(AuthContext);
+
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
+
 };
+

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import logo_home from '../../assets/logo_home.png';
 import Avatar from '../ui/Avatar';
 
 const Navbar: React.FC = () => {
@@ -58,17 +59,20 @@ const Navbar: React.FC = () => {
   return (
     <>
       {/* Top navbar - desktop */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm z-20 hidden md:block">
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 shadow-sm z-20 hidden md:block">
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-navy-600">Hobby Sphere</h1>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="bg-sky-50 px-4 py-1.5 rounded-full w-64 focus:outline-none focus:ring-2 focus:ring-navy-300"
-              />
-              <Search className="absolute right-3 top-2 text-gray-500 w-5 h-5" />
+            <img src={logo_home} alt="Logo" className="h-10 w-auto" />
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-navy-600">Hobby Sphere</h1>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="bg-sky-50 px-4 py-1.5 rounded-full w-64 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                />
+                <Search className="absolute right-3 top-2 text-gray-500 w-5 h-5" />
+              </div>
             </div>
           </div>
 
@@ -76,11 +80,10 @@ const Navbar: React.FC = () => {
             {navItems.map((item) => (
               <div
                 key={item.path}
-                className={`relative cursor-pointer ${
-                  isActive(item.path)
+                className={`relative cursor-pointer ${isActive(item.path)
                     ? 'text-navy-600'
                     : 'text-gray-600 hover:text-navy-600'
-                }`}
+                  }`}
                 onClick={() => navigate(item.path)}
               >
                 <item.icon className="w-6 h-6" />
@@ -100,13 +103,13 @@ const Navbar: React.FC = () => {
 
       {/* Bottom navbar - mobile */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20 md:hidden">
+        {/* <div className="fixed bottom-0 left-0 w-full bg-white border-t p-4 z-50"> */}
         <div className="grid grid-cols-5 px-2 py-2">
           {navItems.map((item, index) => (
             <div
               key={item.path}
-              className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${
-                isActive(item.path) ? 'text-navy-600' : 'text-gray-600'
-              }`}
+              className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${isActive(item.path) ? 'text-navy-600' : 'text-gray-600'
+                }`}
               onClick={() => navigate(item.path)}
             >
               <div className="relative">
@@ -121,9 +124,8 @@ const Navbar: React.FC = () => {
             </div>
           ))}
           <div
-            className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${
-              menuOpen ? 'text-navy-600' : 'text-gray-600'
-            }`}
+            className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${menuOpen ? 'text-navy-600' : 'text-gray-600'
+              }`}
             onClick={toggleMenu}
           >
             <Menu className="w-6 h-6" />
@@ -135,7 +137,7 @@ const Navbar: React.FC = () => {
       {/* Mobile search header */}
       <div className="fixed top-0 left-0 right-0 bg-white z-20 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="text-xl font-bold text-navy-600">SocialApp</h1>
+          <h1 className="text-xl font-bold text-navy-600">Hobby Sphere</h1>
           <div className="flex items-center space-x-4">
             <div onClick={toggleSearch} className="cursor-pointer">
               <Search className="w-6 h-6 text-gray-600" />

@@ -23,6 +23,7 @@ const Login: React.FC = () => {
     
     const success = await login(username, password);
     if (success) {
+      console.log('Login successful');
       navigate('/');
     } else {
       setError('Invalid username or password');
