@@ -205,14 +205,15 @@ import { posts } from '../data/mockData';
 
 // Define User interface to match your backend /userDetail response
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
-  name: string,
+  fullName: string,
   profilePicture: string,
   // posts: any[], // Adjust type based on your posts structure
-  followers: any[],
-  following: any[],
+  followers: number,
+  following: number,
+  posts: number;
   // add other fields if needed
 }
 
@@ -240,18 +241,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const fetchUserDetails = async () => {
     try {
       const response = await axios.get<User>('/api/users/userDetail');
-                  const json = {
-        id: 1,
-        email: 'Dinal@example.com',
-        username: 'dj123',
-        name: 'Dinal Jay',
-        profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
-        posts: posts,
-        followers: [5],
-        following: [2],
-      };
-      setUser(json);
-      // console.log('AUth response:', user);
+      //   const json = {
+      //   id: 1,
+      //   email: 'Dinal@example.com',
+      //   username: 'dj123',
+      //   name: 'Dinal Jay',
+      //   profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+      //   posts: posts,
+      //   followers: [5],
+      //   following: [2],
+      // };
+      setUser(response.data);
       // return { success: true, data: user };
 
     } catch (error) {

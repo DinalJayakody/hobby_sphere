@@ -53,11 +53,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="flex items-center space-x-3" onClick={goToProfile}>
           <Avatar
             src={post.user.profilePicture}
-            alt={post.user.name}
+            alt={post.user.fullName}
             size="md"
           />
           <div>
-            <h3 className="font-semibold text-gray-800">{post.user.name}</h3>
+            <h3 className="font-semibold text-gray-800">{post.user.fullName}</h3>
             <p className="text-xs text-gray-500">{timeAgo(post.timestamp)}</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="flex items-center space-x-2 mb-3">
             <Avatar 
               src={post.user.profilePicture}
-              alt={post.user.name} 
+              alt={post.user.fullName} 
               size="sm" 
             />
             <div className="flex-1 bg-gray-100 rounded-full px-4 py-1.5">

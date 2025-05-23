@@ -2,7 +2,7 @@ import { User, Post, Story, Notification, Conversation } from '../types';
 
 export const currentUser: User = {
   id: 'user-1',
-  name: 'John Doe',
+  fullName: 'John Doe',
   username: 'johndoe',
   profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
   bio: 'Digital creator | Photography enthusiast | Travel lover',
@@ -15,7 +15,7 @@ export const users: User[] = [
   currentUser,
   {
     id: 'user-2',
-    name: 'Jane Smith',
+    fullName: 'Jane Smith',
     username: 'janesmith',
     profilePicture: 'https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg',
     bio: 'Artist | Designer | Coffee addict',
@@ -25,7 +25,7 @@ export const users: User[] = [
   },
   {
     id: 'user-3',
-    name: 'Robert Johnson',
+    fullName: 'Robert Johnson',
     username: 'robert_j',
     profilePicture: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg',
     bio: 'Software Engineer | Tech Enthusiast',
@@ -35,7 +35,7 @@ export const users: User[] = [
   },
   {
     id: 'user-4',
-    name: 'Emily Davis',
+    fullName: 'Emily Davis',
     username: 'emilyd',
     profilePicture: 'https://images.pexels.com/photos/1264210/pexels-photo-1264210.jpeg',
     bio: 'Travel blogger | Adventure seeker',
@@ -45,7 +45,7 @@ export const users: User[] = [
   },
   {
     id: 'user-5',
-    name: 'Michael Wilson',
+    fullName: 'Michael Wilson',
     username: 'mike_w',
     profilePicture: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg',
     bio: 'Photographer | Nature lover',
@@ -54,6 +54,8 @@ export const users: User[] = [
     posts: 89
   }
 ];
+
+// Commented by DJ
 
 export const posts: Post[] = [
   {
@@ -111,7 +113,7 @@ export const posts: Post[] = [
     liked: false
   }
 ];
-
+// Commented by DJ
 export const stories: Story[] = [
   {
     id: 'story-1',

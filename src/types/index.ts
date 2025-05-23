@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  name: string;
+  fullName: string;
   username: string;
   profilePicture: string;
   bio?: string;

@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Bottom navbar - mobile */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 border-t border-gray-200 z-50 md:hidden">
         {/* <div className="fixed bottom-0 left-0 w-full bg-white border-t p-4 z-50"> */}
         <div className="grid grid-cols-5 px-2 py-2">
           {navItems.map((item, index) => (
@@ -135,9 +135,11 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile search header */}
-      <div className="fixed top-0 left-0 right-0 bg-white z-20 md:hidden">
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 z-20 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="text-xl font-bold text-navy-600">Hobby Sphere</h1>
+          <img src={logo_home} alt="Logo" className="h-10 w-auto" />
+          <h1 className="text-xl font-bold text-navy-600 px-4 flex-grow">Hobby Sphere</h1>
+        {/* </div> */}
           <div className="flex items-center space-x-4">
             <div onClick={toggleSearch} className="cursor-pointer">
               <Search className="w-6 h-6 text-gray-600" />
