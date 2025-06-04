@@ -9,7 +9,7 @@ const Welcome: React.FC = () => {
     <div className="min-h-screen flex">
       {/* Left Grid - Animated Background (2/3) */}
       <div className="hidden lg:flex lg:w-2/3 relative">
-        <div 
+        <div
           className="absolute inset-0 bg-gradient-to-br from-navy-600/90 to-sky-500/90"
           style={{
             backgroundImage: "url('https://images.pexels.com/photos/3183183/pexels-photo-3183183.jpeg')",
@@ -91,14 +91,37 @@ const Welcome: React.FC = () => {
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              {/* <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105"> */}
+              <div className="w-full flex items-center justify-center space-x-1">
+
+              <button className="w-full flex items-center justify-center">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-6 h-6"
                 />
-                <span className="text-md">Sign in with Google</span>
+                {/* <span className="text-md">Sign in with Google</span> */}
               </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.apple.com/favicon.ico"
+                  alt="Apple"
+                  className="w-6 h-6"
+                />
+              </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.microsoft.com/favicon.ico"
+                  alt="Microsoft"
+                  className="w-6 h-6"
+                />
+              </button>
+              </div>
+
+
+
             </div>
           </div>
         </div>

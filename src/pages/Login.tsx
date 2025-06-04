@@ -139,14 +139,33 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+<div className="w-full flex items-center justify-center space-x-1">
+
+              <button className="w-full flex items-center justify-center">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-6 h-6"
                 />
-                <span className="text-md">Sign in with Google</span>
+                {/* <span className="text-md">Sign in with Google</span> */}
               </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.apple.com/favicon.ico"
+                  alt="Apple"
+                  className="w-6 h-6"
+                />
+              </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.microsoft.com/favicon.ico"
+                  alt="Microsoft"
+                  className="w-6 h-6"
+                />
+              </button>
+              </div>
             </form>
             
             <div className="mt-6 text-center">

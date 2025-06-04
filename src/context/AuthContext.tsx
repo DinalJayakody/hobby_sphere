@@ -237,6 +237,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
 
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 3000); // 3 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+  
+
   // Fetch user details function
   const fetchUserDetails = async () => {
     try {

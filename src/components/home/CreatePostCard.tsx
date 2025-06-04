@@ -55,7 +55,9 @@ const CreatePostCard: React.FC = () => {
           className="flex-1 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full px-4 py-2.5 text-gray-600"
           onClick={() => navigate('/create')}
         >
-          What's on your mind, {user.fullName.split(' ')[0]}?
+          {/* What's on your mind, {user.fullName.split(' ')[0]}?
+           */}
+           <p>{user.fullName}</p>
         </div>
       </div>
 

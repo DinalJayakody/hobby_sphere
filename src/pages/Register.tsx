@@ -19,6 +19,7 @@ const Register: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [strength, setStrength] = useState('');
+  const [focused, setFocused] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,14 +39,28 @@ const Register: React.FC = () => {
 
   };
 
+
+  // Traffic light color logic
   const getColor = () => {
     switch (strength) {
-      case 'Strong': return 'green';
-      case 'Medium': return 'orange';
-      case 'Weak': return 'red';
-      default: return 'gray';
+      case 'Strong':
+        return 'bg-green-500';
+      case 'Medium':
+        return 'bg-yellow-400';
+      case 'Weak':
+      default:
+        return 'bg-red-500';
     }
   };
+
+  // const getColor = () => {
+  //   switch (strength) {
+  //     case 'Strong': return 'green';
+  //     case 'Medium': return 'orange';
+  //     case 'Weak': return 'red';
+  //     default: return 'gray';
+  //   }
+  // };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -190,14 +205,21 @@ const Register: React.FC = () => {
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
+                  onFocus={() => setFocused(true)}
                   error={errors.password}
                   className="pl-10"
                   fullWidth
                 />
-                {strength && (
-                  <p className="font-semibold text-sm" style={{ color: getColor() }}>
-                    Strength: {strength}
-                  </p>
+                {focused && strength && (
+                  // <p className="font-semibold text-sm" style={{ color: getColor() }}>
+                  //   Strength: {strength}
+                  // </p>
+
+                  <div className="flex items-center mt-2 space-x-2">
+                    <div className={`w-4 h-4 rounded-full ${getColor()}`} />
+                    <span className="text-sm font-medium text-gray-700">{strength}</span>
+
+                  </div>
                 )}
               </div>
 
@@ -249,14 +271,33 @@ const Register: React.FC = () => {
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+<div className="w-full flex items-center justify-center space-x-1">
+
+              <button className="w-full flex items-center justify-center">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-6 h-6"
                 />
-                <span className="text-md">Sign up with Google</span>
+                {/* <span className="text-md">Sign in with Google</span> */}
               </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.apple.com/favicon.ico"
+                  alt="Apple"
+                  className="w-6 h-6"
+                />
+              </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.microsoft.com/favicon.ico"
+                  alt="Microsoft"
+                  className="w-6 h-6"
+                />
+              </button>
+              </div>
             </form>
 
             <div className="mt-6 text-center">

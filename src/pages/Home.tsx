@@ -12,6 +12,35 @@ const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const { posts } = useData();
 
+  if (user) {
+    user.followers = 100; // Example data, replace with actual user data
+    user.following = 50; // Example data, replace with actual user data
+    user.profilePicture = 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg'; // Example data, replace with actual user data
+    user.posts = 12;
+  }
+
+    if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>
+        <p className="mt-4 text-blue-600 font-medium">Loading...</p>
+      </div>
+    );
+  }
+
+  
+
+
+  //   user.id: 12;
+  // username: string;
+  // email: string;
+  // fullName: string,
+  // profilePicture: string,
+  // // posts: any[], // Adjust type based on your posts structure
+  // followers: number,
+  // following: number,
+  // posts: number;
+
   if (!user) return null;
     console.log('check user response:', user);
 
@@ -27,18 +56,18 @@ const Home: React.FC = () => {
               <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
                 <Avatar 
                   src={user.profilePicture}
-                  alt={user.name}
+                  alt={user.fullName}
                   size="md"
                 />
                 <div>
-                  <h3 className="font-semibold">{user.name}</h3>
+                  <h3 className="font-semibold">{user.fullName}</h3>
                   <p className="text-sm text-gray-500">@{user.username}</p>
                 </div>
               </div>
 
               <div className="flex justify-between py-3 text-sm">
                 <div className="text-center">
-                  {/* <p className="font-semibold">{user.posts}</p>  commented by DJ */}
+                  <p className="font-semibold">{user.posts}</p>
 
                   <p className="text-gray-500">Posts</p>
                 </div>

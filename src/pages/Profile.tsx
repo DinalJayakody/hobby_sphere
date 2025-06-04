@@ -31,15 +31,15 @@ const Profile: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           {/* Cover photo */}
           <div 
-            className="h-48 bg-gradient-to-r from-navy-500 to-sky-400"
-          />
+            className="h-48 bg-gradient-to-r from-navy-500 to-sky-400"/>
+            {/* className="h-48 bg-gradient-to-r from-navy-500 to-sky-400"/> */}
           
           {/* Profile info */}
           <div className="px-6 py-4 flex flex-col md:flex-row">
             <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 z-10">
               <img
-              src='https://kristalle.com/wp-content/uploads/2020/07/dummy-profile-pic-1.jpg'
-                // src={user.profilePicture}
+              // src='https://kristalle.com/wp-content/uploads/2020/07/dummy-profile-pic-1.jpg'
+                 src={user.profilePicture}
                 // alt={user.name}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover"
               />
@@ -48,8 +48,8 @@ const Profile: React.FC = () => {
             <div className="flex-1 md:ml-6 md:mt-0">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                 <div>
-                  {/* <h1 className="text-2xl font-bold">{user.name}</h1> */}
-                  <p className="text-gray-500 text-2xl font-bold">@{user.username}</p>
+                  <h1 className="text-2xl font-bold">{user.fullName}</h1>
+                  <p className="text-gray-400 text-md font-bold">@{user.username}</p>
                 </div>
                 
                 <div className="mt-3 md:mt-0 flex space-x-2">
@@ -63,7 +63,7 @@ const Profile: React.FC = () => {
               </div>
               
               <p className="text-gray-700 mb-4">
-                {user.bio || 'No bio yet.'}
+                {user.bio || 'Passionate about building social platforms that connect people through shared hobbies and creativity. Developing apps is my hobby—and helping others grow theirs is my goal.'}
               </p>
               
               <div className="flex flex-wrap justify-between mb-2">
