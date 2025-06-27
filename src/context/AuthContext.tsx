@@ -209,11 +209,17 @@ export interface User {
   username: string;
   email: string;
   fullName: string,
-  profilePicture: string,
+  // profilePicture: string,
   // posts: any[], // Adjust type based on your posts structure
   followers: number,
   following: number,
-  posts: number;
+  posts: number,
+
+  // bio: string,
+  // profilePicture: File | null,
+  // location: string,
+  // hobby: string,
+  // customHobby: string,
   // add other fields if needed
 }
 
@@ -221,7 +227,16 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
-  register: (name: string, username: string, email: string, password: string) => Promise<boolean>;
+  pendingRegistration: any; // For partial registration data
+savePartialRegistration: (regdata: any) => void;
+  register: (name: string,
+    username: string,
+    email: string,
+    password: string,
+    bio: string,
+    profilePicture: File | null,
+    location: string,
+    mainHobby: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;        // loading for login/register calls
   loadingUser: boolean;    // loading for initial user fetch
@@ -237,6 +252,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
 
+  const [pendingRegistration, setPendingRegistration] = useState<any>(null);
+
+const savePartialRegistration = (regdata: any) => {
+  setPendingRegistration(regdata);
+};
+
 
   useEffect(() => {
     // Simulate data loading
@@ -246,7 +267,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return () => clearTimeout(timer);
   }, []);
-  
+
 
   // Fetch user details function
   const fetchUserDetails = async () => {
@@ -306,11 +327,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     name: string,
     username: string,
     email: string,
-    password: string
+    password: string,
+    bio: string,
+    profilePicture: File | null,
+    location: string,
+    mainHobby: string
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/register', { name, username, email, password });
+      const formData = new FormData();
+      formData.append("registerRequest", new Blob([JSON.stringify({
+        name, username, email, password, bio, location, mainHobby, profilePicture: undefined
+      })], { type: "application/json" }));
+
+      if (profilePicture) {
+        formData.append("profilePicture", profilePicture);
+      }
+
+      const response = await axios.post('/api/auth/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       const { token, type } = response.data;
       const fullToken = `${type} ${token}`;
 
@@ -339,10 +377,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         isAuthenticated: !!user,
         login,
+        savePartialRegistration,
         register,
         logout,
         loading,
         loadingUser,
+        pendingRegistration,
+       
       }}
     >
       {children}

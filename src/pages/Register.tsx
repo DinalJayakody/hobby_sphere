@@ -8,6 +8,7 @@ import { User, AtSign, Mail, Lock } from 'lucide-react';
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register: registerUser, loading } = useAuth();
+  const { savePartialRegistration } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -94,17 +95,31 @@ const Register: React.FC = () => {
     e.preventDefault();
 
     if (!validate()) return;
+    console.log('validated');
 
-    const success = await registerUser(
-      formData.name,
-      formData.username,
-      formData.email,
-      formData.password
-    );
+      // Just store the basic registration data
+savePartialRegistration({
+  name: formData.name,
+  username: formData.username,
+  email: formData.email,
+  password: formData.password
+});
+    console.log('Partial data saved');
+    
+    // const success = await registerUser(
+    //   formData.name,
+    //   formData.username,
+    //   formData.email,
+    //   formData.password,
+    //   formData.bio,
+    //   formData.profilePicture,
+    //   formData.location,
+    //   formData.mainHobby,
+    // );
 
-    if (success) {
-      navigate('/profile');
-    }
+    // if (success) {
+      navigate('/profilesetup');
+    // }
   };
 
   return (
@@ -257,7 +272,7 @@ const Register: React.FC = () => {
                 disabled={loading}
                 className="py-3 text-md rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Creating Account...' : 'Continue'}
               </Button>
 
               <div className="relative my-6">
@@ -271,32 +286,32 @@ const Register: React.FC = () => {
                 </div>
               </div>
 
-<div className="w-full flex items-center justify-center space-x-1">
+              <div className="w-full flex items-center justify-center space-x-1">
 
-              <button className="w-full flex items-center justify-center">
-                <img
-                  src="https://www.google.com/favicon.ico"
-                  alt="Google"
-                  className="w-6 h-6"
-                />
-                {/* <span className="text-md">Sign in with Google</span> */}
-              </button>
+                <button className="w-full flex items-center justify-center">
+                  <img
+                    src="https://www.google.com/favicon.ico"
+                    alt="Google"
+                    className="w-6 h-6"
+                  />
+                  {/* <span className="text-md">Sign in with Google</span> */}
+                </button>
 
-              <button className="w-full flex items-center justify-center">
-                <img
-                  src="https://www.apple.com/favicon.ico"
-                  alt="Apple"
-                  className="w-6 h-6"
-                />
-              </button>
+                <button className="w-full flex items-center justify-center">
+                  <img
+                    src="https://www.apple.com/favicon.ico"
+                    alt="Apple"
+                    className="w-6 h-6"
+                  />
+                </button>
 
-              <button className="w-full flex items-center justify-center">
-                <img
-                  src="https://www.microsoft.com/favicon.ico"
-                  alt="Microsoft"
-                  className="w-6 h-6"
-                />
-              </button>
+                <button className="w-full flex items-center justify-center">
+                  <img
+                    src="https://www.microsoft.com/favicon.ico"
+                    alt="Microsoft"
+                    className="w-6 h-6"
+                  />
+                </button>
               </div>
             </form>
 

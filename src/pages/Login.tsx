@@ -113,7 +113,7 @@ const Login: React.FC = () => {
                   <input type="checkbox" className="form-checkbox text-navy-600 rounded" />
                   <span className="ml-2 text-sm text-gray-600">Remember me</span>
                 </label>
-                <a href="#" className="text-sm text-navy-600 hover:underline">
+                <a href="/ProfileSetup" className="text-sm text-navy-600 hover:underline">
                   Forgot password?
                 </a>
               </div>

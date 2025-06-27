@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
 import CreatePost from './pages/CreatePost';
+import ProfileSetup from './pages/ProfileSetup';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated } = useAuth();
@@ -52,6 +53,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/welcome" element={<AuthRoute element={<Welcome />} />} />
         <Route path="/login" element={<AuthRoute element={<Login />} />} />
         <Route path="/register" element={<AuthRoute element={<Register />} />} />
+        <Route path="/profilesetup" element={<AuthRoute element={<ProfileSetup />} />} />
         <Route path="/" element={<ProtectedRoute element={<Home />} />} />
         <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="/profile/:username" element={<ProtectedRoute element={<Profile />} />} />
