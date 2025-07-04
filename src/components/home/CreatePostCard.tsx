@@ -14,7 +14,9 @@ const CreatePostCard: React.FC = () => {
   const [imageURL, setImageURL] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
 
+
   if (!user) return null;
+  const imageSrc = `data:image/png;base64,${user.profilePicture}`;
   console.log('check:', user);
   const handleSubmit = () => {
     if (!content.trim()) return;
@@ -47,7 +49,7 @@ const CreatePostCard: React.FC = () => {
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
       <div className="flex items-center space-x-3 mb-3">
         <Avatar
-          src={user.profilePicture}
+          src={imageSrc}
           alt={user.fullName}
           size="md"
         />

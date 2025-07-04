@@ -55,8 +55,9 @@ const Navbar: React.FC = () => {
   };
 
   if (!user) return null;
-
+const imageSrc = `data:image/png;base64,${user.profilePicture}`;
   return (
+    
     <>
       {/* Top navbar - desktop */}
       <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 shadow-sm z-20 hidden md:block">
@@ -95,7 +96,7 @@ const Navbar: React.FC = () => {
               </div>
             ))}
             <div className="cursor-pointer" onClick={toggleMenu}>
-              <Avatar src={user.profilePicture} alt={user.username} size="sm" />
+              <Avatar src={imageSrc} alt={user.username} size="sm" />
             </div>
           </div>
         </div>

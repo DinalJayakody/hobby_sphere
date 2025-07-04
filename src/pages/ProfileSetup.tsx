@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+import { motion } from 'framer-motion';
+import {
+  UserCircleIcon,
+  MapPinIcon,
+  CameraIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline';
 import BioSection from '../components/profile-setup/BioSection';
 import ProfilePictureUpload from '../components/profile-setup/ProfilePictureUpload';
 import LocationSelector from '../components/profile-setup/LocationSelector';
 import HobbySelector from '../components/profile-setup/HobbySelector';
+
+
 
 const ProfileSetup: React.FC = () => {
     const navigate = useNavigate();
@@ -22,6 +32,8 @@ const ProfileSetup: React.FC = () => {
         mainHobby: '',
         customHobby: '',
     });
+
+
 
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 4;

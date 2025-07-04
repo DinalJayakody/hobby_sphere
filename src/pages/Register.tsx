@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
+import logo from '../assets/HS_logo.png';
 import Button from '../components/ui/Button';
 import { User, AtSign, Mail, Lock } from 'lucide-react';
 
@@ -91,21 +92,29 @@ const Register: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const passwordHints = [
+    { label: "At least 6 characters", test: (pwd: string) => pwd.length >= 6 },
+    { label: "At least 1 uppercase letter", test: (pwd: string) => /[A-Z]/.test(pwd) },
+    { label: "At least 1 lowercase letter", test: (pwd: string) => /[a-z]/.test(pwd) },
+    { label: "At least 1 number", test: (pwd: string) => /[0-9]/.test(pwd) },
+    { label: "At least 1 special character (!@#$%^&*)", test: (pwd: string) => /[!@#$%^&*]/.test(pwd) },
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
     console.log('validated');
 
-      // Just store the basic registration data
-savePartialRegistration({
-  name: formData.name,
-  username: formData.username,
-  email: formData.email,
-  password: formData.password
-});
+    // Just store the basic registration data
+    savePartialRegistration({
+      name: formData.name,
+      username: formData.username,
+      email: formData.email,
+      password: formData.password
+    });
     console.log('Partial data saved');
-    
+
     // const success = await registerUser(
     //   formData.name,
     //   formData.username,
@@ -118,7 +127,7 @@ savePartialRegistration({
     // );
 
     // if (success) {
-      navigate('/profilesetup');
+    navigate('/profilesetup');
     // }
   };
 
@@ -164,8 +173,16 @@ savePartialRegistration({
       <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-navy-50 to-sky-400">
         <div className="w-full max-w-md animate-fade-in" style={{ animationDelay: '0.7s' }}>
           <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">Create Account</h2>
+            <div className="flex flex-col items-center justify-center text-center mb-8 animate-fade-in">
+
+              <img
+                src={logo}
+                alt="Hobby Sphere Logo"
+                className="w-24 h-24 mb-4 animate-bounce-slow"
+              />
+
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">Join Hobby Sphere</h2>
+
               <p className="text-gray-600">Join our community today</p>
             </div>
 
@@ -234,6 +251,26 @@ savePartialRegistration({
                     <div className={`w-4 h-4 rounded-full ${getColor()}`} />
                     <span className="text-sm font-medium text-gray-700">{strength}</span>
 
+                  </div>
+                )}
+
+                {focused && (
+                  <div className="mt-3 text-sm space-y-1">
+                    {passwordHints.map((hint, index) => {
+                      const passed = hint.test(formData.password); // Test current password
+                      return (
+                        <div key={index} className="flex items-center space-x-2">
+                          {/* Dot indicator green if passed, red otherwise */}
+                          <span className={`text-sm font-bold ${passed ? "text-green-600" : "text-red-500"}`}>
+                            {passed ? "✓" : "✕"}
+                          </span>
+                          {/* Hint text, styled green if passed */}
+                          <span className={`${passed ? "text-green-700" : "text-gray-500"}`}>
+                            {hint.label}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -53,7 +53,7 @@ const Welcome: React.FC = () => {
               <p className="text-gray-600 text-lg">Join our community of passionate hobbyists</p>
             </div> */}
             <div className="flex items-center justify-center mb-6">
-              <img src={logo} alt="Logo" className="center h-40 w-auto" />
+              <img src={logo} alt="Logo" className="center h-40 w-auto animate-bounce-slow" />
             </div>
 
 

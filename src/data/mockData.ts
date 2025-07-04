@@ -4,7 +4,7 @@ export const currentUser: User = {
   id: 'user-1',
   fullName: 'John Doe',
   username: 'johndoe',
-  profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+  profilePicture: '',
   bio: 'Digital creator | Photography enthusiast | Travel lover',
   followers: 1243,
   following: 567,

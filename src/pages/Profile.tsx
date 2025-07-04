@@ -12,12 +12,15 @@ const Profile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { posts } = useData();
   const [activeTab, setActiveTab] = useState('posts');
+
+
   
   if (!currentUser) return null;
   
   // In a real app, you'd fetch the user profile based on the username
   // For now, we'll just use the current user
   const user = currentUser;
+  const imageSrc = `data:image/png;base64,${user.profilePicture}`;
   
   // Filter posts by the current user
   const userPosts = posts.filter(post => post.userId === user.id);
@@ -39,7 +42,7 @@ const Profile: React.FC = () => {
             <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 z-10">
               <img
               // src='https://kristalle.com/wp-content/uploads/2020/07/dummy-profile-pic-1.jpg'
-                 src={user.profilePicture}
+                 src={imageSrc}
                 // alt={user.name}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover"
               />

@@ -12,10 +12,14 @@ const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const { posts } = useData();
 
+
+
+  let imageSrc = '';
   if (user) {
+    imageSrc = `data:image/png;base64,${user.profilePicture}`;
     user.followers = 100; // Example data, replace with actual user data
     user.following = 50; // Example data, replace with actual user data
-    user.profilePicture = 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg'; // Example data, replace with actual user data
+    // user.profilePicture = imageSrc;
     user.posts = 12;
   }
 
@@ -45,6 +49,7 @@ const Home: React.FC = () => {
     console.log('check user response:', user);
 
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-navy-50 to-sky-200 ">
       <Navbar />
 
@@ -55,7 +60,7 @@ const Home: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-4">
               <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
                 <Avatar 
-                  src={user.profilePicture}
+                  src={imageSrc}
                   alt={user.fullName}
                   size="md"
                 />

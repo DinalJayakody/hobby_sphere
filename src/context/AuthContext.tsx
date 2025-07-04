@@ -209,7 +209,10 @@ export interface User {
   username: string;
   email: string;
   fullName: string,
-  // profilePicture: string,
+  bio: string,
+  location: string,
+  mainHobby: string,
+  profilePicture: File | null,
   // posts: any[], // Adjust type based on your posts structure
   followers: number,
   following: number,
@@ -283,6 +286,7 @@ const savePartialRegistration = (regdata: any) => {
       //   followers: [5],
       //   following: [2],
       // };
+
       setUser(response.data);
       // return { success: true, data: user };
 
@@ -307,7 +311,8 @@ const savePartialRegistration = (regdata: any) => {
     setLoading(true);
     try {
       const response = await axios.post('/api/auth/login', { username, password });
-      const { token, type } = response.data;
+      const { profilePicture, ...userWithoutImage } = response.data;
+      const { token, type } = userWithoutImage;
       const fullToken = `${type} ${token}`;
 
       localStorage.setItem('token', fullToken);
