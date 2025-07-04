@@ -17,7 +17,6 @@ const CreatePostCard: React.FC = () => {
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-  console.log('check:', user);
   const handleSubmit = () => {
     if (!content.trim()) return;
 
@@ -54,12 +53,9 @@ const CreatePostCard: React.FC = () => {
           size="md"
         />
         <div
-          className="flex-1 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full px-4 py-2.5 text-gray-600"
-          onClick={() => navigate('/create')}
+          className="flex-1 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full px-4 py-2.5 text-gray-700 font-medium shadow-sm"
         >
-          {/* What's on your mind, {user.fullName.split(' ')[0]}?
-           */}
-           <p>{user.fullName}</p>
+          {user.fullName}
         </div>
       </div>
 

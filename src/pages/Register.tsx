@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
-import logo from '../assets/HS_logo.png';
+import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
 import { User, AtSign, Mail, Lock } from 'lucide-react';
 
