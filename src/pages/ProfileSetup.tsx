@@ -15,7 +15,7 @@ import StepTransition from '../components/profile-setup/StepTransition';
 
 const ProfileSetup: React.FC = () => {
   const navigate = useNavigate();
-  const { register: registerUser, loading, pendingRegistration } = useAuth();
+  const { register: registerUser, loading, pendingRegistration} = useAuth();
   const [profileData, setProfileData] = useState({
     bio: '',
     profilePicture: null as File | null,
@@ -50,8 +50,9 @@ const ProfileSetup: React.FC = () => {
       finalHobby,
     );
 
+
     if (success) {
-      navigate('/profile');
+      navigate('/');
     }
   };
 

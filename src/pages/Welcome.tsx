@@ -111,13 +111,13 @@ const Welcome: React.FC = () => {
                 />
               </button>
 
-              <button className="w-full flex items-center justify-center">
+              {/* <button className="w-full flex items-center justify-center">
                 <img
                   src="https://www.microsoft.com/favicon.ico"
                   alt="Microsoft"
                   className="w-6 h-6"
                 />
-              </button>
+              </button> */}
               </div>
 
 

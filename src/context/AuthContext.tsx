@@ -217,13 +217,6 @@ export interface User {
   followers: number,
   following: number,
   posts: number,
-
-  // bio: string,
-  // profilePicture: File | null,
-  // location: string,
-  // hobby: string,
-  // customHobby: string,
-  // add other fields if needed
 }
 
 interface AuthContextType {
@@ -272,40 +265,41 @@ const savePartialRegistration = (regdata: any) => {
   }, []);
 
 
-  // Fetch user details function
-  const fetchUserDetails = async () => {
-    try {
-      const response = await axios.get<User>('/api/users/userDetail');
-      //   const json = {
-      //   id: 1,
-      //   email: 'Dinal@example.com',
-      //   username: 'dj123',
-      //   name: 'Dinal Jay',
-      //   profilePicture: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
-      //   posts: posts,
-      //   followers: [5],
-      //   following: [2],
-      // };
+// Fetch user details function
+const fetchUserDetails = async () => {
+  try {
 
-      setUser(response.data);
-      // return { success: true, data: user };
+    console.log("🔎 Fetching user details with token:", axios.defaults.headers.common['Authorization']);
+    
+    const response = await axios.get<User>('/api/users/userDetail');
 
-    } catch (error) {
-      console.error('Failed to fetch user details:', error);
-      logout(); // Clear auth if token invalid
+    setUser(response.data);
+  } catch (error: any) {
+    console.error('Failed to fetch user details:', error);
+
+
+    // Only logout if it's a real auth error (401 / 403)
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      logout(); 
     }
-  };
+  }
+};
 
-  // On mount, load token and fetch user details
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = token;
-      fetchUserDetails().finally(() => setLoadingUser(false));
-    } else {
-      setLoadingUser(false);
-    }
-  }, []);
+// On mount, load token and fetch user details
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // ✅ Always prefix with Bearer
+        axios.defaults.headers.common['Authorization'] = 
+      token.startsWith("Bearer") ? token : `Bearer ${token}`;
+    // axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+    fetchUserDetails().finally(() => setLoadingUser(false));
+  } else {
+    setLoadingUser(false);
+  }
+}, []);
+
 
   const login = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
@@ -349,6 +343,8 @@ const savePartialRegistration = (regdata: any) => {
         formData.append("profilePicture", profilePicture);
       }
 
+      console.log('Form data Auth Context:', formData);
+
       const response = await axios.post('/api/auth/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -359,6 +355,8 @@ const savePartialRegistration = (regdata: any) => {
 
       localStorage.setItem('token', fullToken);
       axios.defaults.headers.common['Authorization'] = fullToken;
+
+      console.log('User registered successfully:', response.data);
 
       await fetchUserDetails();
       return true;

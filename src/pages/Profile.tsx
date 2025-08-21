@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Navbar from '../components/layout/Navbar';
@@ -11,6 +11,7 @@ import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
+    const navigate = useNavigate();
   const { posts } = useData();
   const [activeTab, setActiveTab] = useState('posts');
 
@@ -22,9 +23,11 @@ const Profile: React.FC = () => {
   // For now, we'll just use the current user
   const user = currentUser;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-
   // Filter posts by the current user
-  const userPosts = posts.filter(post => post.userId === user.id);
+  const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
+
+  console.log('User posts:', userPosts);
+  console.log('Post:', posts);
   user.location = 'Gampaha';
   return (
     <div className="min-h-screen bg-sky-50">
@@ -61,7 +64,7 @@ const Profile: React.FC = () => {
                 </div>
 
                 <div className="mt-3 md:mt-0 flex space-x-2">
-                  <Button variant="primary" size="sm">
+                  <Button variant="primary" size="sm" onClick={() => navigate("/ProfileEdit")}>
                     Edit Profile
                   </Button>
                   <Button variant="outline" size="sm">
@@ -169,9 +172,13 @@ const Profile: React.FC = () => {
               ) : (
                 userPosts.map(post => (
                   <div key={post.id} className="aspect-square overflow-hidden bg-gray-100 relative group">
-                    {post.image ? (
+                    {post.images && post.images.length > 0 ? (
                       <img
-                        src={post.image}
+                        src={
+                          post.images && Array.isArray(post.images) && post.images.length > 0
+                            ? `data:image/png;base64,${post.images}`
+                            : undefined
+                        }
                         alt="Post"
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
