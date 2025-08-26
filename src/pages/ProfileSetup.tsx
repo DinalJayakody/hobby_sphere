@@ -19,7 +19,7 @@ const ProfileSetup: React.FC = () => {
   const [profileData, setProfileData] = useState({
     bio: '',
     profilePicture: null as File | null,
-    location: '',
+    location: { lat: 0, lng: 0 },
     mainHobby: '',
     customHobby: '',
   });
@@ -46,10 +46,12 @@ const ProfileSetup: React.FC = () => {
       pendingRegistration.password,
       profileData.bio,
       profileData.profilePicture,
-      profileData.location,
+      profileData.location.lat.toString(),
+      profileData.location.lng.toString(), 
       finalHobby,
     );
 
+    console.log('Test Lat Lan:', profileData.location.lat, profileData.location.lng);
 
     if (success) {
       navigate('/');
@@ -117,7 +119,7 @@ const ProfileSetup: React.FC = () => {
     // Count completed steps (all are optional now)
     if (profileData.bio.trim()) completed++;
     if (profileData.profilePicture) completed++;
-    if (profileData.location.trim()) completed++;
+    // if (profileData.location.trim()) completed++;
     if (profileData.mainHobby && (profileData.mainHobby !== 'Custom' || profileData.customHobby.trim())) completed++;
     
     return Math.round((completed / totalSteps) * 100);
@@ -285,7 +287,7 @@ const ProfileSetup: React.FC = () => {
       >
         <LocationSelector
           location={profileData.location}
-          updateLocation={(value) => updateProfileData('location', value)}
+          updateLocation={(location) => updateProfileData('location', location)}
         />
       </motion.div>
     )}

@@ -13,6 +13,9 @@ import CreatePost from './pages/CreatePost';
 import ProfileSetup from './pages/ProfileSetup';
 import LoadingScreen from './components/ui/LoadingScreen';
 import ProfileEdit from './pages/ProfileEdit';
+import FriendProfile from './pages/FriendProfile';
+import FriendsPage from './pages/FriendsPage';
+import Pages from './pages/Pages';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -82,6 +85,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
         <Route path="/create" element={<ProtectedRoute element={<CreatePost />} />} />
         <Route path="/ProfileEdit" element={<ProtectedRoute element={<ProfileEdit />} />} />
+        <Route path="/FriendProfile/:id" element={<ProtectedRoute element={<FriendProfile />} />} />
+        <Route path="/FriendsPage" element={<ProtectedRoute element={<FriendsPage />} />} />
+        <Route path="/Pages" element={<ProtectedRoute element={<Pages />} />} />
         <Route path="*" element={<Navigate to="/welcome" />} />
       </Routes>
     </PageTransitionWrapper>

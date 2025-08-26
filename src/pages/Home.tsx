@@ -14,9 +14,11 @@ import {
   UsersRound,
   Calendar,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const { posts } = useData();
 
   let imageSrc = "";
@@ -65,6 +67,10 @@ const Home: React.FC = () => {
                     key={label}
                     whileHover={{ scale: 1.05, x: 4 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (label === "Friends") navigate("/FriendsPage");
+                      else if (label === "Pages") navigate("/Pages");
+                    }}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sky-50 text-gray-700 font-medium transition"
                   >
                     <Icon className="w-5 h-5 text-sky-600" />

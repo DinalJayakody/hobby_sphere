@@ -155,14 +155,32 @@ const Navbar: React.FC = () => {
                             key={idx}
                             className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
                             onClick={() => {
-                              navigate(`/profile/${user.username}`);
+                              navigate(`/FriendProfile/${user.id}`);
+                              // navigate(`/FriendProfile/`);
                               setSearchQuery("");
                             }}
                           >
-                            <div className="font-medium">{user.username}</div>
-                            <div className="text-sm text-gray-500">
-                              {user.hobby || "No hobby"} ·{" "}
-                              {user.location || "Unknown"}
+                            {/* Profile picture */}
+                            <div className="flex items-center space-x-3">
+                              <img
+                                src={
+                                  imageSrc ||
+                                  // user.profilePicture ||
+                                  user.avatarUrl ||
+                                  "/default-avatar.png"
+                                }
+                                alt={user.username}
+                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                              />
+
+                              <div className="flex flex-col">
+                                <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
+
+                                <div className="text-sm text-gray-500">{user.username}</div>
+                                <div className="text-sm text-gray-500">
+                                  🎯 {user.hobby || "No hobby"} · 📍 {user.location || "Unknown"}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -184,11 +202,10 @@ const Navbar: React.FC = () => {
             {navItems.map((item) => (
               <div
                 key={item.path}
-                className={`relative cursor-pointer ${
-                  isActive(item.path)
-                    ? "text-navy-600"
-                    : "text-gray-600 hover:text-navy-600"
-                }`}
+                className={`relative cursor-pointer ${isActive(item.path)
+                  ? "text-navy-600"
+                  : "text-gray-600 hover:text-navy-600"
+                  }`}
                 onClick={() => navigate(item.path)}
               >
                 <item.icon className="w-6 h-6" />
@@ -212,9 +229,8 @@ const Navbar: React.FC = () => {
           {navItems.map((item) => (
             <div
               key={item.path}
-              className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${
-                isActive(item.path) ? "text-navy-600" : "text-gray-600"
-              }`}
+              className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${isActive(item.path) ? "text-navy-600" : "text-gray-600"
+                }`}
               onClick={() => navigate(item.path)}
             >
               <div className="relative">
@@ -229,9 +245,8 @@ const Navbar: React.FC = () => {
             </div>
           ))}
           <div
-            className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${
-              menuOpen ? "text-navy-600" : "text-gray-600"
-            }`}
+            className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg cursor-pointer ${menuOpen ? "text-navy-600" : "text-gray-600"
+              }`}
             onClick={toggleMenu}
           >
             <Menu className="w-6 h-6" />
@@ -291,15 +306,32 @@ const Navbar: React.FC = () => {
                           key={idx}
                           className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
                           onClick={() => {
-                            navigate(`/profile/${user.username}`);
+                            navigate(`/FriendProfile/${user.id}`);
                             setSearchQuery("");
                             setSearchOpen(false);
                           }}
                         >
-                          <div className="font-medium">{user.username}</div>
-                          <div className="text-sm text-gray-500">
-                            {user.hobby || "No hobby"} ·{" "}
-                            {user.location || "Unknown"}
+
+                          {/* Profile picture */}
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={
+                                imageSrc ||
+                                user.avatarUrl ||
+                                "/default-avatar.png"
+                              }
+                              alt={user.username}
+                              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                            />
+
+                            <div className="flex flex-col">
+                              <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
+
+                              <div className="text-sm text-gray-500">{user.username}</div>
+                              <div className="text-sm text-gray-500">
+                                🎯 {user.hobby || "No hobby"} · 📍 {user.location || "Unknown"}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}

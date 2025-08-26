@@ -3,7 +3,7 @@ import { posts as initialPosts, stories as initialStories, notifications as init
 import { Post, Story, Notification } from '../types';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import api from '../types/axios';
+import api from '../types/axiosInstance';
 
 
 interface DataContextType {

@@ -29,6 +29,7 @@ const Profile: React.FC = () => {
   console.log('User posts:', userPosts);
   console.log('Post:', posts);
   user.location = 'Gampaha';
+  console.log('User hobby', user.mainHobby);
   return (
     <div className="min-h-screen bg-sky-50">
       <Navbar />

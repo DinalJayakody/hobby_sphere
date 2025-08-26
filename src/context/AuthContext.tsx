@@ -210,7 +210,8 @@ export interface User {
   email: string;
   fullName: string,
   bio: string,
-  location: string,
+  lat: string,
+  lan: string,
   mainHobby: string,
   profilePicture: File | null,
   // posts: any[], // Adjust type based on your posts structure
@@ -231,7 +232,8 @@ savePartialRegistration: (regdata: any) => void;
     password: string,
     bio: string,
     profilePicture: File | null,
-    location: string,
+    lat: string,
+    lan: string,
     mainHobby: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;        // loading for login/register calls
@@ -329,14 +331,15 @@ useEffect(() => {
     password: string,
     bio: string,
     profilePicture: File | null,
-    location: string,
+    lat: string,
+    lon: string,
     mainHobby: string
   ): Promise<boolean> => {
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("registerRequest", new Blob([JSON.stringify({
-        name, username, email, password, bio, location, mainHobby, profilePicture: undefined
+        name, username, email, password, bio, lat, lon, mainHobby, profilePicture: undefined
       })], { type: "application/json" }));
 
       if (profilePicture) {
