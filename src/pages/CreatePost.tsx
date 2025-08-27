@@ -59,7 +59,7 @@ const CreatePost: React.FC = () => {
           <div className="p-4 border-b border-gray-100">
             <div className="flex items-center">
               <Avatar 
-                src={user.profilePicture}
+                src={user.profilePicture} 
                 alt={user.name}
                 size="md"
               />

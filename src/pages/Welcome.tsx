@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import logo from '../assets/HS_logo.png';
 import { LogIn, UserPlus } from 'lucide-react';
 
 const Welcome: React.FC = () => {
@@ -8,7 +9,7 @@ const Welcome: React.FC = () => {
     <div className="min-h-screen flex">
       {/* Left Grid - Animated Background (2/3) */}
       <div className="hidden lg:flex lg:w-2/3 relative">
-        <div 
+        <div
           className="absolute inset-0 bg-gradient-to-br from-navy-600/90 to-sky-500/90"
           style={{
             backgroundImage: "url('https://images.pexels.com/photos/3183183/pexels-photo-3183183.jpeg')",
@@ -45,12 +46,16 @@ const Welcome: React.FC = () => {
       <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-navy-50 to-sky-400">
         <div className="w-full max-w-md animate-fade-in" style={{ animationDelay: '0.7s' }}>
           <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
-            <div className="text-center">
+            {/* <div className="text-center">  Commented by DJ
               <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">
                 Welcome to Hobby Sphere
               </h2>
               <p className="text-gray-600 text-lg">Join our community of passionate hobbyists</p>
+            </div> */}
+            <div className="flex items-center justify-center mb-6">
+              <img src={logo} alt="Logo" className="center h-40 w-auto animate-bounce-slow" />
             </div>
+
 
             <div className="space-y-6">
               <Link to="/login">
@@ -86,14 +91,37 @@ const Welcome: React.FC = () => {
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              {/* <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105"> */}
+              <div className="w-full flex items-center justify-center space-x-1">
+
+              <button className="w-full flex items-center justify-center">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
                   className="w-6 h-6"
                 />
-                <span className="text-md">Sign in with Google</span>
+                {/* <span className="text-md">Sign in with Google</span> */}
               </button>
+
+              <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.apple.com/favicon.ico"
+                  alt="Apple"
+                  className="w-6 h-6"
+                />
+              </button>
+
+              {/* <button className="w-full flex items-center justify-center">
+                <img
+                  src="https://www.microsoft.com/favicon.ico"
+                  alt="Microsoft"
+                  className="w-6 h-6"
+                />
+              </button> */}
+              </div>
+
+
+
             </div>
           </div>
         </div>
