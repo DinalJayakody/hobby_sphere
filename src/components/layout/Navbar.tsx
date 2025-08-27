@@ -361,7 +361,7 @@ const Navbar: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center space-x-3 border-b border-gray-100 pb-4 mb-2">
-              <Avatar src={user.profilePicture} alt={user.username} size="md" />
+              <Avatar src={imageSrc} alt={user.username} size="md" />
               <div>
                 <h3 className="font-semibold">{user.fullName}</h3>
                 <p className="text-sm text-gray-500">@{user.username}</p>

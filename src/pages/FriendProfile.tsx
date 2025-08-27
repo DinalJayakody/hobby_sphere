@@ -1,6 +1,6 @@
 // src/pages/FriendProfile.tsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Button from "../components/ui/Button";
@@ -18,8 +18,9 @@ type FriendUser = {
     imageUrl?: string;       // optional URL alternative
     location?: string;
     mainHobby?: string;
-    followers?: number;
-    following?: number;
+    followersCount?: number;
+    followingCount?: number;
+    following?: boolean;
     posts?: number;
 };
 
@@ -28,14 +29,37 @@ const FriendProfile: React.FC = () => {
     const navigate = useNavigate();
     const { posts } = useData();
 
+    // For Pop up for followers and following
+      const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+const [followersList, setFollowersList] = useState<any[]>([
+  {
+    id: 1,
+    fullName: "John Doe",
+    username: "johndoe",
+    avatarUrl: "/default-avatar.png",
+  },
+  {
+    id: 2,
+    fullName: "Jane Smith",
+    username: "janesmith",
+    avatarUrl: "/default-avatar.png",
+  },
+  {
+    id: 3,
+    fullName: "Alex Johnson",
+    username: "alexj",
+    avatarUrl: "/default-avatar.png",
+  },
+]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+
     const [friend, setFriend] = useState<FriendUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"posts" | "saved" | "tagged">("posts");
     const [isFollowing, setIsFollowing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-
-    axios.defaults.baseURL = 'http://localhost:8080';
     // Fetch friend profile by id
     useEffect(() => {
         let cancelled = false;
@@ -45,7 +69,7 @@ const FriendProfile: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await axios.get(`/api/users/${id}`
+                const res = await axiosInstance.get(`/api/users/${id}`
                     //   `http://16.170.26.131:8080/api/users/${id}`,
                 );
 
@@ -61,12 +85,15 @@ const FriendProfile: React.FC = () => {
                         imageUrl: data.imageUrl,
                         location: data.location,
                         mainHobby: data.mainHobby,
-                        followers: data.followers,
+                        followersCount: data.followersCount,
+                        followingCount: data.followingCount,
                         following: data.following,
                         posts: data.posts,
 
                     });
+                    console.log("Friend data:", data);
                     setIsFollowing(true);
+                    // setFollowersList(data || []);
                 }
             } catch (e: any) {
                 if (!cancelled) {
@@ -83,31 +110,14 @@ const FriendProfile: React.FC = () => {
 
     const handleFollowToggle = async () => {
         try {
-            setLoading(true);
-
+            // setLoading(true);
             if (!isFollowing) {
                 // 👉 Follow API
-                await axios.post(
-                    `/api/users/${id}/follow`,
-                    {},
-                    {
-                        headers: {
-                            Authorization: `${localStorage.getItem("token")}`,
-                        },
-                    }
-                );
+                await axiosInstance.post(`/api/users/${id}/follow`);
                 setIsFollowing(true);
             } else {
-                // 👉 Unfollow API
-                await axios.post(
-                    `/api/users/${id}/unfollow`,
-                    {},
-                    {
-                        headers: {
-                            Authorization: `${localStorage.getItem("token")}`,
-                        },
-                    }
-                );
+                // 👉 Unfollow API (assuming your backend has it)
+                await axiosInstance.post(`/api/users/${id}/unfollow`);
                 setIsFollowing(false);
             }
 
@@ -156,11 +166,11 @@ const FriendProfile: React.FC = () => {
 
                     <div className="px-6 py-4 flex flex-col md:flex-row">
                         {/* Avatar */}
-                        <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0">
+                        <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 relative z-10">
                             <img
                                 src={imageSrc}
                                 alt={friend.fullName}
-                                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover shadow-lg hover:scale-105 transition-transform"
+                                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover shadow-lg"
                             />
                         </div>
 
@@ -203,19 +213,31 @@ const FriendProfile: React.FC = () => {
 
                             {/* Stats */}
                             <div className="flex flex-wrap justify-between mb-2">
+                                {/* Posts */}
                                 <div className="mr-6 mb-2">
                                     <span className="font-semibold text-gray-900">{friend.posts ?? 0}</span>{" "}
                                     <span className="text-gray-600">Posts</span>
                                 </div>
-                                <div className="mr-6 mb-2">
-                                    <span className="font-semibold text-gray-900">{friend.followers ?? 0}</span>{" "}
+
+                                {/* Followers Button */}
+                                <button
+                                    className="mr-6 mb-2 text-left"
+                                    onClick={() => setShowFollowers(true)}
+                                >
+                                    <span className="font-semibold text-gray-900">{friend.followersCount ?? 0}</span>{" "}
                                     <span className="text-gray-600">Followers</span>
-                                </div>
-                                <div className="mb-2">
-                                    <span className="font-semibold text-gray-900">{friend.following ?? 0}</span>{" "}
+                                </button>
+
+                                {/* Following Button */}
+                                <button
+                                    className="mb-2 text-left"
+                                    onClick={() => setShowFollowing(true)}
+                                >
+                                    <span className="font-semibold text-gray-900">{friend.followingCount ?? 0}</span>{" "}
                                     <span className="text-gray-600">Following</span>
-                                </div>
+                                </button>
                             </div>
+
                         </div>
                     </div>
 
@@ -310,9 +332,102 @@ const FriendProfile: React.FC = () => {
                         <p className="text-gray-500">Tagged posts will appear here.</p>
                     </div>
                 )}
+
+                {/* Followers Modal */}
+{showFollowers && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+    onClick={() => setShowFollowers(false)}
+  >
+    <div
+      className="bg-white rounded-lg w-80 max-h-[80vh] overflow-y-auto p-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+        Followers
+        <button
+          className="text-gray-500 text-xl font-bold"
+          onClick={() => setShowFollowers(false)}
+        >
+          ×
+        </button>
+      </h3>
+      {followersList.length === 0 ? (
+        <p className="text-gray-500 text-center">No followers yet</p>
+      ) : (
+        followersList.map((user) => (
+          <div
+            key={user.id}
+            className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
+            onClick={() => navigate(`/FriendProfile/${user.id}`)}
+          >
+            <img
+              src={user.avatarUrl || "/default-avatar.png"}
+              alt={user.username}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
+              <div className="text-sm text-gray-500">@{user.username}</div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
+
+{/* Following Modal pop up box */}
+{showFollowing && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+    onClick={() => setShowFollowing(false)}
+  >
+    <div
+      className="bg-white rounded-lg w-80 max-h-[80vh] overflow-y-auto p-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+        Following
+        <button
+          className="text-gray-500 text-xl font-bold"
+          onClick={() => setShowFollowing(false)}
+        >
+          ×
+        </button>
+      </h3>
+      {followingList.length === 0 ? (
+        <p className="text-gray-500 text-center">Not following anyone yet</p>
+      ) : (
+        followingList.map((user) => (
+          <div
+            key={user.id}
+            className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
+            onClick={() => navigate(`/FriendProfile/${user.id}`)}
+          >
+            <img
+              src={user.avatarUrl || "/default-avatar.png"}
+              alt={user.username}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
+              <div className="text-sm text-gray-500">@{user.username}</div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
             </div>
         </div>
+
+        
     );
 };
+
+
+
 
 export default FriendProfile;
