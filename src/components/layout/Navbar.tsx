@@ -13,11 +13,12 @@ import {
   Users,
   Bookmark,
 } from "lucide-react";
-import axios from "axios";
+// import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import logo_home from "../../assets/logo_home.png";
 import Avatar from "../ui/Avatar";
+import axiosInstance from "../../types/axiosInstance";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -72,8 +73,9 @@ const Navbar: React.FC = () => {
     }
     try {
       setLoading(true);
-      const res = await axios.get(
-        `http://localhost:8080/api/users/search?query=${encodeURIComponent(
+      const res = await axiosInstance.get(
+        // `http://localhost:8080/api/users/search?query=${encodeURIComponent(
+        `/api/users/search?query=${encodeURIComponent(
           query
         )}&page=${pageNum}&size=5`
       );

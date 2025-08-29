@@ -24,9 +24,6 @@ const Home: React.FC = () => {
   let imageSrc = "";
   if (user) {
     imageSrc = `data:image/png;base64,${user.profilePicture}`;
-    user.followers = 100;
-    user.following = 50;
-    user.posts = 12;
   }
 
   if (loading) {
@@ -96,27 +93,42 @@ const Home: React.FC = () => {
           <div className="sticky top-24 space-y-4">
             <div className="bg-white rounded-2xl shadow p-4">
               <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
-                <Avatar src={imageSrc} alt={user.fullName} size="md" />
-                <div>
-                  <h3 className="font-semibold">{user.fullName}</h3>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
-                </div>
-              </div>
+            <img
+              src={imageSrc}
+              alt={user.fullName}
+              onClick={() => navigate(`/profile`)}
+              className="w-12 h-12 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
+            />
+            <div>
+              <h3
+                onClick={() => navigate(`/profile`)}
+                className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition"
+              >
+                {user.fullName}
+              </h3>
+              <p
+                onClick={() => navigate(`/profile`)}
+                className="text-sm text-gray-500 cursor-pointer hover:text-blue-400 transition"
+              >
+                @{user.username}
+              </p>
+            </div>
+          </div>
 
-              <div className="flex justify-between py-3 text-sm">
+              {/* <div className="flex justify-between py-3 text-sm">
                 <div className="text-center">
                   <p className="font-semibold">{user.posts}</p>
                   <p className="text-gray-500">Posts</p>
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold">{user.followers}</p>
+                  <p className="font-semibold">{user.followersCount}</p>
                   <p className="text-gray-500">Followers</p>
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold">{user.following}</p>
+                  <p className="font-semibold">{user.followingCount}</p>
                   <p className="text-gray-500">Following</p>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Suggestions */}
