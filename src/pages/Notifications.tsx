@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/layout/Navbar';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
-import { Heart, MessageCircle, UserPlus, AtSign, Tag } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, AtSign, Tag, Bell } from 'lucide-react';
 
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
@@ -93,7 +93,7 @@ const Notifications: React.FC = () => {
                   <div className="flex-shrink-0 mr-3 mt-1">
                     <Avatar
                       src={notification.user.profilePicture}
-                      alt={notification.user.name}
+                      alt={notification.user.username}
                       size="md"
                     />
                   </div>
@@ -101,7 +101,7 @@ const Notifications: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{notification.user.name}</span>
+                        <span className="font-semibold">{notification.user.fullName}</span>
                         <div className="flex-shrink-0">
                           {getNotificationIcon(notification.type)}
                         </div>

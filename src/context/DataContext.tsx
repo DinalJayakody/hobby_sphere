@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { posts as initialPosts, stories as initialStories, notifications as initialNotifications } from '../data/mockData';
 import { Post, Story, Notification } from '../types';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
-import api from '../types/axiosInstance';
+// import axios from 'axios';
+import axiosInstance from "../types/axiosInstance";
 
 
 interface DataContextType {
@@ -22,7 +22,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Set base URL for axios (adjust if your backend URL changes)
-axios.defaults.baseURL = 'http://localhost:8080';
+// axios.defaults.baseURL = 'http://localhost:8080';
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
    const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 useEffect(() => {
   const token = localStorage.getItem('token');
  if (token) {
-       axios.defaults.headers.common['Authorization'] = token;
+      //  axios.defaults.headers.common['Authorization'] = token;
        if (user && user.id) {
          fetchPostDetails(user.id, 0).finally(() => setLoading(false));
        } else {
@@ -47,13 +47,6 @@ useEffect(() => {
      } else {
        setLoading(false);
      }
-
-  
-
-  // axios.defaults.headers.common['Authorization'] = token;
-    // axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-  // Fetch posts only when user.id changes
       
 }, [user?.id]);
 
@@ -64,7 +57,7 @@ useEffect(() => {
 
     try {
       // Get posts to display immediatly
-      const response = await axios.get(`/api/post/user/${userId}`,  {
+      const response = await axiosInstance.get(`/api/post/user/${userId}`,  {
       params: { page: pageNum, size }
     });
 
@@ -113,12 +106,6 @@ useEffect(() => {
       const formData = new FormData();
       formData.append("createPostRequest", new Blob([JSON.stringify({
         ...post, images: undefined
-      //   ...post,
-      // id: `post-${Date.now()}`,
-      // timestamp: new Date().toISOString(),
-      // likes: 0,
-      // comments: 0,
-      // liked: false
       })], { type: "application/json" }));
 
 
@@ -136,7 +123,7 @@ useEffect(() => {
       console.log('Post content:', post);
       console.log(formData.get("selectedFiles")); 
 
-      const response = await axios.post('/api/post/create', formData, {
+      const response = await axiosInstance.post('/api/post/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
