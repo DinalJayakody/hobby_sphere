@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
 import { posts } from '../data/mockData';
+import { useData } from './DataContext';
 
 // Define User interface to match your backend /userDetail response
 export interface User {
@@ -50,6 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
+  // const { clearData } = useData();
 
   const [pendingRegistration, setPendingRegistration] = useState<any>(null);
 
@@ -176,6 +178,7 @@ useEffect(() => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    //  clearData();
   };
 
   return (

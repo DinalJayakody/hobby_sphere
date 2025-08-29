@@ -27,6 +27,7 @@ const Navbar: React.FC = () => {
   const { unreadNotificationsCount } = useData();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+   const { clearData } = useData();
 
   // 🔍 Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +62,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    clearData();
     navigate("/login");
   };
 
@@ -81,6 +83,7 @@ const Navbar: React.FC = () => {
       );
 
       const newResults = res.data.data || [];
+      
 
       if (pageNum === 0) {
         setResults(newResults);
@@ -95,7 +98,6 @@ const Navbar: React.FC = () => {
       setLoading(false);
     }
   };
-
   // Reset & fetch when query changes
   useEffect(() => {
     if (searchQuery) {
@@ -119,6 +121,8 @@ const Navbar: React.FC = () => {
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
+  
+  // const imagefriend = `data:image/png;base64,${res.profilePicture}`;
 
   return (
     <>
@@ -152,40 +156,47 @@ const Navbar: React.FC = () => {
                       <div className="p-3 text-center text-sm">Searching...</div>
                     ) : (
                       <>
-                        {results.map((user: any, idx) => (
-                          <div
-                            key={idx}
-                            className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
-                            onClick={() => {
-                              navigate(`/FriendProfile/${user.id}`);
-                              // navigate(`/FriendProfile/`);
-                              setSearchQuery("");
-                            }}
-                          >
-                            {/* Profile picture */}
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={
-                                  imageSrc ||
-                                  // user.profilePicture ||
-                                  user.avatarUrl ||
-                                  "/default-avatar.png"
-                                }
-                                alt={user.username}
-                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                              />
+                        {results.map((friend: any, idx: number) => {
+  const imagefriend = friend.profilePicture
+    ? `data:image/png;base64,${friend.profilePicture}`
+    : null;
 
-                              <div className="flex flex-col">
-                                <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
+  return (
+    <div
+      key={idx}
+      className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
+      onClick={() => {
+        navigate(`/FriendProfile/${friend.id}`);
+        setSearchQuery("");
+      }}
+    >
+      {/* Profile picture */}
+      <div className="flex items-center space-x-3">
+        <img
+          src={
+            imagefriend ||
+            friend.avatarUrl ||
+            "/default-avatar.png"
+          }
+          alt={friend.username}
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+        />
 
-                                <div className="text-sm text-gray-500">{user.username}</div>
-                                <div className="text-sm text-gray-500">
-                                  🎯 {user.hobby || "No hobby"} · 📍 {user.location || "Unknown"}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+        <div className="flex flex-col">
+          <div className="font-semibold text-gray-900">
+            {friend.fullName || "No Name"}
+          </div>
+
+          <div className="text-sm text-gray-500">{friend.username}</div>
+          <div className="text-sm text-gray-500">
+            🎯 {friend.hobby || "No hobby"} · 📍 {friend.location || "Unknown"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+})}
+
 
                         {loading && page > 0 && (
                           <div className="p-3 text-center text-sm">

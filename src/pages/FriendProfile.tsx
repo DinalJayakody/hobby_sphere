@@ -51,8 +51,51 @@ const FriendProfile: React.FC = () => {
             username: "alexj",
             avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
         },
+         {
+            id: 2,
+            fullName: "Shane Smith",
+            username: "shanesmith",
+            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+        },
+        {
+            id: 3,
+            fullName: "William Brown",
+            username: "williamb",
+            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+        },
     ]);
-    const [followingList, setFollowingList] = useState<any[]>([]);
+    const [followingList, setFollowingList] = useState<any[]>([
+        {
+            id: 1,
+            fullName: "John Doe",
+            username: "johndoe",
+            avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+        },
+        {
+            id: 2,
+            fullName: "Jane Smith",
+            username: "janesmith",
+            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+        },
+        {
+            id: 3,
+            fullName: "Alex Johnson",
+            username: "alexj",
+            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+        },
+         {
+            id: 2,
+            fullName: "Shane Smith",
+            username: "shanesmith",
+            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+        },
+        {
+            id: 3,
+            fullName: "William Brown",
+            username: "williamb",
+            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+        },
+    ]);
 
     const [friend, setFriend] = useState<FriendUser | null>(null);
     const [loading, setLoading] = useState(true);
@@ -364,18 +407,44 @@ const FriendProfile: React.FC = () => {
                                 followersList.map((user) => (
                                     <div
                                         key={user.id}
-                                        className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
-                                        onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                                        className="flex items-center justify-between mb-3 hover:bg-sky-50 rounded-lg p-2"
                                     >
-                                        <img
-                                            src={user.avatarUrl || "/default-avatar.png"}
-                                            alt={user.username}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
-                                            <div className="text-sm text-gray-500">@{user.username}</div>
+                                        {/* Left side: Clickable profile */}
+                                        <div
+                                            className="flex items-center space-x-3 cursor-pointer"
+                                            onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                                        >
+                                            <img
+                                                src={
+                                                    user.profilePicture
+                                                        ? `data:image/png;base64,${user.profilePicture}`
+                                                        : user.avatarUrl || "/default-avatar.png"
+                                                }
+                                                alt={user.username}
+                                                className="w-10 h-10 rounded-full object-cover"
+                                            />
+                                            <div>
+                                                <div className="font-semibold text-gray-900">
+                                                    {user.fullName || "No Name"}
+                                                </div>
+                                                <div className="text-sm text-gray-500">@{user.username}</div>
+                                            </div>
                                         </div>
+
+                                        {/* Right side: Follow / Unfollow button */}
+                                        <button
+                                            onClick={() =>
+                                                user.isFollowing
+                                                    ? handleUnfollow(user.id)
+                                                    : handleFollow(user.id)
+                                            }
+                                            className={`px-3 py-1 rounded-lg text-sm ${user.isFollowing
+                                                    ? "bg-red-500 text-white hover:bg-red-600"
+                                                    : "bg-sky-500 text-white hover:bg-sky-600"
+                                                }`}
+                                        >
+                                            {user.isFollowing ? "Unfollow" : "Follow"}
+                                        </button>
                                     </div>
                                 ))
                             )}
@@ -383,7 +452,7 @@ const FriendProfile: React.FC = () => {
                     </div>
                 )}
 
-                {/* Following Modal pop up box */}
+                {/* Following Modal */}
                 {showFollowing && (
                     <div
                         className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
@@ -408,24 +477,51 @@ const FriendProfile: React.FC = () => {
                                 followingList.map((user) => (
                                     <div
                                         key={user.id}
-                                        className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
-                                        onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                                        className="flex items-center justify-between mb-3 hover:bg-sky-50 rounded-lg p-2"
                                     >
-                                        <img
-                                            src={user.avatarUrl || "/default-avatar.png"}
-                                            alt={user.username}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
-                                            <div className="text-sm text-gray-500">@{user.username}</div>
+                                        {/* Left side: Clickable profile */}
+                                        <div
+                                            className="flex items-center space-x-3 cursor-pointer"
+                                            onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                                        >
+                                            <img
+                                                src={
+                                                    user.profilePicture
+                                                        ? `data:image/png;base64,${user.profilePicture}`
+                                                        : user.avatarUrl || "/default-avatar.png"
+                                                }
+                                                alt={user.username}
+                                                className="w-10 h-10 rounded-full object-cover"
+                                            />
+                                            <div>
+                                                <div className="font-semibold text-gray-900">
+                                                    {user.fullName || "No Name"}
+                                                </div>
+                                                <div className="text-sm text-gray-500">@{user.username}</div>
+                                            </div>
                                         </div>
+
+                                        {/* Right side: Follow / Unfollow button */}
+                                        <button
+                                            onClick={() =>
+                                                user.isFollowing
+                                                    ? handleUnfollow(user.id)
+                                                    : handleFollow(user.id)
+                                            }
+                                            className={`px-3 py-1 rounded-lg text-sm ${user.isFollowing
+                                                    ? "bg-red-500 text-white hover:bg-red-600"
+                                                    : "bg-sky-500 text-white hover:bg-sky-600"
+                                                }`}
+                                        >
+                                            {user.isFollowing ? "Unfollow" : "Follow"}
+                                        </button>
                                     </div>
                                 ))
                             )}
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
 

@@ -16,6 +16,7 @@ interface DataContextType {
   viewStory: (storyId: string) => void;
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
+  clearData: () => void; 
   unreadNotificationsCount: number;
 }
 
@@ -34,6 +35,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
+  const clearData = () => {
+  setPosts([]);
+  // setStories([initialStories[5]]); // Keep only the initial story
+  // setNotifications([]);
+  // setPage(0);
+  setHasMore(true);
+};
+
     // On mount, load token and fetch user details
 useEffect(() => {
   const token = localStorage.getItem('token');
@@ -42,6 +51,7 @@ useEffect(() => {
        if (user && user.id) {
          fetchPostDetails(user.id, 0).finally(() => setLoading(false));
        } else {
+         
          setLoading(false);
        }
      } else {
@@ -59,6 +69,8 @@ useEffect(() => {
       // Get posts to display immediatly
       const response = await axiosInstance.get(`/api/post/user/${userId}`,  {
       params: { page: pageNum, size }
+      //       const response = await axiosInstance.get(`/api/post/feed`,  {
+      // params: { page: pageNum, size }
     });
 
 
@@ -214,6 +226,7 @@ useEffect(() => {
         viewStory,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        clearData,
         unreadNotificationsCount
       }}
     >
