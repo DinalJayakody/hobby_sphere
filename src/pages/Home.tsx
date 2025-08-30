@@ -6,6 +6,10 @@ import Navbar from "../components/layout/Navbar";
 import Stories from "../components/home/Stories";
 import CreatePostCard from "../components/home/CreatePostCard";
 import PostCard from "../components/home/PostCard";
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
 import Avatar from "../components/ui/Avatar";
 import {
   Users,
@@ -139,19 +143,19 @@ const Home: React.FC = () => {
               <div className="space-y-3">
                 {[
                   {
-                    name: "Michael Wilson",
-                    role: "Photographer",
-                    src: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+                    name: "Chanuka Nuwankalpa",
+                    role: "Music",
+                    src: Chanuka,
                   },
                   {
-                    name: "Emily Davis",
-                    role: "Travel Blogger",
-                    src: "https://images.pexels.com/photos/1264210/pexels-photo-1264210.jpeg",
+                    name: "Tharinda Withanage",
+                    role: "Music",
+                    src: Prashan,
                   },
                   {
-                    name: "Robert Johnson",
-                    role: "Software Engineer",
-                    src: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+                    name: "Dinal Jayakody",
+                    role: "Music",
+                    src: Dinal,
                   },
                 ].map((s, i) => (
                   <motion.div

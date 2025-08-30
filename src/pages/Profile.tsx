@@ -6,6 +6,13 @@ import Navbar from '../components/layout/Navbar';
 import PostCard from '../components/home/PostCard';
 import Button from '../components/ui/Button';
 import cover from '../assets/cover.png';
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Maniya from "../assets/Maniya.jpg";
+import Kavindu from "../assets/Kavindu.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
+import Prabs from "../assets/Prabs.jpg";
 import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle } from 'lucide-react';
 
 const Profile: React.FC = () => {
@@ -21,39 +28,39 @@ const Profile: React.FC = () => {
   const [followersList, setFollowersList] = useState<any[]>([
     {
       id: 1,
-      fullName: "John Doe",
-      username: "johndoe",
-      avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      fullName: "Tharinda Withanage",
+      username: "tharinda_withanage",
+      avatarUrl: Tharinda,
     },
     {
       id: 2,
-      fullName: "Jane Smith",
-      username: "janesmith",
-      avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+      fullName: "Chanuka Nuwankalpa",
+      username: "chanuka_nuwankalpa",
+      avatarUrl: Chanuka,
     },
     {
       id: 3,
-      fullName: "Alex Johnson",
-      username: "alexj",
-      avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+      fullName: "Prabuddha Rathnayaka",
+      username: "prabuddha_rathnayaka",
+      avatarUrl: Prabs,
     },
     {
       id: 4,
-      fullName: "Sandaruwan Perera",
-      username: "johndoe",
-      avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      fullName: "Prashan Thilakawardana",
+      username: "prashan_thilakawaradana",
+      avatarUrl: Prashan,
     },
     {
       id: 5,
-      fullName: "Samanali Perera",
-      username: "janesmith",
-      avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+      fullName: "Dinal Jayakody",
+      username: "dinal_jayakody",
+      avatarUrl: Dinal,
     },
     {
       id: 6,
-      fullName: "Steve Smith",
-      username: "alexj",
-      avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+      fullName: "Kavindu Rathnayaka",
+      username: "kavindu_rathnayaka",
+      avatarUrl: Kavindu,
     },
   ]);
   const [followingList, setFollowingList] = useState<any[]>([]);
@@ -71,7 +78,7 @@ const Profile: React.FC = () => {
 
   console.log('User posts:', userPosts);
   console.log('Post:', posts);
-  user.location = 'Gampaha';
+  // user.location = 'Gampaha';
   console.log('User hobby', user.mainHobby);
   return (
     <div className="min-h-screen bg-sky-50">
@@ -124,13 +131,9 @@ const Profile: React.FC = () => {
 
               {/* {user.location ? `Location: ${user.location}` : ' '} */}
               <div className="flex gap-x-12 mb-4">
-                <p className="text-gray-700">
-                  <span className="font-bold">Location:</span> {user.location}
-                </p>
+                <p className="text-gray-700">📍 {"Panadura"}</p>
+                <p className="text-gray-700">🎯 {user.mainHobby || "Music"}</p>
 
-                <p className="text-gray-700">
-                  <span className="font-bold">Main Hobby:</span> {user.mainHobby}
-                </p>
               </div>
 
               <div className="flex flex-wrap justify-between mb-2">

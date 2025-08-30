@@ -1,48 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, Globe, Save, Upload } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 const ProfileEdit: React.FC = () => {
+  const { user } = useAuth();
+
   const [profileData, setProfileData] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    phone: "+94 71 234 5678",
-    website: "https://mywebsite.com",
-    bio: "Passionate about coding, design, and coffee ☕",
-    avatar: "/default-avatar.png",
+    fullName: "",
+    email: "",
+    phone: "",
+    website: "",
+    bio: "",
+    profilePicture: "",
   });
 
-  const [previewImage, setPreviewImage] = useState(profileData.avatar);
+  const [previewImage, setPreviewImage] = useState("/default-avatar.png");
+
+  // Populate form with logged-in user data
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        website: user.website || "",
+        bio: user.bio || "",
+        profilePicture: user.profilePicture || "/default-avatar.png",
+      });
+
+      const imageSrcedit = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "";
+
+      setPreviewImage(imageSrcedit || "/default-avatar.png");
+    }
+  }, [user]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setProfileData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const fileUrl = URL.createObjectURL(e.target.files[0]);
       setPreviewImage(fileUrl);
-      setProfileData((prev) => ({
-        ...prev,
-        avatar: fileUrl,
-      }));
+      setProfileData((prev) => ({ ...prev, avatar: fileUrl }));
     }
   };
 
   const handleSave = () => {
     console.log("Profile saved:", profileData);
     alert("✅ Profile updated successfully!");
+    // TODO: send updated profileData to backend
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200">
-      {/* ✅ HobbySphere Navbar */}
+      {/* Navbar */}
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-4 py-12">
@@ -124,7 +140,7 @@ const ProfileEdit: React.FC = () => {
           </div>
 
           {/* Website */}
-          <div>
+          {/* <div>
             <label className="block text-gray-700 text-sm mb-1">Website</label>
             <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
               <Globe className="text-sky-500 w-5 h-5 mr-2" />
@@ -137,7 +153,7 @@ const ProfileEdit: React.FC = () => {
                 placeholder="Enter your website"
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Bio */}
           <div>

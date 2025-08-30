@@ -67,12 +67,13 @@ useEffect(() => {
 
     try {
       // Get posts to display immediatly
-      const response = await axiosInstance.get(`/api/post/user/${userId}`,  {
-      params: { page: pageNum, size }
-      //       const response = await axiosInstance.get(`/api/post/feed`,  {
+      // const response = await axiosInstance.get(`/api/post/user/${userId}`,  {
       // params: { page: pageNum, size }
-    });
+            const response = await axiosInstance.get(`/api/post/feed`,  {
+      params: { page: pageNum, size }
 
+    });
+ console.log("Post User", response);
 
     const apiPosts = response.data.content || [];
 
@@ -83,7 +84,7 @@ useEffect(() => {
       user: {
         id: p.userId,
         fullName: p.fullName || "Unknown User",
-        profilePicture: p.userProfilePicture || "", // handle profile pic if available
+        profilePicture: p.profilePictureUrl || "", // handle profile pic if available
       },
       content: p.content,
       images: p.imageUrls || [], // map imageUrls to images array
@@ -98,6 +99,7 @@ useEffect(() => {
   const uniquePosts = mergedPosts.filter(
     (post, index, self) => index === self.findIndex((p) => p.id === post.id)
   );
+  console.log("Prev Posts", prevPosts);
   return uniquePosts;
 });
     setHasMore(!response.data.last); // If it's the last page, stop fetching

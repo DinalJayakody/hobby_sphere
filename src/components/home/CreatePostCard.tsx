@@ -18,6 +18,8 @@ const CreatePostCard: React.FC = () => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);       // State to store selected image previews
 
   const [images, setSelectedFiles] = useState<File[]>([]);    // State to store actual image files for uploading
+// const { user.profile, ...safeUser } = user;
+// const { profilePicture, ...userWithoutImage } = user;
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;

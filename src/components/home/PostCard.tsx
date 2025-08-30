@@ -21,6 +21,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [saved, setSaved] = useState(false);
 
   const imageSrc = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "";
+  const imageSrcPost = post?.user.profilePicture ? `data:image/png;base64,${post.user.profilePicture}` : "";
+
+  console.log('Post Card image details ',  post);
 
   const timeAgo = (timestamp: string) => {
     const now = new Date();
@@ -58,7 +61,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center space-x-3" onClick={goToProfile}>
           <Avatar
-            src={imageSrc}
+            src={imageSrcPost}
             alt={post.user?.fullName || "User"}
             size="md"
           />

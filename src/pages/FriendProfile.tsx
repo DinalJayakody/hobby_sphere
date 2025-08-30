@@ -8,6 +8,13 @@ import { Grid, Bookmark, Tag, MessageCircle, Heart, UserPlus, Send } from "lucid
 import { useData } from "../context/DataContext";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import axiosInstance from "../types/axiosInstance";
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Maniya from "../assets/Maniya.jpg";
+import Kavindu from "../assets/Kavindu.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
+import Prabs from "../assets/Prabs.jpg";
 
 type FriendUser = {
     id: string | number;
@@ -22,6 +29,7 @@ type FriendUser = {
     followingCount?: number;
     following?: boolean;
     posts?: number;
+    postsNo?: number;
 };
 
 const FriendProfile: React.FC = () => {
@@ -34,35 +42,41 @@ const FriendProfile: React.FC = () => {
     const [showFollowing, setShowFollowing] = useState(false);
     const [followersList, setFollowersList] = useState<any[]>([
         {
-            id: 1,
-            fullName: "John Doe",
-            username: "johndoe",
-            avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-        },
-        {
-            id: 2,
-            fullName: "Jane Smith",
-            username: "janesmith",
-            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
-        },
-        {
-            id: 3,
-            fullName: "Alex Johnson",
-            username: "alexj",
-            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
-        },
-         {
-            id: 2,
-            fullName: "Shane Smith",
-            username: "shanesmith",
-            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
-        },
-        {
-            id: 3,
-            fullName: "William Brown",
-            username: "williamb",
-            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
-        },
+      id: 1,
+      fullName: "Tharinda Withanage",
+      username: "tharinda_withanage",
+      avatarUrl: Tharinda,
+    },
+    {
+      id: 2,
+      fullName: "Chanuka Nuwankalpa",
+      username: "chanuka_nuwankalpa",
+      avatarUrl: Chanuka,
+    },
+    {
+      id: 3,
+      fullName: "Prabuddha Rathnayaka",
+      username: "prabuddha_rathnayaka",
+      avatarUrl: Prabs,
+    },
+    {
+      id: 4,
+      fullName: "Prashan Thilakawardana",
+      username: "prashan_thilakawaradana",
+      avatarUrl: Prashan,
+    },
+    {
+      id: 5,
+      fullName: "Dinal Jayakody",
+      username: "dinal_jayakody",
+      avatarUrl: Dinal,
+    },
+    {
+      id: 6,
+      fullName: "Kavindu Rathnayaka",
+      username: "kavindu_rathnayaka",
+      avatarUrl: Kavindu,
+    },
     ]);
     const [followingList, setFollowingList] = useState<any[]>([
         {
@@ -132,6 +146,7 @@ const FriendProfile: React.FC = () => {
                         followingCount: data.followingCount,
                         following: data.following,
                         posts: data.posts,
+                        postsNo: data.totalElements,
 
                     });
                     console.log("Friend data:", data);
@@ -256,15 +271,15 @@ const FriendProfile: React.FC = () => {
                             </p>
 
                             <div className="flex gap-x-10 mb-4">
-                                <p className="text-gray-700">📍 {friend.location || "Unknown"}</p>
-                                <p className="text-gray-700">🎯 {friend.mainHobby || "No hobby"}</p>
+                                <p className="text-gray-700">📍 {friend.location || "Panadura"}</p>
+                                <p className="text-gray-700">🎯 {friend.mainHobby || "Music"}</p>
                             </div>
 
                             {/* Stats */}
                             <div className="flex flex-wrap justify-between mb-2">
                                 {/* Posts */}
                                 <div className="mr-6 mb-2">
-                                    <span className="font-semibold text-gray-900">{friend.posts ?? 0}</span>{" "}
+                                    <span className="font-semibold text-gray-900">{friend.postsNo ?? 2}</span>{" "}
                                     <span className="text-gray-600">Posts</span>
                                 </div>
 
