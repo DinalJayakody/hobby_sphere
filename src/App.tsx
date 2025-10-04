@@ -17,6 +17,8 @@ import FriendProfile from './pages/FriendProfile';
 import FriendsPage from './pages/FriendsPage';
 import Pages from './pages/Pages';
 import Settings from './pages/Settings';
+import GroupsPage from './pages/GroupsPage';
+import { CreateGroup } from './pages/CreateGroup';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -89,7 +91,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/FriendProfile/:id" element={<ProtectedRoute element={<FriendProfile />} />} />
         <Route path="/FriendsPage" element={<ProtectedRoute element={<FriendsPage />} />} />
         <Route path="/Pages" element={<ProtectedRoute element={<Pages />} />} />
-         <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
+        <Route path="/GroupsPage" element={<ProtectedRoute element={<GroupsPage />} />} />
+        <Route path="/CreateGroup" element={<ProtectedRoute element={<CreateGroup />} />} />
+        <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
         <Route path="*" element={<Navigate to="/welcome" />} />
       </Routes>
     </PageTransitionWrapper>

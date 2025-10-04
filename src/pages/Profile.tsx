@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -13,7 +13,9 @@ import Maniya from "../assets/Maniya.jpg";
 import Kavindu from "../assets/Kavindu.jpg";
 import Tharinda from "../assets/Tharinda.jpg";
 import Prabs from "../assets/Prabs.jpg";
+import axiosInstance from "../types/axiosInstance"; // adjust path
 import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle } from 'lucide-react';
+import { Post } from '../types';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -21,6 +23,7 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { posts } = useData();
   const [activeTab, setActiveTab] = useState('posts');
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
 
   // For follwing and followers pop up
   const [showFollowers, setShowFollowers] = useState(false);
@@ -66,6 +69,39 @@ const Profile: React.FC = () => {
   const [followingList, setFollowingList] = useState<any[]>([]);
 
 
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchUserPosts = async () => {
+      try {
+        const response = await axiosInstance.get(`/api/post/user/${user.id}`);
+        const apiPosts = response.data.content || [];
+
+        const formattedPosts: Post[] = apiPosts.map((p: any) => ({
+          id: p.id.toString(),
+          userId: p.userId.toString(),
+          user: {
+            id: p.userId,
+            fullName: p.fullName || "Unknown User",
+            profilePicture: p.profilePictureUrl || "",
+          },
+          content: p.content,
+          images: p.imageUrls || [],
+          likes: p.likesCount || 0,
+          comments: p.commentsCount || 0,
+          timestamp: p.createdAt || new Date().toISOString(),
+          liked: p.liked || false,
+        }));
+
+        setUserPosts(formattedPosts);
+      } catch (error) {
+        console.error("Failed to fetch user posts:", error);
+      }
+    };
+
+    fetchUserPosts();
+  }, [currentUser?.id]);
+
 
   if (!currentUser) return null;
 
@@ -74,7 +110,7 @@ const Profile: React.FC = () => {
   const user = currentUser;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
   // Filter posts by the current user
-  const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
+  // const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
 
   console.log('User posts:', userPosts);
   console.log('Post:', posts);

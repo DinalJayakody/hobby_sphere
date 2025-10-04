@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
   const { unreadNotificationsCount } = useData();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-   const { clearData } = useData();
+  const { clearData } = useData();
 
   // 🔍 Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,6 +55,7 @@ const Navbar: React.FC = () => {
     { path: "/friends", icon: Users, label: "Friends" },
     { path: "/saved", icon: Bookmark, label: "Saved Posts" },
     { path: "/create", icon: PlusSquare, label: "Create Post" },
+    { path: "/GroupsPage", icon: PlusSquare, label: "Groups" },
   ];
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
@@ -83,7 +84,7 @@ const Navbar: React.FC = () => {
       );
 
       const newResults = res.data.data || [];
-      
+
 
       if (pageNum === 0) {
         setResults(newResults);
@@ -121,7 +122,7 @@ const Navbar: React.FC = () => {
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-  
+
   // const imagefriend = `data:image/png;base64,${res.profilePicture}`;
 
   return (
@@ -157,45 +158,45 @@ const Navbar: React.FC = () => {
                     ) : (
                       <>
                         {results.map((friend: any, idx: number) => {
-  const imagefriend = friend.profilePicture
-    ? `data:image/png;base64,${friend.profilePicture}`
-    : null;
+                          const imagefriend = friend.profilePicture
+                            ? `data:image/png;base64,${friend.profilePicture}`
+                            : null;
 
-  return (
-    <div
-      key={idx}
-      className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
-      onClick={() => {
-        navigate(`/FriendProfile/${friend.id}`);
-        setSearchQuery("");
-      }}
-    >
-      {/* Profile picture */}
-      <div className="flex items-center space-x-3">
-        <img
-          src={
-            imagefriend ||
-            friend.avatarUrl ||
-            "/default-avatar.png"
-          }
-          alt={friend.username}
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-        />
+                          return (
+                            <div
+                              key={idx}
+                              className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
+                              onClick={() => {
+                                navigate(`/FriendProfile/${friend.id}`);
+                                setSearchQuery("");
+                              }}
+                            >
+                              {/* Profile picture */}
+                              <div className="flex items-center space-x-3">
+                                <img
+                                  src={
+                                    imagefriend ||
+                                    friend.avatarUrl ||
+                                    "/default-avatar.png"
+                                  }
+                                  alt={friend.username}
+                                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                />
 
-        <div className="flex flex-col">
-          <div className="font-semibold text-gray-900">
-            {friend.fullName || "No Name"}
-          </div>
+                                <div className="flex flex-col">
+                                  <div className="font-semibold text-gray-900">
+                                    {friend.fullName || "No Name"}
+                                  </div>
 
-          <div className="text-sm text-gray-500">{friend.username}</div>
-          <div className="text-sm text-gray-500">
-            🎯 {friend.hobby || "No hobby"} · 📍 {friend.location || "Unknown"}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-})}
+                                  <div className="text-sm text-gray-500">{friend.username}</div>
+                                  <div className="text-sm text-gray-500">
+                                    🎯 {friend.hobby || "No hobby"} · 📍 {friend.location || "Unknown"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
 
 
                         {loading && page > 0 && (
@@ -265,6 +266,83 @@ const Navbar: React.FC = () => {
             <Menu className="w-6 h-6" />
             <span className="text-xs mt-1">Menu</span>
           </div>
+
+          {menuOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-30"
+              onClick={toggleMenu}
+            >
+              <div
+                className="absolute bottom-16 right-0 left-0 bg-white rounded-t-2xl shadow-xl p-4 md:hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* 🔹 Profile Section */}
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                  <div
+                    className="flex items-center space-x-3 cursor-pointer"
+                    onClick={() => {
+                      navigate(`/profile`);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Avatar src={imageSrc} alt={user.username} size="md" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900 hover:text-sky-600">
+                        {user.fullName}
+                      </h3>
+                      <p className="text-sm text-gray-500">@{user.username}</p>
+                    </div>
+                  </div>
+                  {/* ⚙️ Settings navigation */}
+                  <button
+                    onClick={() => {
+                      navigate("/settings");
+                      setMenuOpen(false);
+                    }}
+                    className="px-3 py-1 text-sm bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg"
+                  >
+                    Settings
+                  </button>
+                </div>
+
+                {/* 🔹 Tile Menu Items */}
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { path: "/GroupsPage", icon: Users, label: "Groups" },
+                    { path: "/", icon: Home, label: "Feed" },
+                    { path: "/events", icon: Bell, label: "Events" },
+                    { path: "/saved", icon: Bookmark, label: "Saved" },
+                    { path: "/friends", icon: Users, label: "Friends" },
+                    // 👉 Add more items here as needed (Photos, Pages, Marketplace, etc.)
+                  ].map((item) => (
+                    <div
+                      key={item.path}
+                      onClick={() => {
+                        navigate(item.path);
+                        setMenuOpen(false);
+                      }}
+                      className="flex flex-col items-center justify-center bg-sky-50 hover:bg-sky-100 rounded-xl p-3 cursor-pointer transition"
+                    >
+                      <item.icon className="w-7 h-7 text-sky-600 mb-2" />
+                      <span className="text-sm font-medium text-gray-700">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 🔹 Logout Section */}
+                <div
+                  className="mt-6 flex items-center justify-center py-2 text-red-500 font-medium cursor-pointer hover:text-red-600"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Logout
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 

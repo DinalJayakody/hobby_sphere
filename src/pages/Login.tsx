@@ -5,13 +5,19 @@ import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
 import { AtSign, Lock } from 'lucide-react';
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from 'axios';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loading } = useAuth();
+  const { login, loading, loginWithGoogleToken } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialError, setSocialError] = useState("");
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +36,55 @@ const Login: React.FC = () => {
       setError('Invalid username or password');
     }
   };
+
+  const googleLogin = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
+    try {
+      setSocialError("");
+      setGoogleLoading(true);
+
+      // 1) Fetch Google profile using access_token
+      const googleProfileRes = await axios.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        }
+      );
+      const googleProfile = googleProfileRes.data; // contains email, name, picture, sub, email_verified, etc.
+
+      // 2) Send token (or profile) to your backend to verify/create account and issue your app JWT
+      // Backend endpoint example: POST /api/auth/google { access_token }
+      const backendRes = await axios.post("/api/auth/google", {
+        access_token: tokenResponse.access_token,
+        // optional: send profile data too: profile: googleProfile
+      });
+
+      // 3) Backend should return { token: "<your-jwt>", user: { ... } }
+      const { token } = backendRes.data;
+
+      // 4) Save token into your auth context / localStorage and fetch user / set auth state
+      if (loginWithGoogleToken) {
+        await loginWithGoogleToken(token); // recommended: implement this in AuthContext
+      } else {
+        localStorage.setItem("token", token);
+        // If your app expects a current user fetch, trigger it (or reload)
+        window.location.href = "/";
+      }
+    } catch (err) {
+  console.error("Error during Google sign-in →", err);
+  // setSocialError("Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  },
+  onError: (err) => {
+    console.error("Google login failed:", err);
+    setSocialError("Google sign-in failed.");
+  },
+});
+
 
   return (
     <div className="min-h-screen flex">
@@ -149,14 +204,19 @@ const Login: React.FC = () => {
 
               <div className="w-full flex items-center justify-center space-x-1">
 
-                <button className="w-full flex items-center justify-center">
-                  <img
+                <button className="w-full flex items-center justify-center"
+                  type="button"
+                  onClick={() => googleLogin()}
+                  disabled={googleLoading}
+                  // {/* className="w-full flex items-center justify-center px-3 py-2 border rounded-lg hover:bg-gray-50 transition" */}
+                >
+                   <img
                     src="https://www.google.com/favicon.ico"
                     alt="Google"
                     className="w-6 h-6"
                   />
-                  {/* <span className="text-md">Sign in with Google</span> */}
                 </button>
+                {socialError && <div className="text-sm text-red-500 mt-2">{socialError}</div>}
 
                 <button className="w-full flex items-center justify-center">
                   <img

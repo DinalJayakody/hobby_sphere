@@ -71,6 +71,7 @@ const Home: React.FC = () => {
                     onClick={() => {
                       if (label === "Friends") navigate("/FriendsPage");
                       else if (label === "Pages") navigate("/Pages");
+                      else if (label === "Groups") navigate("/GroupsPage");
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sky-50 text-gray-700 font-medium transition"
                   >

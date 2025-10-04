@@ -24,6 +24,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  loginWithGoogleToken: (token: string) => Promise<boolean>;
   login: (username: string, password: string) => Promise<boolean>;
   pendingRegistration: any; // For partial registration data
 savePartialRegistration: (regdata: any) => void;
@@ -44,8 +45,8 @@ savePartialRegistration: (regdata: any) => void;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Set base URL for axios (adjust if your backend URL changes)
-// axios.defaults.baseURL = 'http://localhost:8080';
-axios.defaults.baseURL = 'http://16.170.26.131:8080';
+axios.defaults.baseURL = 'http://localhost:8080';
+// axios.defaults.baseURL = 'http://16.170.26.131:8080';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -104,6 +105,26 @@ useEffect(() => {
     setLoadingUser(false);
   }
 }, []);
+
+
+// inside your AuthProvider
+const loginWithGoogleToken = async (token: string) => {
+  try {
+    // store token (secure cookie or localStorage depending on your strategy)
+    localStorage.setItem("token", token);
+
+    // set default header for future requests (if you use axios)
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // or axiosInstance
+
+    // fetch current user
+    const res = await axios.get("/api/auth/me"); // backend: return current user info for token
+    setUser(res.data);
+    return true;
+  } catch (err) {
+    console.error("loginWithToken error", err);
+    return false;
+  }
+};
 
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -186,6 +207,7 @@ useEffect(() => {
       value={{
         user,
         isAuthenticated: !!user,
+        loginWithGoogleToken,
         login,
         savePartialRegistration,
         register,
