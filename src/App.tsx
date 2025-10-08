@@ -19,6 +19,7 @@ import Pages from './pages/Pages';
 import Settings from './pages/Settings';
 import GroupsPage from './pages/GroupsPage';
 import { CreateGroup } from './pages/CreateGroup';
+import ForgotPassword from './pages/ForgotPassword';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -80,6 +81,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/welcome" element={<AuthRoute element={<Welcome />} />} />
         <Route path="/login" element={<AuthRoute element={<Login />} />} />
         <Route path="/register" element={<AuthRoute element={<Register />} />} />
+        <Route path="/ForgotPassword" element={<ForgotPassword />} />
         <Route path="/profilesetup" element={<AuthRoute element={<ProfileSetup />} />} />
         <Route path="/" element={<ProtectedRoute element={<Home />} />} />
         <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
@@ -93,6 +95,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Pages" element={<ProtectedRoute element={<Pages />} />} />
         <Route path="/GroupsPage" element={<ProtectedRoute element={<GroupsPage />} />} />
         <Route path="/CreateGroup" element={<ProtectedRoute element={<CreateGroup />} />} />
+        <Route path="/ForgotPassword" element={<ProtectedRoute element={<ForgotPassword />} />} />
         <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
         <Route path="*" element={<Navigate to="/welcome" />} />
       </Routes>

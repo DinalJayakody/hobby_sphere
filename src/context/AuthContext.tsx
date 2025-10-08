@@ -114,12 +114,15 @@ const loginWithGoogleToken = async (token: string) => {
     localStorage.setItem("token", token);
 
     // set default header for future requests (if you use axios)
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // or axiosInstance
+      axios.defaults.headers.common['Authorization'] = token;
+    
 
     // fetch current user
-    const res = await axios.get("/api/auth/me"); // backend: return current user info for token
-    setUser(res.data);
-    return true;
+    // const res = await axios.get("/api/auth/me"); // backend: return current user info for token
+    // setUser(res.data);
+    // return true;
+      await fetchUserDetails();
+      return true;
   } catch (err) {
     console.error("loginWithToken error", err);
     return false;

@@ -5,11 +5,21 @@ import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
 import { User, AtSign, Mail, Lock } from 'lucide-react';
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from 'axios';
+import { PrivacyPolicyModal } from "../components/modals/PrivacyPolicyModal";
+import { TermsOfServiceModal } from '../components/modals/TermsOfServiceModal';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register: registerUser, loading } = useAuth();
+  const { register: registerUser, loading, loginWithGoogleToken } = useAuth();
   const { savePartialRegistration } = useAuth();
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialError, setSocialError] = useState("");
+
+  const [showPrivacy, setShowPrivacy] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +32,57 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [strength, setStrength] = useState('');
   const [focused, setFocused] = useState(false);
+
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setSocialError("");
+        setGoogleLoading(true);
+
+        // 1) Fetch Google profile using access_token
+        const googleProfileRes = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+        const googleProfile = googleProfileRes.data; // contains email, name, picture, sub, email_verified, etc.
+
+        // 2) Send token (or profile) to your backend to verify/create account and issue your app JWT
+        // Backend endpoint example: POST /api/auth/google { access_token }
+        const backendRes = await axios.post("/api/auth/google", {
+          access_token: tokenResponse.access_token,
+          // optional: send profile data too: profile: googleProfile
+        });
+
+        // 3) Backend should return { token: "<your-jwt>", user: { ... } }
+        const { token } = backendRes.data;
+
+        // 4) Save token into your auth context / localStorage and fetch user / set auth state
+        if (loginWithGoogleToken) {
+          await loginWithGoogleToken(token); // recommended: implement this in AuthContext
+        } else {
+          localStorage.setItem("token", token);
+          // If your app expects a current user fetch, trigger it (or reload)
+          window.location.href = "/";
+        }
+      } catch (err) {
+        console.error("Error during Google sign-in →", err);
+        // setSocialError("Google sign-in failed. Please try again.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error("Google login failed:", err);
+      setSocialError("Google sign-in failed.");
+    },
+  });
+
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,15 +115,6 @@ const Register: React.FC = () => {
         return 'bg-red-500';
     }
   };
-
-  // const getColor = () => {
-  //   switch (strength) {
-  //     case 'Strong': return 'green';
-  //     case 'Medium': return 'orange';
-  //     case 'Weak': return 'red';
-  //     default: return 'gray';
-  //   }
-  // };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -296,11 +348,41 @@ const Register: React.FC = () => {
                   className="form-checkbox text-navy-600 rounded"
                   required
                 />
-                <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+                {/* <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
                   I agree to the <a href="#" className="text-navy-600 hover:underline">Terms of Service</a> and{' '}
                   <a href="#" className="text-navy-600 hover:underline">Privacy Policy</a>
-                </label>
-              </div>
+                </label> */}
+
+ <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+        I agree to the{" "}
+        <button
+          type="button"
+          onClick={() => setShowTerms(true)}
+          className="text-navy-600 hover:underline"
+        >
+          Terms of Service
+        </button>{" "}
+        and{" "}
+        <button
+          type="button"
+          onClick={() => setShowPrivacy(true)}
+          className="text-navy-600 hover:underline"
+        >
+          Privacy Policy
+        </button>
+        .
+      </label>
+
+      {/* 🔹 Modals for Terms & Privacy */}
+      <TermsOfServiceModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+      />
+      <PrivacyPolicyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+      />
+    </div>
 
               <Button
                 type="submit"
@@ -325,14 +407,20 @@ const Register: React.FC = () => {
 
               <div className="w-full flex items-center justify-center space-x-1">
 
-                <button className="w-full flex items-center justify-center">
+                <button className="w-full flex items-center justify-center"
+                  type="button"
+                  onClick={() => googleLogin()}
+                  disabled={googleLoading}
+                // {/* className="w-full flex items-center justify-center px-3 py-2 border rounded-lg hover:bg-gray-50 transition" */}
+                >
                   <img
                     src="https://www.google.com/favicon.ico"
                     alt="Google"
                     className="w-6 h-6"
                   />
-                  {/* <span className="text-md">Sign in with Google</span> */}
                 </button>
+                {socialError && <div className="text-sm text-red-500 mt-2">{socialError}</div>}
+
 
                 <button className="w-full flex items-center justify-center">
                   <img
@@ -342,13 +430,13 @@ const Register: React.FC = () => {
                   />
                 </button>
 
-                <button className="w-full flex items-center justify-center">
+                {/* <button className="w-full flex items-center justify-center">
                   <img
                     src="https://www.microsoft.com/favicon.ico"
                     alt="Microsoft"
                     className="w-6 h-6"
                   />
-                </button>
+                </button> */}
               </div>
             </form>
 
