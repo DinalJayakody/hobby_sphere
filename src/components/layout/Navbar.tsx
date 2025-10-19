@@ -91,10 +91,7 @@ const Navbar: React.FC = () => {
    setLoading(true);
       const res = await axiosInstance.get(
         // `http://localhost:8080/api/users/search?query=${encodeURIComponent(
-        `/api/users/search?query=${encodeURIComponent(query)}
-        &hobby=${hobby}
-        &nearby=${nearby}
-        &page=${pageNum}&size=5`
+        `/api/users/search?query=${encodeURIComponent(query)}&hobby=${hobby}&nearby=${nearby}&page=${pageNum}&size=5`
       );
 
 
@@ -109,14 +106,9 @@ const Navbar: React.FC = () => {
       setHasMore(newResults.length > 0);
 
       // 🧪 Mock data for UI testing
-      setTimeout(() => {
-        setResults([
-          { id: 1, username: "alex", hobby: "football", location: "Colombo" },
-          { id: 2, username: "mila", hobby: "painting", location: "Kandy" },
-          { id: 2, username: "mila", hobby: "painting", location: "Kandy" },
-          { id: 2, username: "mila", hobby: "painting", location: "Kandy" },
-        ]);
-      }, 400);
+      // setTimeout(() => {
+      //   setResults([]);
+      // }, 400);
 
 
     } catch (err) {

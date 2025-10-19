@@ -2,17 +2,22 @@ import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, Globe, Save, Upload } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import { useAuth } from "../context/AuthContext";
+import LocationPicker from "../components/modals/LocationPicker";
+import axiosInstance from "../types/axiosInstance";
 
 const ProfileEdit: React.FC = () => {
   const { user } = useAuth();
 
   const [profileData, setProfileData] = useState({
     fullName: "",
+    userName: "",
     email: "",
     phone: "",
-    website: "",
     bio: "",
-    profilePicture: "",
+    location: "",
+    // profilePicture: "",
+    lat: "",
+    lon: "",
   });
 
   const [previewImage, setPreviewImage] = useState("/default-avatar.png");
@@ -22,11 +27,14 @@ const ProfileEdit: React.FC = () => {
     if (user) {
       setProfileData({
         fullName: user.fullName || "",
+        userName: user.username || "",
         email: user.email || "",
         phone: user.phone || "",
-        website: user.website || "",
         bio: user.bio || "",
-        profilePicture: user.profilePicture || "/default-avatar.png",
+        location: user.location || "",
+        lat: user.lat,
+        lon: user.lan,
+        // profilePicture: user.profilePicture || "/default-avatar.png",
       });
 
       const imageSrcedit = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "";
@@ -50,11 +58,32 @@ const ProfileEdit: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+const handleSave = async () => {
+  try {
     console.log("Profile saved:", profileData);
+
+    // 🧭 Convert lat/lon to strings (only if they exist)
+    // const payload = {
+    //   ...profileData,
+    //   lat: profileData.lat !== undefined && profileData.lat !== null
+    //     ? String(profileData.lat)
+    //     : "",
+    //   lon: profileData.lon !== undefined && profileData.lon !== null
+    //     ? String(profileData.lon)
+    //     : "",
+    // };
+
+    // console.log("Payload to backend:", payload);
+
+    const response = await axiosInstance.put("/api/users/profile", profileData);
+
     alert("✅ Profile updated successfully!");
-    // TODO: send updated profileData to backend
-  };
+  } catch (error) {
+    console.error("❌ Error updating profile:", error);
+    alert("Failed to update profile. Please try again.");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200">
@@ -107,6 +136,22 @@ const ProfileEdit: React.FC = () => {
             </div>
           </div>
 
+          {/* User Name */}
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">User Name</label>
+            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
+              <User className="text-sky-500 w-5 h-5 mr-2" />
+              <input
+                type="text"
+                name="userName"
+                value={profileData.userName}
+                onChange={handleInputChange}
+                className="w-full bg-transparent outline-none"
+                placeholder="Enter your username"
+              />
+            </div>
+          </div>
+
           {/* Email */}
           <div>
             <label className="block text-gray-700 text-sm mb-1">Email</label>
@@ -139,22 +184,6 @@ const ProfileEdit: React.FC = () => {
             </div>
           </div>
 
-          {/* Website */}
-          {/* <div>
-            <label className="block text-gray-700 text-sm mb-1">Website</label>
-            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
-              <Globe className="text-sky-500 w-5 h-5 mr-2" />
-              <input
-                type="text"
-                name="website"
-                value={profileData.website}
-                onChange={handleInputChange}
-                className="w-full bg-transparent outline-none"
-                placeholder="Enter your website"
-              />
-            </div>
-          </div> */}
-
           {/* Bio */}
           <div>
             <label className="block text-gray-700 text-sm mb-1">Bio</label>
@@ -165,6 +194,15 @@ const ProfileEdit: React.FC = () => {
               rows={4}
               className="w-full border-2 border-sky-200 rounded-lg p-3 shadow-sm outline-none resize-none bg-sky-50"
               placeholder="Tell something about yourself..."
+            />
+          </div>
+
+          {/* Location Picker*/}
+
+          <div className="mt-4">
+            <LocationPicker
+              profileData={profileData}
+              setProfileData={setProfileData}
             />
           </div>
 
