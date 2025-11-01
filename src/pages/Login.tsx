@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
-import { AtSign, Lock } from 'lucide-react';
+import { AtSign, Eye, EyeOff, Lock } from 'lucide-react';
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
 
@@ -17,6 +17,8 @@ const Login: React.FC = () => {
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [socialError, setSocialError] = useState("");
+
+    const [showPassword, setShowPassword] = useState(false);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,15 +174,29 @@ const Login: React.FC = () => {
 
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  fullWidth
-                />
-              </div>
+           <Input
+        type={showPassword ? "text" : "password"}
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="pl-10 pr-10 text-sm"
+        fullWidth
+      />
+
+      {/* 👁️ Eye icon for toggle */}
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute top-3 right-3 text-gray-400 hover:text-sky-500 transition"
+        aria-label={showPassword ? "Hide password" : "Show password"}
+      >
+        {showPassword ? (
+          <EyeOff className="w-5 h-5" />
+        ) : (
+          <Eye className="w-5 h-5" />
+        )}
+      </button>
+    </div>
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center">

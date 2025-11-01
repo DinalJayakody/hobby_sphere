@@ -13,6 +13,7 @@ interface DataContextType {
   addPost: (post: Omit<Post, 'id' | 'timestamp'> & { images?: File[] }) => Promise<boolean>;
   addStory: (story: Omit<Story, 'id' | 'timestamp'>) => void;
   likePost: (postId: string) => void;
+  savePost: (postId: string, userId: string) => Promise<boolean>;
   viewStory: (storyId: string) => void;
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
@@ -186,6 +187,30 @@ useEffect(() => {
     );
   };
 
+
+  const savePost = async (postId: string, userId: string): Promise<boolean> => {
+    try {
+      const response = await axiosInstance.post(
+        `/api/savePost/${encodeURIComponent(postId)}/${encodeURIComponent(userId)}`
+      );
+      console.log("Save Post Response:", response);
+      const data = response.data;
+
+      // If the API returns the updated post, sync it into state
+      if (data.post) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId && p.userId === userId ? { ...p, ...data.post } : p))
+        );
+      }
+
+      console.log("✅ Post save success:", data.message || "Success");
+      return true;
+    } catch (error: any) {
+      console.error("❌ Save post failed:", error.response?.data || error.message);
+      return false;
+    }
+  };
+
   const viewStory = (storyId: string) => {
     setStories(
       stories.map(story => {
@@ -225,6 +250,7 @@ useEffect(() => {
         addPost,
         addStory,
         likePost,
+        savePost,
         viewStory,
         markNotificationAsRead,
         markAllNotificationsAsRead,

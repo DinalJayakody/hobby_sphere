@@ -119,21 +119,6 @@ const Home: React.FC = () => {
               </p>
             </div>
           </div>
-
-              {/* <div className="flex justify-between py-3 text-sm">
-                <div className="text-center">
-                  <p className="font-semibold">{user.posts}</p>
-                  <p className="text-gray-500">Posts</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">{user.followersCount}</p>
-                  <p className="text-gray-500">Followers</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">{user.followingCount}</p>
-                  <p className="text-gray-500">Following</p>
-                </div>
-              </div> */}
             </div>
 
             {/* Suggestions */}

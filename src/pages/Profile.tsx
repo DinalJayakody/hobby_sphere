@@ -174,8 +174,10 @@ const Profile: React.FC = () => {
 
               <div className="flex flex-wrap justify-between mb-2">
                 <div className="mr-6 mb-2">
-                  <span className="font-semibold text-gray-900">{user.posts}</span>{' '}
-                  <span className="text-gray-600">Posts</span>
+                  <span className="font-semibold text-gray-900">
+  {userPosts ? userPosts.length : 0}
+</span>
+                  <span className="text-gray-600"> Posts</span>
                 </div>
                 {/* Followers Button */}
                 <button

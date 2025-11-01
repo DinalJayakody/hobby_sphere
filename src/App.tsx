@@ -22,6 +22,7 @@ import { CreateGroup } from './pages/CreateGroup';
 import ForgotPassword from './pages/ForgotPassword';
 import VerifyCode from './pages/VerifyCode';
 import ResetPassword from './pages/ResetPassword';
+import { ModalProvider } from './context/ModalContext';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -111,9 +112,11 @@ function App() {
   return (
     <AuthProvider>
       <DataProvider>
+        <ModalProvider>
         <Router>
           <AppRoutes />
         </Router>
+        </ModalProvider>
       </DataProvider>
     </AuthProvider>
   );

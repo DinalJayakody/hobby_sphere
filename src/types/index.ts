@@ -12,7 +12,7 @@ export interface User {
 export interface Post {
   id: string;
   userId: string;
-  user: User;
+  user?: User;
   content: string;
   images?: string[];
   profilePicture: string;
@@ -20,6 +20,7 @@ export interface Post {
   comments: number;
   timestamp: string;
   liked: boolean;
+  privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
 }
 
 export interface Story {

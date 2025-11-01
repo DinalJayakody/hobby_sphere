@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
-import { User, AtSign, Mail, Lock } from 'lucide-react';
+import { User, AtSign, Mail, Lock, EyeOff, Eye } from 'lucide-react';
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
 import { PrivacyPolicyModal } from "../components/modals/PrivacyPolicyModal";
@@ -19,7 +19,7 @@ const Register: React.FC = () => {
   const [socialError, setSocialError] = useState("");
 
   const [showPrivacy, setShowPrivacy] = useState(false);
-    const [showTerms, setShowTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -32,6 +32,7 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [strength, setStrength] = useState('');
   const [focused, setFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
 
   const googleLogin = useGoogleLogin({
@@ -284,16 +285,25 @@ const Register: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
                   onFocus={() => setFocused(true)}
                   error={errors.password}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   fullWidth
                 />
+
+                {/* 👁 Eye Icon for show/hide toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-2.5 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
                 {focused && strength && (
                   // <p className="font-semibold text-sm" style={{ color: getColor() }}>
                   //   Strength: {strength}
@@ -330,15 +340,24 @@ const Register: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="confirmPassword"
                   placeholder="Confirm Password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   error={errors.confirmPassword}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   fullWidth
                 />
+
+                {/* 👁 Eye Icon for show/hide toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-2.5 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
 
               <div className="flex items-center">
@@ -353,36 +372,36 @@ const Register: React.FC = () => {
                   <a href="#" className="text-navy-600 hover:underline">Privacy Policy</a>
                 </label> */}
 
- <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-        I agree to the{" "}
-        <button
-          type="button"
-          onClick={() => setShowTerms(true)}
-          className="text-navy-600 hover:underline"
-        >
-          Terms of Service
-        </button>{" "}
-        and{" "}
-        <button
-          type="button"
-          onClick={() => setShowPrivacy(true)}
-          className="text-navy-600 hover:underline"
-        >
-          Privacy Policy
-        </button>
-        .
-      </label>
+                <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(true)}
+                    className="text-navy-600 hover:underline"
+                  >
+                    Terms of Service
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacy(true)}
+                    className="text-navy-600 hover:underline"
+                  >
+                    Privacy Policy
+                  </button>
+                  .
+                </label>
 
-      {/* 🔹 Modals for Terms & Privacy */}
-      <TermsOfServiceModal
-        isOpen={showTerms}
-        onClose={() => setShowTerms(false)}
-      />
-      <PrivacyPolicyModal
-        isOpen={showPrivacy}
-        onClose={() => setShowPrivacy(false)}
-      />
-    </div>
+                {/* 🔹 Modals for Terms & Privacy */}
+                <TermsOfServiceModal
+                  isOpen={showTerms}
+                  onClose={() => setShowTerms(false)}
+                />
+                <PrivacyPolicyModal
+                  isOpen={showPrivacy}
+                  onClose={() => setShowPrivacy(false)}
+                />
+              </div>
 
               <Button
                 type="submit"
