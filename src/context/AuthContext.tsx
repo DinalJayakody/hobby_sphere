@@ -14,6 +14,7 @@ export interface User {
   lat: string,
   lan: string,
   mainHobby: string,
+  location: string,
   profilePicture: File | null,
   // posts: any[], // Adjust type based on your posts structure
   followersCount: number,
@@ -36,7 +37,9 @@ savePartialRegistration: (regdata: any) => void;
     profilePicture: File | null,
     lat: string,
     lan: string,
-    mainHobby: string) => Promise<boolean>;
+    mainHobby: string,
+    location: string) => Promise<boolean>;
+    
   logout: () => void;
   loading: boolean;        // loading for login/register calls
   loadingUser: boolean;    // loading for initial user fetch
@@ -160,13 +163,14 @@ const loginWithGoogleToken = async (token: string) => {
     profilePicture: File | null,
     lat: string,
     lon: string,
-    mainHobby: string
+    mainHobby: string,
+    location: string
   ): Promise<boolean> => {
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("registerRequest", new Blob([JSON.stringify({
-        name, username, email, password, bio, lat, lon, mainHobby, profilePicture: undefined
+        name, username, email, password, bio, lat, lon, mainHobby, location, profilePicture: undefined
       })], { type: "application/json" }));
 
       if (profilePicture) {

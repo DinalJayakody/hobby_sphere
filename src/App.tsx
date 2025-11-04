@@ -23,6 +23,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import VerifyCode from './pages/VerifyCode';
 import ResetPassword from './pages/ResetPassword';
 import { ModalProvider } from './context/ModalContext';
+import RegisterSuccess from './pages/RegisterSuccess';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -84,6 +85,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/welcome" element={<AuthRoute element={<Welcome />} />} />
         <Route path="/login" element={<AuthRoute element={<Login />} />} />
         <Route path="/register" element={<AuthRoute element={<Register />} />} />
+        <Route path="/RegisterSuccess" element={<ProtectedRoute element={<RegisterSuccess />} />} />
         <Route path="/ForgotPassword" element={<ForgotPassword />} />
         <Route path="/VerifyCode" element={<VerifyCode />} />
         <Route path="/ResetPassword" element={<ResetPassword />} />

@@ -9,6 +9,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
 import { PrivacyPolicyModal } from "../components/modals/PrivacyPolicyModal";
 import { TermsOfServiceModal } from '../components/modals/TermsOfServiceModal';
+import axiosInstance from '../types/axiosInstance';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +34,13 @@ const Register: React.FC = () => {
   const [strength, setStrength] = useState('');
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Username availability states
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [usernameMessage, setUsernameMessage] = useState("");
+  // Email validation states
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [emailMessage, setEmailMessage] = useState("");
+
 
 
   const googleLogin = useGoogleLogin({
@@ -60,13 +68,15 @@ const Register: React.FC = () => {
         });
 
         // 3) Backend should return { token: "<your-jwt>", user: { ... } }
-        const { token } = backendRes.data;
+                const { token, type } = backendRes.data;
+      const fullToken = `${type} ${token}`;
 
         // 4) Save token into your auth context / localStorage and fetch user / set auth state
         if (loginWithGoogleToken) {
-          await loginWithGoogleToken(token); // recommended: implement this in AuthContext
+          await loginWithGoogleToken(fullToken); // recommended: implement this in AuthContext
         } else {
-          localStorage.setItem("token", token);
+          localStorage.setItem("token", fullToken);
+          `Bearer ${token}`
           // If your app expects a current user fetch, trigger it (or reload)
           window.location.href = "/";
         }
@@ -84,12 +94,30 @@ const Register: React.FC = () => {
   });
 
 
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setStrength(checkStrength(formData.password));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // ✅ Check password strength (your existing logic)
+    if (name === "password") {
+      setStrength(checkStrength(value));
+    }
+
+    // ✅ Check username availability (debounced)
+    if (name === "username") {
+      checkUsernameAvailability(value);
+    }
+
+    // ✅ Validate email instantly
+    if (name === "email") {
+      validateEmail(value);
+    }
   };
+
 
   const checkStrength = (pwd: string) => {
     // Regular Expressions for password strength
@@ -141,9 +169,88 @@ const Register: React.FC = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (formData.password) {
+      const failedHints = passwordHints.filter((h) => !h.test(formData.password));
+      if (failedHints.length > 0) {
+        // create a single human readable message or use one for UI list
+        newErrors.password = `Password must satisfy all hints given`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  let usernameCheckTimeout: ReturnType<typeof setTimeout>;
+
+  // ✅ Username availability check
+  const checkUsernameAvailability = async (username: string) => {
+    const trimmed = username.trim();
+
+    // Reset when input is empty
+    if (!trimmed) {
+      setUsernameStatus("idle");
+      setUsernameMessage("");
+      return;
+    }
+
+    // Basic local validation (optional)
+    const valid = /^[a-zA-Z0-9_.]{3,30}$/.test(trimmed);
+    if (!valid) {
+      setUsernameStatus("taken");
+      setUsernameMessage("Use 3–30 letters, numbers, underscores, or dots.");
+      return;
+    }
+
+    // Clear previous debounce timeout
+    clearTimeout(usernameCheckTimeout);
+
+    // Debounce — wait 500ms after user stops typing
+    usernameCheckTimeout = setTimeout(async () => {
+
+      console.log("Checking username availability for:", trimmed);
+      try {
+        setUsernameStatus("checking");
+        setUsernameMessage("Checking availability…");
+
+        const res = await axiosInstance.get("/api/users/checkUserNameExist", {
+          params: { userName: trimmed },
+        });
+
+        const exists = res.data === true || res.data === "true";
+
+        if (exists) {
+          setUsernameStatus("taken");
+          setUsernameMessage("Username is already taken.");
+        } else {
+          setUsernameStatus("available");
+          setUsernameMessage("Username is available!");
+        }
+      } catch (err) {
+        console.error("Username check error:", err);
+        setUsernameStatus("taken");
+        setUsernameMessage("Unable to check username. Try again.");
+      }
+    }, 500);
+  };
+
+  // ✅ Email validation function
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      setEmailValid(null);
+      setEmailMessage("");
+      return;
+    }
+    if (regex.test(email)) {
+      setEmailValid(true);
+      setEmailMessage("Valid email address.");
+    } else {
+      setEmailValid(false);
+      setEmailMessage("Invalid email format.");
+    }
+  };
+
 
   const passwordHints = [
     { label: "At least 6 characters", test: (pwd: string) => pwd.length >= 6 },
@@ -167,17 +274,6 @@ const Register: React.FC = () => {
       password: formData.password
     });
     console.log('Partial data saved');
-
-    // const success = await registerUser(
-    //   formData.name,
-    //   formData.username,
-    //   formData.email,
-    //   formData.password,
-    //   formData.bio,
-    //   formData.profilePicture,
-    //   formData.location,
-    //   formData.mainHobby,
-    // );
 
     // if (success) {
     navigate('/profilesetup');
@@ -266,6 +362,18 @@ const Register: React.FC = () => {
                   className="pl-10"
                   fullWidth
                 />
+                {usernameStatus !== "idle" && (
+                  <p
+                    className={`text-xs mt-1 ${usernameStatus === "available"
+                        ? "text-green-600"
+                        : usernameStatus === "taken"
+                          ? "text-red-600"
+                          : "text-gray-500"
+                      }`}
+                  >
+                    {usernameMessage}
+                  </p>
+                )}
               </div>
 
               <div className="relative">

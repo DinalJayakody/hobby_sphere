@@ -65,7 +65,6 @@ const Login: React.FC = () => {
 
         const backendRes = await axios.post("/api/auth/google", {
           access_token: tokenResponse.access_token,
-          // optional: send profile data too: profile: googleProfile
         }, {
           withCredentials: true
         });
