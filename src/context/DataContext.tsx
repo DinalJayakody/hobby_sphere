@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { posts as initialPosts, stories as initialStories, notifications as initialNotifications } from '../data/mockData';
 import { Post, Story, Notification } from '../types';
 import { useAuth } from '../context/AuthContext';
 // import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
 
+interface CreateGroupPayload {
+  name: string;
+  description?: string;
+  privacy: "public" | "private";
+  // image - will be sent as multipart/form-data
+}
 
 interface DataContextType {
   posts: Post[];
@@ -17,7 +23,14 @@ interface DataContextType {
   viewStory: (storyId: string) => void;
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
-  clearData: () => void; 
+  createGroup: (payload: CreateGroupPayload, file?: File | null) => Promise<any>;
+  fetchGroupById: (groupId: string) => Promise<any>;
+  createGroupPost: (groupId: string, body: FormData) => Promise<any>;
+  joinGroup: (groupId: string) => Promise<any>;
+  leaveGroup: (groupId: string) => Promise<any>;
+  inviteMember: (groupId: string, email: string) => Promise<any>;
+  updateGroup: (groupId: string, formData: FormData) => Promise<any>;
+  clearData: () => void;
   unreadNotificationsCount: number;
 }
 
@@ -27,91 +40,91 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // axios.defaults.baseURL = 'http://localhost:8080';
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-   const [loading, setLoading] = useState(false);
-  const { user} = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(0); // Start from page 0
   const [hasMore, setHasMore] = useState(true); // Track if more posts exist
-   const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
   const clearData = () => {
-  setPosts([]);
-  // setStories([initialStories[5]]); // Keep only the initial story
-  // setNotifications([]);
-  // setPage(0);
-  setHasMore(true);
-};
+    setPosts([]);
+    // setStories([initialStories[5]]); // Keep only the initial story
+    // setNotifications([]);
+    // setPage(0);
+    setHasMore(true);
+  };
 
-    // On mount, load token and fetch user details
-useEffect(() => {
-  const token = localStorage.getItem('token');
- if (token) {
+  // On mount, load token and fetch user details
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
       //  axios.defaults.headers.common['Authorization'] = token;
-       if (user && user.id) {
-         fetchPostDetails(user.id, 0).finally(() => setLoading(false));
-       } else {
-         
-         setLoading(false);
-       }
-     } else {
-       setLoading(false);
-     }
-      
-}, [user?.id]);
+      if (user && user.id) {
+        fetchPostDetails(user.id, 0).finally(() => setLoading(false));
+      } else {
 
-   // Fetch post details function
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+
+  }, [user?.id]);
+
+  // Fetch post details function
   const fetchPostDetails = async (userId: string, pageNum = page, size = 10) => {
-      if (loading) return; // Prevent duplicate calls
-      setLoading(true);
+    if (loading) return; // Prevent duplicate calls
+    setLoading(true);
 
     try {
       // Get posts to display immediatly
       // const response = await axiosInstance.get(`/api/post/user/${userId}`,  {
       // params: { page: pageNum, size }
-            const response = await axiosInstance.get(`/api/post/feed`,  {
-      params: { page: pageNum, size }
+      const response = await axiosInstance.get(`/api/post/feed`, {
+        params: { page: pageNum, size }
 
-    });
- console.log("Post User", response);
+      });
+      console.log("Post User", response);
 
-    const apiPosts = response.data.content || [];
+      const apiPosts = response.data.content || [];
 
-    // Map API response to match Post interface
-    const formattedPosts: Post[] = apiPosts.map((p: any) => ({
-      id: p.id.toString(),
-      userId: p.userId.toString(),
-      user: {
-        id: p.userId,
-        fullName: p.fullName || "Unknown User",
-        profilePicture: p.profilePictureUrl || "", // handle profile pic if available
-      },
-      content: p.content,
-      images: p.imageUrls || [], // map imageUrls to images array
-      likes: p.likesCount || 0,
-      comments: p.commentsCount || 0,
-      timestamp: p.createdAt || new Date().toISOString(),
-      liked: p.liked || false,
-    }));
+      // Map API response to match Post interface
+      const formattedPosts: Post[] = apiPosts.map((p: any) => ({
+        id: p.id.toString(),
+        userId: p.userId.toString(),
+        user: {
+          id: p.userId,
+          fullName: p.fullName || "Unknown User",
+          profilePicture: p.profilePictureUrl || "", // handle profile pic if available
+        },
+        content: p.content,
+        images: p.imageUrls || [], // map imageUrls to images array
+        likes: p.likesCount || 0,
+        comments: p.commentsCount || 0,
+        timestamp: p.createdAt || new Date().toISOString(),
+        liked: p.liked || false,
+      }));
 
-    setPosts((prevPosts) => {
-  const mergedPosts = [...formattedPosts, ...prevPosts];
-  const uniquePosts = mergedPosts.filter(
-    (post, index, self) => index === self.findIndex((p) => p.id === post.id)
-  );
-  console.log("Prev Posts", prevPosts);
-  return uniquePosts;
-});
-    setHasMore(!response.data.last); // If it's the last page, stop fetching
-    setPage(pageNum + 1); // Increment page for next call
+      setPosts((prevPosts) => {
+        const mergedPosts = [...formattedPosts, ...prevPosts];
+        const uniquePosts = mergedPosts.filter(
+          (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+        );
+        console.log("Prev Posts", prevPosts);
+        return uniquePosts;
+      });
+      setHasMore(!response.data.last); // If it's the last page, stop fetching
+      setPage(pageNum + 1); // Increment page for next call
 
-  } catch (err) {
-    console.error('Failed to fetch posts:', err);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addPost = async (post: Omit<Post, 'id' | 'timestamp'> & { images?: File[] }) => {
     setLoading(true);
@@ -132,11 +145,11 @@ useEffect(() => {
 
       // Debug purpose: log the form data
       for (const [key, value] of formData.entries()) {
-  console.log(`${key}:`, value);  // <-- This will show text and files
-}
+        console.log(`${key}:`, value);  // <-- This will show text and files
+      }
       console.log('Form data prepared:', formData);
       console.log('Post content:', post);
-      console.log(formData.get("selectedFiles")); 
+      console.log(formData.get("selectedFiles"));
 
       const response = await axiosInstance.post('/api/post/create', formData, {
         headers: {
@@ -153,7 +166,7 @@ useEffect(() => {
         await fetchPostDetails(user.id, 0);
       }
       return true;
-     } catch (error) {
+    } catch (error) {
       console.error('Posting Failed', error);
       return false;
     } finally {
@@ -239,6 +252,96 @@ useEffect(() => {
     );
   };
 
+  // Create group API call (multipart/form-data)
+  const createGroup = useCallback(async (payload: CreateGroupPayload, file?: File | null) => {
+    try {
+      // Build formData for file upload
+      // const formData = new FormData();
+      // formData.append("name", payload.name);
+      // formData.append("description", payload.description || "");
+      // formData.append("privacy", payload.privacy);
+
+      // if (file) {
+      //   // backend expects key 'image' — adjust if your API expects different name
+      //   formData.append("groupImage", file);
+      // }
+
+const formData = new FormData();
+
+// Construct your JSON object
+const createGroupRequest = {
+  name: payload.name,
+  description: payload.description,
+  privacy: payload.privacy,
+};
+
+// Append JSON as a blob (Spring expects this)
+formData.append(
+  "createGroupRequest",
+  new Blob([JSON.stringify(createGroupRequest)], {
+    type: "application/json",
+  })
+);
+
+// Append image (optional)
+if (file) {
+  formData.append("groupImage", file);
+}
+
+
+      // Example POST call to create group endpoint
+      // IMPORTANT: axiosInstance should NOT override Content-Type for multipart; browser sets boundary
+      const res = await axiosInstance.post("/api/groups/create", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // return response data to component
+      return res.data;
+    } catch (err) {
+      // rethrow for UI to handle
+      throw err;
+    }
+  }, []);
+
+  const fetchGroupById = async (groupId: string) => {
+  // GET group by id (returns group + role for current user)
+  // API: GET /api/groups/:groupId
+  const res = await axiosInstance.get(`/api/groups/${groupId}`);
+  return res.data; // expected: { group: {...}, role: 'admin'|'member'|'guest' }
+};
+
+const createGroupPost = async (groupId: string, body: FormData) => {
+  // POST /api/groups/:groupId/posts (multipart if file included)
+  const res = await axiosInstance.post(`/api/groups/${groupId}/posts`, body);
+  return res.data;
+};
+
+const joinGroup = async (groupId: string) => {
+  // POST /api/groups/:groupId/join
+  const res = await axiosInstance.post(`/api/groups/${groupId}/join`);
+  return res.data;
+};
+
+const leaveGroup = async (groupId: string) => {
+  // POST /api/groups/:groupId/leave
+  const res = await axiosInstance.post(`/api/groups/${groupId}/leave`);
+  return res.data;
+};
+
+const inviteMember = async (groupId: string, email: string) => {
+  // POST /api/groups/:groupId/invite { email }
+  const res = await axiosInstance.post(`/api/groups/${groupId}/invite`, { email });
+  return res.data;
+};
+
+const updateGroup = async (groupId: string, formData: FormData) => {
+  // PUT /api/groups/:groupId
+  const res = await axiosInstance.put(`/api/groups/${groupId}`, formData);
+  return res.data;
+};
+
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -254,6 +357,13 @@ useEffect(() => {
         viewStory,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        createGroup,
+        fetchGroupById,
+        createGroupPost,
+        joinGroup,
+        leaveGroup,
+        inviteMember,
+        updateGroup,
         clearData,
         unreadNotificationsCount
       }}

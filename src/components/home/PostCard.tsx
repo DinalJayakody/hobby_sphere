@@ -46,8 +46,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setSaved(!saved);
 
     if (!saved) {
-      console.log('Saving post with ID:', post.id, 'for user ID:', post.userId);
-      savePost(post.id, post.userId);
+      if (!user?.id) {
+        console.warn('Cannot save post: no authenticated user.');
+        return;
+      }
+      console.log('Saving post with ID:', post.id, 'for user ID:', user.id);
+      savePost(post.id, user.id);
     }
   };
 

@@ -59,4 +59,14 @@ export interface Conversation {
   lastMessage: string;
   timestamp: string;
   unread: number;
+}  
+
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  coverImage: string;
+  membersCount: number;
+  privacy: 'PUBLIC' | 'PRIVATE';
+  joined: boolean;
 }

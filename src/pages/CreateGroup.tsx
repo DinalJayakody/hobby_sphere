@@ -1,171 +1,172 @@
-// src/pages/CreateGroupPage.tsx
+// src/components/CreateGroup/index.tsx
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Users, Globe, Lock, Upload, ArrowLeft } from "lucide-react";
+// import ImagePicker from "./ImagePicker";
+import { useData } from "../context/DataContext";
 import { useNavigate } from "react-router-dom";
+import { Shield, Globe, Lock, PlusCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import ImagePicker from "../components/layout/ImagePicker";
 
-export const CreateGroup: React.FC = () => {
+type FormState = {
+  name: string;
+  description: string;
+  privacy: "public" | "private";
+};
+
+const CreateGroup: React.FC = () => {
   const navigate = useNavigate();
-
-  // 🔹 State for group form
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [privacy, setPrivacy] = useState<"Public" | "Private">("Public");
-  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const { createGroup } = useData();
+  const [form, setForm] = useState<FormState>({
+    name: "",
+    description: "",
+    privacy: "public",
+  });
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Handle file upload
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCoverImage(e.target.files[0]);
+  // Client-side validation
+  const validate = (): string | null => {
+    if (!form.name.trim()) return "Group name is required";
+    if (form.name.trim().length < 3) return "Group name is too short";
+    return null;
+  };
+
+  const onSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const err = validate();
+    if (err) {
+      alert(err);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // call DataContext createGroup method (multipart handled there)
+      const payload = {
+        name: form.name.trim(),
+        description: form.description.trim(),
+        privacy: form.privacy,
+      };
+
+      const result = await createGroup(payload, file);
+      // success UX — navigate to new group page or show toast
+      // assuming backend returns created group id in result.id
+      const groupId = result?.id;
+      if (groupId) {
+        navigate(`/Group/${groupId}`);
+      } else {
+        // fallback: go to groups list
+        navigate("/GroupsPage");
+      }
+    } catch (err: any) {
+      // better: display a friendly toast or inline error
+      console.error("Create group error:", err);
+      const message = err?.response?.data?.message || "Failed to create group.";
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Example API call with FormData
-    // const formData = new FormData();
-    // formData.append("name", name);
-    // formData.append("description", description);
-    // formData.append("privacy", privacy);
-    // if (coverImage) formData.append("coverImage", coverImage);
-    //
-    // await fetch("/api/groups", {
-    //   method: "POST",
-    //   body: formData,
-    // });
-
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/groups"); // redirect back after create
-    }, 1000);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
-      {/* Header */}
-      <div className="sticky top-0 bg-white shadow-md p-4 flex items-center gap-4">
-        <button
-          onClick={() => navigate("/groups")}
-          className="p-2 hover:bg-sky-50 rounded-full"
-        >
-          <ArrowLeft className="w-5 h-5 text-sky-700" />
-        </button>
-        <h1 className="text-xl font-bold text-sky-700">Create Group</h1>
-      </div>
+    <div className="max-w-xl mx-auto p-4">
+      <div className="bg-white rounded-2xl shadow-lg p-5 border border-sky-100">
+        <div className="flex items-center gap-3 mb-4">
+          <motion.div
+            initial={{ scale: 0.96 }}
+            animate={{ scale: 1 }}
+            className="bg-sky-50 p-2 rounded-md"
+          >
+            <PlusCircle className="w-6 h-6 text-sky-600" />
+          </motion.div>
+          <h2 className="text-lg font-semibold text-sky-700">Create Group</h2>
+        </div>
 
-      {/* Form */}
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow mt-6 p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Image picker */}
+        <ImagePicker
+          defaultSrc={undefined}
+          onFileChange={(f) => setFile(f)}
+          className="mb-4"
+        />
+
+        <form onSubmit={onSubmit} className="space-y-4">
           {/* Group Name */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Group Name
-            </label>
+            <label className="block text-gray-700 text-sm mb-1">Group Name</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-sky-400"
+              name="name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Enter group name"
+              className="w-full px-3 py-2 rounded-lg border border-sky-100 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-200 text-sm"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Description
-            </label>
+            <label className="block text-gray-700 text-sm mb-1">Description</label>
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-sky-400"
-              placeholder="What's this group about?"
+              name="description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Tell people what this group is about"
+              rows={4}
+              className="w-full px-3 py-2 rounded-lg border border-sky-100 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-200 text-sm"
             />
           </div>
 
           {/* Privacy */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Privacy
-            </label>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <p className="text-sm font-medium text-gray-700 mb-2">Privacy</p>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 bg-white hover:bg-sky-50 cursor-pointer">
                 <input
                   type="radio"
                   name="privacy"
-                  value="Public"
-                  checked={privacy === "Public"}
-                  onChange={() => setPrivacy("Public")}
-                  className="accent-sky-600"
+                  value="public"
+                  checked={form.privacy === "public"}
+                  onChange={() => setForm({ ...form, privacy: "public" })}
                 />
-                <Globe className="w-4 h-4 text-sky-600" />
-                <span>Public</span>
+                <div className="ml-2">
+                  <div className="text-sm font-medium">Public</div>
+                  <div className="text-xs text-gray-500">
+                    Anybody can see the group, its members and their posts.
+                  </div>
+                </div>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+
+              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 bg-white hover:bg-sky-50 cursor-pointer">
                 <input
                   type="radio"
                   name="privacy"
-                  value="Private"
-                  checked={privacy === "Private"}
-                  onChange={() => setPrivacy("Private")}
-                  className="accent-sky-600"
+                  value="private"
+                  checked={form.privacy === "private"}
+                  onChange={() => setForm({ ...form, privacy: "private" })}
                 />
-                <Lock className="w-4 h-4 text-sky-600" />
-                <span>Private</span>
+                <div className="ml-2">
+                  <div className="text-sm font-medium">Private</div>
+                  <div className="text-xs text-gray-500">
+                    Only members can see who's in the group and what they post.
+                  </div>
+                </div>
               </label>
             </div>
           </div>
 
-          {/* Cover Image */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Cover Image
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                id="coverImageUpload"
-              />
-              <label
-                htmlFor="coverImageUpload"
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-sky-50"
-              >
-                <Upload className="w-5 h-5 text-sky-600" />
-                {coverImage ? coverImage.name : "Upload Image"}
-              </label>
-            </div>
-            {coverImage && (
-              <div className="mt-3">
-                <img
-                  src={URL.createObjectURL(coverImage)}
-                  alt="Preview"
-                  className="w-full h-40 object-cover rounded-lg shadow"
-                />
-              </div>
-            )}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 text-white font-semibold hover:shadow-lg transition disabled:opacity-60"
+            >
+              {loading ? "Creating..." : "Create Group"}
+            </button>
           </div>
-
-          {/* Submit Button */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            type="submit"
-            disabled={loading}
-            className="w-full bg-sky-600 text-white font-medium py-3 rounded-lg shadow hover:bg-sky-700 transition"
-          >
-            {loading ? "Creating..." : "Create Group"}
-          </motion.button>
         </form>
       </div>
     </div>
   );
 };
+
+export default CreateGroup;

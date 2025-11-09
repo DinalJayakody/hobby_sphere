@@ -1,180 +1,270 @@
-// src/pages/GroupsPage.tsx
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  UsersRound,
-  PlusCircle,
-  Search,
-  FileText,
-  Calendar,
-  Users,
-  Bookmark,
-} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/layout/Navbar"; // Added Navbar
+import {
+  Search,
+  PlusCircle,
+  Users,
+  Compass,
+  User,
+  Settings,
+  ChevronRight,
+} from "lucide-react";
+import axiosInstance from "../api/axiosInstance";
+
+/**
+ * HobbySphere Groups Page
+ * Responsive recreation of Facebook's Groups UI
+ */
 
 interface Group {
-  id: string;
+  id: number;
   name: string;
-  description: string;
-  coverImage?: string;
-  members: number;
+  members?: string;
+  postsPerDay?: string;
+  image: string;
+  lastActive?: string;
+  joined?: boolean;
 }
 
 const GroupsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("discover");
+  const [managedGroups, setManagedGroups] = useState<Group[]>([]);
+  const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
+  const [suggestedGroups, setSuggestedGroups] = useState<Group[]>([]);
 
-  // 🔹 Fetch groups from backend API
+  // Fetch groups from API (using dummy data now)
   useEffect(() => {
-    // Example API call
-    // fetch("/api/groups")
-    //   .then((res) => res.json())
-    //   .then((data) => setGroups(data));
-    setGroups([
-      {
-        id: "1",
-        name: "React Developers",
-        description: "A community for React enthusiasts.",
-        members: 1240,
-      },
-      {
-        id: "2",
-        name: "Music Lovers",
-        description: "Share and discuss your favorite music.",
-        members: 856,
-      },
-    ]);
+    const fetchGroups = async () => {
+      try {
+        // const [managed, joined, suggested] = await Promise.all([
+        //   axiosInstance.get("/api/groups/managed"),
+        //   axiosInstance.get("/api/groups/joined"),
+        //   axiosInstance.get("/api/groups/suggested"),
+        // ]);
+        // setManagedGroups(managed.data);
+        // setJoinedGroups(joined.data);
+        // setSuggestedGroups(suggested.data);
+
+        // Dummy fallback data
+        setManagedGroups([
+          {
+            id: 1,
+            name: "Test",
+            lastActive: "7 weeks ago",
+            image: "https://i.ibb.co/QDrDp2t/group3.png",
+          },
+          {
+            id: 2,
+            name: "Test 2",
+            lastActive: "1 week ago",
+            image: "https://i.ibb.co/8NTJmKJ/group2.png",
+          },
+        ]);
+        setJoinedGroups([
+          {
+            id: 3,
+            name: "JSB TV SERIES",
+            lastActive: "1 day ago",
+            image: "https://i.ibb.co/yfH6xv1/group1.png",
+          },
+        ]);
+        setSuggestedGroups([
+          {
+            id: 4,
+            name: "CSE - කොළඹ කොටස් වෙළඳපොළ ආයෝජකයෝ",
+            members: "44K members",
+            postsPerDay: "10+ posts a day",
+            image: "https://i.ibb.co/GsXH1sf/group-suggest1.png",
+          },
+          {
+            id: 5,
+            name: "ගම්පහ ඉක්මන් විකුණුම් ඉඩම් නිවාස lk.",
+            members: "10K members",
+            postsPerDay: "10+ posts a day",
+            image: "https://i.ibb.co/fMkhcc6/group4.png",
+          },
+        ]);
+      } catch (err) {
+        console.error("Error fetching groups", err);
+      }
+    };
+    fetchGroups();
   }, []);
 
+  // Filter based on search
+  const filteredManaged = managedGroups.filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredJoined = joinedGroups.filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredSuggested = suggestedGroups.filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200">
-      {/* 🔹 Navbar */}
-      <Navbar />
-
-      {/* 🔹 Header */}
-      <div className="sticky top-16 md:top-0 bg-white shadow-md p-4 flex items-center justify-between z-20">
-        <h1 className="text-xl font-bold text-sky-700">Groups</h1>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/creategroup")}
-          className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 transition"
-        >
-          <PlusCircle className="w-5 h-5" />
-          Create Group
-        </motion.button>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* 🔹 Left Sidebar (Desktop) */}
-        <div className="hidden md:block md:col-span-1">
-          <div className="sticky top-24 space-y-4">
-            <div className="bg-white rounded-2xl shadow p-4">
-              <div className="flex flex-col gap-2">
-                {[
-                  { label: "Friends", route: "/FriendsPage", icon: Users },
-                  { label: "Saved", route: "/Saved", icon: Bookmark },
-                  { label: "Pages", route: "/Pages", icon: FileText },
-                  { label: "Groups", route: "/groups", icon: UsersRound },
-                  { label: "Events", route: "/Events", icon: Calendar },
-                ].map(({ label, route, icon: Icon }) => (
-                  <motion.button
-                    key={label}
-                    whileHover={{ scale: 1.03, x: 4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate(route)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sky-50 transition text-gray-700 font-medium"
-                  >
-                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-sky-100">
-                      <Icon className="w-5 h-5 text-sky-600" />
-                    </div>
-                    {label}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-sky-100 to-sky-200 flex flex-col md:flex-row">
+      {/* Left Sidebar */}
+      <aside className="w-full md:w-64 bg-white/70 backdrop-blur-lg border-r border-sky-100 p-4 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h1
+            className="text-xl font-bold bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent cursor-pointer"
+            onClick={() => navigate("/")}
+          >
+            HobbySphere
+          </h1>
+          <Settings className="w-5 h-5 text-sky-500" />
         </div>
 
-        {/* 🔹 Groups Feed */}
-        <div className="md:col-span-3">
-          {/* Search */}
-          <div className="bg-white rounded-2xl shadow p-4 mb-6 flex items-center gap-2">
-            <Search className="w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search groups..."
-              className="w-full outline-none text-gray-700"
-              // 🔹 Connect with API (onChange → call search endpoint)
-            />
-          </div>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-2.5 text-sky-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search groups"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 rounded-full bg-sky-50 border border-sky-200 text-sm focus:ring-2 focus:ring-sky-300 outline-none"
+          />
+        </div>
 
-          {/* Groups List */}
-          <div className="grid gap-6">
-            {groups.map((group) => (
-              <motion.div
-                key={group.id}
-                whileHover={{ scale: 1.01 }}
-                className="bg-white rounded-2xl shadow p-5 flex flex-col md:flex-row items-start md:items-center gap-4"
+        <nav className="flex flex-col gap-2 text-gray-700 text-sm">
+          <button
+            onClick={() => setActiveTab("feed")}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              activeTab === "feed"
+                ? "bg-sky-100 text-sky-700 font-medium"
+                : "hover:bg-sky-50"
+            }`}
+          >
+            <User className="w-4 h-4" /> Your Feed
+          </button>
+          <button
+            onClick={() => setActiveTab("discover")}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              activeTab === "discover"
+                ? "bg-sky-100 text-sky-700 font-medium"
+                : "hover:bg-sky-50"
+            }`}
+          >
+            <Compass className="w-4 h-4" /> Discover
+          </button>
+          <button
+            onClick={() => setActiveTab("your-groups")}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              activeTab === "your-groups"
+                ? "bg-sky-100 text-sky-700 font-medium"
+                : "hover:bg-sky-50"
+            }`}
+          >
+            <Users className="w-4 h-4" /> Your Groups
+          </button>
+          <button
+            onClick={() => navigate("/CreateGroup")}
+            className="flex items-center gap-2 px-3 py-2 text-sky-600 hover:text-sky-700 mt-3"
+          >
+            <PlusCircle className="w-4 h-4" /> Create New Group
+          </button>
+        </nav>
+
+        {/* Groups you manage */}
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">
+            Groups You Manage
+          </h2>
+          <div className="space-y-2">
+            {filteredManaged.map((g) => (
+              <div
+                key={g.id}
+                className="flex items-center gap-2 cursor-pointer hover:bg-sky-50 p-2 rounded-lg"
               >
-                {/* Group Cover Image */}
-                <div className="w-full md:w-1/4">
-                  <img
-                    src={
-                      group.coverImage ||
-                      "https://via.placeholder.com/300x150.png?text=Group+Cover"
-                    }
-                    alt={group.name}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                </div>
-
-                {/* Group Details */}
+                <img
+                  src={g.image}
+                  alt={g.name}
+                  className="w-9 h-9 rounded-md object-cover"
+                />
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {group.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm">{group.description}</p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {group.members} members
+                  <p className="text-sm font-medium">{g.name}</p>
+                  <p className="text-xs text-gray-500">
+                    Last active {g.lastActive}
                   </p>
                 </div>
-
-                {/* Join Button */}
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 transition"
-                  // 🔹 Connect with API → POST /groups/:id/join
-                >
-                  Join
-                </motion.button>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* 🔹 Mobile Bottom Menu */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t border-gray-200 flex justify-around py-2 md:hidden z-50">
-        {[
-          { label: "Home", route: "/", icon: Users },
-          { label: "Friends", route: "/FriendsPage", icon: Users },
-          { label: "Groups", route: "/groups", icon: UsersRound },
-          { label: "Pages", route: "/Pages", icon: FileText },
-          { label: "Events", route: "/Events", icon: Calendar },
-        ].map(({ label, route, icon: Icon }) => (
-          <button
-            key={label}
-            onClick={() => navigate(route)}
-            className="flex flex-col items-center text-gray-600 hover:text-sky-600 transition"
-          >
-            <Icon className="w-6 h-6 mb-1" />
-            <span className="text-xs">{label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Right Main Section */}
+      <main className="flex-1 p-5">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-700">
+              Suggested for You
+            </h2>
+            <button className="text-sky-600 text-sm hover:underline">
+              See all
+            </button>
+          </div>
+
+          {/* Suggested Groups */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredSuggested.map((group) => (
+              <div
+                key={group.id}
+                className="bg-white/80 border border-sky-100 rounded-2xl shadow hover:shadow-md transition-all overflow-hidden"
+              >
+                <img
+                  src={group.image}
+                  alt={group.name}
+                  className="w-full h-40 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">
+                    {group.name}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {group.members} • {group.postsPerDay}
+                  </p>
+                  <button className="mt-3 w-full bg-sky-50 border border-sky-200 text-sky-700 font-medium text-sm rounded-lg py-2 hover:bg-sky-100 transition">
+                    Join Group
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Joined Groups */}
+          <div className="mt-10">
+            <h2 className="text-lg font-bold text-gray-700 mb-3">
+              Groups You’ve Joined
+            </h2>
+            <div className="space-y-3">
+              {filteredJoined.map((group) => (
+                <div
+                  key={group.id}
+                  onClick={() => navigate(`/Group/${group.id}`)}
+                  className="flex items-center gap-3 bg-white/80 border border-sky-100 hover:border-sky-300 rounded-xl p-3 cursor-pointer shadow-sm hover:shadow-md transition"
+                >
+                  <img
+                    src={group.image}
+                    alt={group.name}
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{group.name}</p>
+                    <p className="text-xs text-gray-500">
+                      Last active {group.lastActive}
+                    </p>
+                  </div>
+                  <ChevronRight className="text-sky-400 w-4 h-4" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

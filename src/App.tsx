@@ -18,12 +18,13 @@ import FriendsPage from './pages/FriendsPage';
 import Pages from './pages/Pages';
 import Settings from './pages/Settings';
 import GroupsPage from './pages/GroupsPage';
-import { CreateGroup } from './pages/CreateGroup';
+import CreateGroup from './pages/CreateGroup';
 import ForgotPassword from './pages/ForgotPassword';
 import VerifyCode from './pages/VerifyCode';
 import ResetPassword from './pages/ResetPassword';
 import { ModalProvider } from './context/ModalContext';
 import RegisterSuccess from './pages/RegisterSuccess';
+import GroupPage from './pages/GroupPage';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -101,6 +102,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/FriendsPage" element={<ProtectedRoute element={<FriendsPage />} />} />
         <Route path="/Pages" element={<ProtectedRoute element={<Pages />} />} />
         <Route path="/GroupsPage" element={<ProtectedRoute element={<GroupsPage />} />} />
+        <Route path="/Group/:groupId" element={<ProtectedRoute element={<GroupPage />} />} />
         <Route path="/CreateGroup" element={<ProtectedRoute element={<CreateGroup />} />} />
         {/* <Route path="/ForgotPassword" element={<ProtectedRoute element={<ForgotPassword />} />} /> */}
         <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
