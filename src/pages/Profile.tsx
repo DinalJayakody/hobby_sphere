@@ -28,6 +28,8 @@ const Profile: React.FC = () => {
   // For follwing and followers pop up
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+
+  const { followers, fetchFollowers, followersLoading, followersError } = useData();
   const [followersList, setFollowersList] = useState<any[]>([
     {
       id: 1,
@@ -68,6 +70,16 @@ const Profile: React.FC = () => {
   ]);
   const [followingList, setFollowingList] = useState<any[]>([]);
 
+
+  console.log('Current User followers:', followers);
+useEffect(() => {
+    if (!currentUser?.id) return;
+    // fetch followers on mount; pass userId if you need followers of a specific profile
+    fetchFollowers(Number(currentUser.id));
+  }, [fetchFollowers, currentUser?.id]);
+
+//   if (followersLoading) return <div>Loading followers...</div>;
+//   if (followersError) return <div className="text-red-500">{followersError}</div>;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -167,8 +179,8 @@ const Profile: React.FC = () => {
 
               {/* {user.location ? `Location: ${user.location}` : ' '} */}
               <div className="flex gap-x-12 mb-4">
-                <p className="text-gray-700">📍 {"Panadura"}</p>
-                <p className="text-gray-700">🎯 {user.mainHobby || "Music"}</p>
+                <p className="text-gray-700">📍 {user.location || ""}</p>
+                <p className="text-gray-700">🎯 {user.mainHobby || ""}</p>
 
               </div>
 
@@ -336,10 +348,10 @@ const Profile: React.FC = () => {
                   ×
                 </button>
               </h3>
-              {followersList.length === 0 ? (
+              {followers.length === 0 ? (
                 <p className="text-gray-500 text-center">No followers yet</p>
               ) : (
-                followersList.map((user) => (
+                followers.map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"

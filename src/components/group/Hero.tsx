@@ -4,10 +4,11 @@ import { Lock, Globe } from "lucide-react";
 
 type Props = {
     group: any;
-    role: "admin" | "member" | "guest" | null;
+    role: "SUPER_ADMIN" | "ADMIN" | "MEMBER" | null;
 };
 
 const Hero: React.FC<Props> = ({ group, role }) => {
+    const imageSrc = `data:image/png;base64,${group.groupImage}`;
     const cover = group.coverUrl || "/default-group-cover.svg";
 
     return (
@@ -16,7 +17,7 @@ const Hero: React.FC<Props> = ({ group, role }) => {
                 {/* Cover area */}
                 <div className="w-full h-44 md:h-56 bg-slate-100">
                     <img
-                        src={cover}
+                        src={imageSrc}
                         alt={`${group.name} cover`}
                         className="w-full h-full object-cover"
                     // object-cover gives vibrant hero; if you prefer illustration, use object-center + background

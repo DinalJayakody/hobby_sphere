@@ -10,7 +10,7 @@ import ImagePicker from "../components/layout/ImagePicker";
 type FormState = {
   name: string;
   description: string;
-  privacy: "public" | "private";
+  privacy: "PUBLIC" | "PRIVATE";
 };
 
 const CreateGroup: React.FC = () => {
@@ -19,7 +19,7 @@ const CreateGroup: React.FC = () => {
   const [form, setForm] = useState<FormState>({
     name: "",
     description: "",
-    privacy: "public",
+    privacy: "PUBLIC",
   });
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,8 +125,8 @@ const CreateGroup: React.FC = () => {
                   type="radio"
                   name="privacy"
                   value="public"
-                  checked={form.privacy === "public"}
-                  onChange={() => setForm({ ...form, privacy: "public" })}
+                  checked={form.privacy === "PUBLIC"}
+                  onChange={() => setForm({ ...form, privacy: "PUBLIC" })}
                 />
                 <div className="ml-2">
                   <div className="text-sm font-medium">Public</div>
@@ -141,8 +141,8 @@ const CreateGroup: React.FC = () => {
                   type="radio"
                   name="privacy"
                   value="private"
-                  checked={form.privacy === "private"}
-                  onChange={() => setForm({ ...form, privacy: "private" })}
+                  checked={form.privacy === "PRIVATE"}
+                  onChange={() => setForm({ ...form, privacy: "PRIVATE" })}
                 />
                 <div className="ml-2">
                   <div className="text-sm font-medium">Private</div>

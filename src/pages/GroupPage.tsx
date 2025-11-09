@@ -30,7 +30,7 @@ const GroupPage: React.FC = () => {
   const navigate = useNavigate();
   const { fetchGroupById } = useData(); // ✅ get function from context
   const [group, setGroup] = useState<Group | null>(null);
-  const [role, setRole] = useState<"admin" | "member" | "guest" | null>(null);
+  const [role, setRole] = useState<"SUPER_ADMIN" | "ADMIN" | "MEMBER" | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,13 +39,17 @@ const GroupPage: React.FC = () => {
       navigate("/GroupsPage");
       return;
     }
+    console.log("Fetching group with ID:", groupId);
     setLoading(true);
     setError(null);
     fetchGroupById(groupId)
       .then((data) => {
+        console.log("Group data fetched:", data);
         // expected response: { group: {...}, role: 'admin' | 'member' | 'guest' }
-        if (data?.group) setGroup(data.group);
-        if (data?.role) setRole(data.role);
+        if (data) setGroup(data);
+        if (data?.currentUserRole) setRole(data.currentUserRole);
+
+        console.log("User role in group:", role, group);
       })
       .catch((err) => {
         console.error("Failed to load group:", err);
@@ -103,7 +107,7 @@ const GroupPage: React.FC = () => {
           <Hero group={group} role={role} />
 
           {/* Admin Panel (only for Admins) */}
-          {role === "admin" && <AdminPanel group={group} />}
+          {(role === "SUPER_ADMIN" || role === "ADMIN") && <AdminPanel group={group} />}
 
           {/* Tabs (Feed / Members / Analytics / Settings) */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>

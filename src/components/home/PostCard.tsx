@@ -45,14 +45,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const toggleSaved = () => {
     setSaved(!saved);
 
-    if (!saved) {
+    // if (!saved) {
       if (!user?.id) {
         console.warn('Cannot save post: no authenticated user.');
         return;
       }
       console.log('Saving post with ID:', post.id, 'for user ID:', user.id);
       savePost(post.id, user.id);
-    }
+    // }
   };
 
   const handleLike = () => {
@@ -106,7 +106,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           text-sm sm:text-base
         "
             >
-              {post.user.fullName}
+              {post.user?.fullName || 'Unknown User'}
             </h3>
             <p className="text-xs text-gray-500">{timeAgo(post.timestamp)}</p>
           </div>

@@ -70,3 +70,10 @@ export interface Group {
   privacy: 'PUBLIC' | 'PRIVATE';
   joined: boolean;
 }
+
+export interface Follower {
+  id: number;
+  fullName: string;
+  username: string;
+  avatarUrl?: string; // optional
+};
