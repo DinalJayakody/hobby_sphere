@@ -32,10 +32,10 @@ const GroupsPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("discover");
   // const [managedGroups, setManagedGroups] = useState<Group[]>([]);
-  // const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
+  const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
   // const [suggestedGroups, setSuggestedGroups] = useState<Group[]>([]);
 
-  const { managedGroups, joinedGroups, suggestedGroups, searchGroups } = useData();
+  const { managedGroups, suggestedGroups, searchGroups } = useData();
 
 const imageSrc = `data:image/png;base64,${managedGroups.groupImage}`;
 const imageSrc2 = `data:image/png;base64,${joinedGroups.groupImage}`;
@@ -50,9 +50,9 @@ const imageSrc3 = `data:image/png;base64,${suggestedGroups.groupImage}`;
   }, [search, searchGroups]);
 
   // Fetch groups from API (using dummy data now)
-  // useEffect(() => {
-  //   const fetchGroups = async () => {
-  //     try {
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
   //       // const [managed, joined, suggested] = await Promise.all([
   //       //   axiosInstance.get("/api/groups/managed"),
   //       //   axiosInstance.get("/api/groups/joined"),
@@ -77,14 +77,14 @@ const imageSrc3 = `data:image/png;base64,${suggestedGroups.groupImage}`;
   //           image: "https://i.ibb.co/8NTJmKJ/group2.png",
   //         },
   //       ]);
-  //       setJoinedGroups([
-  //         {
-  //           id: 3,
-  //           name: "JSB TV SERIES",
-  //           lastActive: "1 day ago",
-  //           image: "https://i.ibb.co/yfH6xv1/group1.png",
-  //         },
-  //       ]);
+        setJoinedGroups([
+          {
+            id: 3,
+            name: "JSB TV SERIES",
+            lastActive: "1 day ago",
+            image: "https://i.ibb.co/yfH6xv1/group1.png",
+          },
+        ]);
   //       setSuggestedGroups([
   //         {
   //           id: 4,
@@ -101,12 +101,12 @@ const imageSrc3 = `data:image/png;base64,${suggestedGroups.groupImage}`;
   //           image: "https://i.ibb.co/fMkhcc6/group4.png",
   //         },
   //       ]);
-  //     } catch (err) {
-  //       console.error("Error fetching groups", err);
-  //     }
-  //   };
-  //   fetchGroups();
-  // }, []);
+      } catch (err) {
+        console.error("Error fetching groups", err);
+      }
+    };
+    fetchGroups();
+  }, []);
 
  const handleGroupClick = async (groupId: number) => {
     try {

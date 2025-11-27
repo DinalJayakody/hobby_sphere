@@ -13,7 +13,7 @@ type FormState = {
   privacy: "PUBLIC" | "PRIVATE";
 };
 
-const CreateGroup: React.FC = () => {
+const CreateGroup: React.FC = () => { 
   const navigate = useNavigate();
   const { createGroup } = useData();
   const [form, setForm] = useState<FormState>({
