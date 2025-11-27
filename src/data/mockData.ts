@@ -1,4 +1,8 @@
 import { User, Post, Story, Notification, Conversation } from '../types';
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
 
 export const currentUser: User = {
   id: 'user-1',
@@ -15,9 +19,9 @@ export const users: User[] = [
   currentUser,
   {
     id: 'user-2',
-    fullName: 'Jane Smith',
-    username: 'janesmith',
-    profilePicture: 'https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg',
+    fullName: 'Prashan Thilakawaradana',
+    username: 'prashan_thilakawaradana',
+    profilePicture: Prashan,
     bio: 'Artist | Designer | Coffee addict',
     followers: 2352,
     following: 341,
@@ -25,9 +29,9 @@ export const users: User[] = [
   },
   {
     id: 'user-3',
-    fullName: 'Robert Johnson',
-    username: 'robert_j',
-    profilePicture: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg',
+    fullName: 'Dinal Jayakody',
+    username: 'dinal_jayakody',
+    profilePicture: Dinal,
     bio: 'Software Engineer | Tech Enthusiast',
     followers: 843,
     following: 267,
@@ -35,9 +39,9 @@ export const users: User[] = [
   },
   {
     id: 'user-4',
-    fullName: 'Emily Davis',
-    username: 'emilyd',
-    profilePicture: 'https://images.pexels.com/photos/1264210/pexels-photo-1264210.jpeg',
+    fullName: 'Tharinda Withanage',
+    username: 'tharinda_withanage',
+    profilePicture: Tharinda,
     bio: 'Travel blogger | Adventure seeker',
     followers: 5243,
     following: 324,
@@ -45,9 +49,9 @@ export const users: User[] = [
   },
   {
     id: 'user-5',
-    fullName: 'Michael Wilson',
-    username: 'mike_w',
-    profilePicture: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg',
+    fullName: 'Chanuka Nuwankalpa',
+    username: 'chanuka_nuwankalpa',
+    profilePicture: Chanuka,
     bio: 'Photographer | Nature lover',
     followers: 1932,
     following: 512,
@@ -119,7 +123,7 @@ export const stories: Story[] = [
     id: 'story-1',
     userId: 'user-2',
     user: users[1],
-    image: 'https://images.pexels.com/photos/1671325/pexels-photo-1671325.jpeg',
+    image: Chanuka,
     timestamp: '2023-04-12T18:30:00Z',
     viewed: false
   },
@@ -127,7 +131,7 @@ export const stories: Story[] = [
     id: 'story-2',
     userId: 'user-3',
     user: users[2],
-    image: 'https://images.pexels.com/photos/3052361/pexels-photo-3052361.jpeg',
+    image: Dinal,
     timestamp: '2023-04-12T17:45:00Z',
     viewed: false
   },
@@ -135,7 +139,7 @@ export const stories: Story[] = [
     id: 'story-3',
     userId: 'user-4',
     user: users[3],
-    image: 'https://images.pexels.com/photos/933054/pexels-photo-933054.jpeg',
+    image: Prashan,
     timestamp: '2023-04-12T16:30:00Z',
     viewed: true
   },
@@ -143,7 +147,7 @@ export const stories: Story[] = [
     id: 'story-4',
     userId: 'user-5',
     user: users[4],
-    image: 'https://images.pexels.com/photos/2832773/pexels-photo-2832773.jpeg',
+    image: Tharinda,
     timestamp: '2023-04-12T15:15:00Z',
     viewed: true
   }

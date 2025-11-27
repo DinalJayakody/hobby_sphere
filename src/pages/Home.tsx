@@ -6,6 +6,10 @@ import Navbar from "../components/layout/Navbar";
 import Stories from "../components/home/Stories";
 import CreatePostCard from "../components/home/CreatePostCard";
 import PostCard from "../components/home/PostCard";
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
 import Avatar from "../components/ui/Avatar";
 import {
   Users,
@@ -67,6 +71,7 @@ const Home: React.FC = () => {
                     onClick={() => {
                       if (label === "Friends") navigate("/FriendsPage");
                       else if (label === "Pages") navigate("/Pages");
+                      else if (label === "Groups") navigate("/GroupsPage");
                     }}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sky-50 text-gray-700 font-medium transition"
                   >
@@ -114,21 +119,6 @@ const Home: React.FC = () => {
               </p>
             </div>
           </div>
-
-              {/* <div className="flex justify-between py-3 text-sm">
-                <div className="text-center">
-                  <p className="font-semibold">{user.posts}</p>
-                  <p className="text-gray-500">Posts</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">{user.followersCount}</p>
-                  <p className="text-gray-500">Followers</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">{user.followingCount}</p>
-                  <p className="text-gray-500">Following</p>
-                </div>
-              </div> */}
             </div>
 
             {/* Suggestions */}
@@ -139,19 +129,19 @@ const Home: React.FC = () => {
               <div className="space-y-3">
                 {[
                   {
-                    name: "Michael Wilson",
-                    role: "Photographer",
-                    src: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+                    name: "Chanuka Nuwankalpa",
+                    role: "Music",
+                    src: Chanuka,
                   },
                   {
-                    name: "Emily Davis",
-                    role: "Travel Blogger",
-                    src: "https://images.pexels.com/photos/1264210/pexels-photo-1264210.jpeg",
+                    name: "Tharinda Withanage",
+                    role: "Music",
+                    src: Prashan,
                   },
                   {
-                    name: "Robert Johnson",
-                    role: "Software Engineer",
-                    src: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+                    name: "Dinal Jayakody",
+                    role: "Music",
+                    src: Dinal,
                   },
                 ].map((s, i) => (
                   <motion.div

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
 import { posts } from '../data/mockData';
+import { useData } from './DataContext';
 
 // Define User interface to match your backend /userDetail response
 export interface User {
@@ -13,6 +14,7 @@ export interface User {
   lat: string,
   lan: string,
   mainHobby: string,
+  location: string,
   profilePicture: File | null,
   // posts: any[], // Adjust type based on your posts structure
   followersCount: number,
@@ -23,6 +25,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  loginWithGoogleToken: (token: string) => Promise<boolean>;
   login: (username: string, password: string) => Promise<boolean>;
   pendingRegistration: any; // For partial registration data
 savePartialRegistration: (regdata: any) => void;
@@ -34,7 +37,9 @@ savePartialRegistration: (regdata: any) => void;
     profilePicture: File | null,
     lat: string,
     lan: string,
-    mainHobby: string) => Promise<boolean>;
+    mainHobby: string,
+    location: string) => Promise<boolean>;
+    
   logout: () => void;
   loading: boolean;        // loading for login/register calls
   loadingUser: boolean;    // loading for initial user fetch
@@ -43,13 +48,14 @@ savePartialRegistration: (regdata: any) => void;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Set base URL for axios (adjust if your backend URL changes)
-// axios.defaults.baseURL = 'http://localhost:8080';
-axios.defaults.baseURL = 'http://16.170.26.131:8080';
+axios.defaults.baseURL = 'http://localhost:8080';
+// axios.defaults.baseURL = 'http://16.170.26.131:8080';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
+  // const { clearData } = useData();
 
   const [pendingRegistration, setPendingRegistration] = useState<any>(null);
 
@@ -104,6 +110,29 @@ useEffect(() => {
 }, []);
 
 
+// inside your AuthProvider
+const loginWithGoogleToken = async (token: string) => {
+  try {
+    // store token (secure cookie or localStorage depending on your strategy)
+    localStorage.setItem("token", token);
+
+    // set default header for future requests (if you use axios)
+      axios.defaults.headers.common['Authorization'] = token;
+    
+
+    // fetch current user
+    // const res = await axios.get("/api/auth/me"); // backend: return current user info for token
+    // setUser(res.data);
+    // return true;
+      await fetchUserDetails();
+      return true;
+  } catch (err) {
+    console.error("loginWithToken error", err);
+    return false;
+  }
+};
+
+
   const login = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
@@ -134,13 +163,14 @@ useEffect(() => {
     profilePicture: File | null,
     lat: string,
     lon: string,
-    mainHobby: string
+    mainHobby: string,
+    location: string
   ): Promise<boolean> => {
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("registerRequest", new Blob([JSON.stringify({
-        name, username, email, password, bio, lat, lon, mainHobby, profilePicture: undefined
+        name, username, email, password, bio, lat, lon, mainHobby, location, profilePicture: undefined
       })], { type: "application/json" }));
 
       if (profilePicture) {
@@ -176,6 +206,7 @@ useEffect(() => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    //  clearData();
   };
 
   return (
@@ -183,6 +214,7 @@ useEffect(() => {
       value={{
         user,
         isAuthenticated: !!user,
+        loginWithGoogleToken,
         login,
         savePartialRegistration,
         register,

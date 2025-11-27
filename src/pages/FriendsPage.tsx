@@ -1,21 +1,41 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Maniya from "../assets/Maniya.jpg";
+import Kavindu from "../assets/Kavindu.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
+import Prabs from "../assets/Prabs.jpg";
 
 // Dummy data
 const followers = [
-  { id: 1, name: "Jean Muller", img: "https://api.dicebear.com/6.x/avataaars/svg?seed=jean" },
-  { id: 2, name: "Amith Sudeera", img: "https://api.dicebear.com/6.x/avataaars/svg?seed=amith" },
+  { id: 1, name: "Dinal Jayakody", img: Dinal },
+  { id: 2, name: "Prashan Thilakawardana", img: Prashan },
+  { id: 4, name: "Kavindu Rathnayaka", img: Kavindu },
+  { id: 4, name: "Prabuddha Rathnayaka", img: Prabs },
+  { id: 4, name: "Manisha Perera", img: Maniya },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Chanuka },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Prabs },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Kavindu },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Maniya },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Chanuka },
+
 ];
 
 const following = [
-  { id: 3, name: "Kiki Fox", img: "https://api.dicebear.com/6.x/avataaars/svg?seed=kiki" },
-  { id: 4, name: "Yanagi Ayuko", img: "https://api.dicebear.com/6.x/avataaars/svg?seed=yanagi" },
+  { id: 3, name: "Tharinda Withanage", img: Tharinda },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Chanuka },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Prabs },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Kavindu },
+  { id: 4, name: "Chanuka Nuwankalpa", img: Maniya },
 ];
+
 
 const communities = [
   { id: 5, name: "Photography Enthusiasts", img: "https://api.dicebear.com/6.x/shapes/svg?seed=photo" },
-  { id: 6, name: "Book Lovers", img: "https://api.dicebear.com/6.x/shapes/svg?seed=books" },
+  { id: 6, name: "Music", img: "https://api.dicebear.com/6.x/shapes/svg?seed=music" },
   { id: 7, name: "Gaming Legends", img: "https://api.dicebear.com/6.x/shapes/svg?seed=gaming" },
 ];
 

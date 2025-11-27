@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -6,7 +6,16 @@ import Navbar from '../components/layout/Navbar';
 import PostCard from '../components/home/PostCard';
 import Button from '../components/ui/Button';
 import cover from '../assets/cover.png';
+import Chanuka from "../assets/Chanuka.jpg";
+import Prashan from "../assets/Prashan.jpg";
+import Dinal from "../assets/Dinal.jpg";
+import Maniya from "../assets/Maniya.jpg";
+import Kavindu from "../assets/Kavindu.jpg";
+import Tharinda from "../assets/Tharinda.jpg";
+import Prabs from "../assets/Prabs.jpg";
+import axiosInstance from "../types/axiosInstance"; // adjust path
 import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle } from 'lucide-react';
+import { Post } from '../types';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -14,50 +23,96 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { posts } = useData();
   const [activeTab, setActiveTab] = useState('posts');
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
 
   // For follwing and followers pop up
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+
+  const { followers, fetchFollowers, followersLoading, followersError } = useData();
   const [followersList, setFollowersList] = useState<any[]>([
     {
       id: 1,
-      fullName: "John Doe",
-      username: "johndoe",
-      avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      fullName: "Tharinda Withanage",
+      username: "tharinda_withanage",
+      avatarUrl: Tharinda,
     },
     {
       id: 2,
-      fullName: "Jane Smith",
-      username: "janesmith",
-      avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+      fullName: "Chanuka Nuwankalpa",
+      username: "chanuka_nuwankalpa",
+      avatarUrl: Chanuka,
     },
     {
       id: 3,
-      fullName: "Alex Johnson",
-      username: "alexj",
-      avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+      fullName: "Prabuddha Rathnayaka",
+      username: "prabuddha_rathnayaka",
+      avatarUrl: Prabs,
     },
     {
       id: 4,
-      fullName: "Sandaruwan Perera",
-      username: "johndoe",
-      avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      fullName: "Prashan Thilakawardana",
+      username: "prashan_thilakawaradana",
+      avatarUrl: Prashan,
     },
     {
       id: 5,
-      fullName: "Samanali Perera",
-      username: "janesmith",
-      avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
+      fullName: "Dinal Jayakody",
+      username: "dinal_jayakody",
+      avatarUrl: Dinal,
     },
     {
       id: 6,
-      fullName: "Steve Smith",
-      username: "alexj",
-      avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
+      fullName: "Kavindu Rathnayaka",
+      username: "kavindu_rathnayaka",
+      avatarUrl: Kavindu,
     },
   ]);
   const [followingList, setFollowingList] = useState<any[]>([]);
 
+
+  console.log('Current User followers:', followers);
+useEffect(() => {
+    if (!currentUser?.id) return;
+    // fetch followers on mount; pass userId if you need followers of a specific profile
+    fetchFollowers(Number(currentUser.id));
+  }, [fetchFollowers, currentUser?.id]);
+
+//   if (followersLoading) return <div>Loading followers...</div>;
+//   if (followersError) return <div className="text-red-500">{followersError}</div>;
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchUserPosts = async () => {
+      try {
+        const response = await axiosInstance.get(`/api/post/user/${user.id}`);
+        const apiPosts = response.data.content || [];
+
+        const formattedPosts: Post[] = apiPosts.map((p: any) => ({
+          id: p.id.toString(),
+          userId: p.userId.toString(),
+          user: {
+            id: p.userId,
+            fullName: p.fullName || "Unknown User",
+            profilePicture: p.profilePictureUrl || "",
+          },
+          content: p.content,
+          images: p.imageUrls || [],
+          likes: p.likesCount || 0,
+          comments: p.commentsCount || 0,
+          timestamp: p.createdAt || new Date().toISOString(),
+          liked: p.liked || false,
+        }));
+
+        setUserPosts(formattedPosts);
+      } catch (error) {
+        console.error("Failed to fetch user posts:", error);
+      }
+    };
+
+    fetchUserPosts();
+  }, [currentUser?.id]);
 
 
   if (!currentUser) return null;
@@ -67,11 +122,11 @@ const Profile: React.FC = () => {
   const user = currentUser;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
   // Filter posts by the current user
-  const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
+  // const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
 
   console.log('User posts:', userPosts);
   console.log('Post:', posts);
-  user.location = 'Gampaha';
+  // user.location = 'Gampaha';
   console.log('User hobby', user.mainHobby);
   return (
     <div className="min-h-screen bg-sky-50">
@@ -124,19 +179,17 @@ const Profile: React.FC = () => {
 
               {/* {user.location ? `Location: ${user.location}` : ' '} */}
               <div className="flex gap-x-12 mb-4">
-                <p className="text-gray-700">
-                  <span className="font-bold">Location:</span> {user.location}
-                </p>
+                <p className="text-gray-700">📍 {user.location || ""}</p>
+                <p className="text-gray-700">🎯 {user.mainHobby || ""}</p>
 
-                <p className="text-gray-700">
-                  <span className="font-bold">Main Hobby:</span> {user.mainHobby}
-                </p>
               </div>
 
               <div className="flex flex-wrap justify-between mb-2">
                 <div className="mr-6 mb-2">
-                  <span className="font-semibold text-gray-900">{user.posts}</span>{' '}
-                  <span className="text-gray-600">Posts</span>
+                  <span className="font-semibold text-gray-900">
+  {userPosts ? userPosts.length : 0}
+</span>
+                  <span className="text-gray-600"> Posts</span>
                 </div>
                 {/* Followers Button */}
                 <button
@@ -295,10 +348,10 @@ const Profile: React.FC = () => {
                   ×
                 </button>
               </h3>
-              {followersList.length === 0 ? (
+              {followers.length === 0 ? (
                 <p className="text-gray-500 text-center">No followers yet</p>
               ) : (
-                followersList.map((user) => (
+                followers.map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"

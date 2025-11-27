@@ -4,12 +4,23 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
-import { User, AtSign, Mail, Lock } from 'lucide-react';
+import { User, AtSign, Mail, Lock, EyeOff, Eye } from 'lucide-react';
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from 'axios';
+import { PrivacyPolicyModal } from "../components/modals/PrivacyPolicyModal";
+import { TermsOfServiceModal } from '../components/modals/TermsOfServiceModal';
+import axiosInstance from '../types/axiosInstance';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register: registerUser, loading } = useAuth();
+  const { register: registerUser, loading, loginWithGoogleToken } = useAuth();
   const { savePartialRegistration } = useAuth();
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialError, setSocialError] = useState("");
+
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -22,12 +33,91 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [strength, setStrength] = useState('');
   const [focused, setFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  // Username availability states
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [usernameMessage, setUsernameMessage] = useState("");
+  // Email validation states
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [emailMessage, setEmailMessage] = useState("");
+
+
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setSocialError("");
+        setGoogleLoading(true);
+
+        // 1) Fetch Google profile using access_token
+        const googleProfileRes = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+        const googleProfile = googleProfileRes.data; // contains email, name, picture, sub, email_verified, etc.
+
+        // 2) Send token (or profile) to your backend to verify/create account and issue your app JWT
+        // Backend endpoint example: POST /api/auth/google { access_token }
+        const backendRes = await axios.post("/api/auth/google", {
+          access_token: tokenResponse.access_token,
+          // optional: send profile data too: profile: googleProfile
+        });
+
+        // 3) Backend should return { token: "<your-jwt>", user: { ... } }
+                const { token, type } = backendRes.data;
+      const fullToken = `${type} ${token}`;
+
+        // 4) Save token into your auth context / localStorage and fetch user / set auth state
+        if (loginWithGoogleToken) {
+          await loginWithGoogleToken(fullToken); // recommended: implement this in AuthContext
+        } else {
+          localStorage.setItem("token", fullToken);
+          `Bearer ${token}`
+          // If your app expects a current user fetch, trigger it (or reload)
+          window.location.href = "/";
+        }
+      } catch (err) {
+        console.error("Error during Google sign-in →", err);
+        // setSocialError("Google sign-in failed. Please try again.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error("Google login failed:", err);
+      setSocialError("Google sign-in failed.");
+    },
+  });
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setStrength(checkStrength(formData.password));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // ✅ Check password strength (your existing logic)
+    if (name === "password") {
+      setStrength(checkStrength(value));
+    }
+
+    // ✅ Check username availability (debounced)
+    if (name === "username") {
+      checkUsernameAvailability(value);
+    }
+
+    // ✅ Validate email instantly
+    if (name === "email") {
+      validateEmail(value);
+    }
   };
+
 
   const checkStrength = (pwd: string) => {
     // Regular Expressions for password strength
@@ -55,15 +145,6 @@ const Register: React.FC = () => {
     }
   };
 
-  // const getColor = () => {
-  //   switch (strength) {
-  //     case 'Strong': return 'green';
-  //     case 'Medium': return 'orange';
-  //     case 'Weak': return 'red';
-  //     default: return 'gray';
-  //   }
-  // };
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -88,9 +169,88 @@ const Register: React.FC = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (formData.password) {
+      const failedHints = passwordHints.filter((h) => !h.test(formData.password));
+      if (failedHints.length > 0) {
+        // create a single human readable message or use one for UI list
+        newErrors.password = `Password must satisfy all hints given`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  let usernameCheckTimeout: ReturnType<typeof setTimeout>;
+
+  // ✅ Username availability check
+  const checkUsernameAvailability = async (username: string) => {
+    const trimmed = username.trim();
+
+    // Reset when input is empty
+    if (!trimmed) {
+      setUsernameStatus("idle");
+      setUsernameMessage("");
+      return;
+    }
+
+    // Basic local validation (optional)
+    const valid = /^[a-zA-Z0-9_.]{3,30}$/.test(trimmed);
+    if (!valid) {
+      setUsernameStatus("taken");
+      setUsernameMessage("Use 3–30 letters, numbers, underscores, or dots.");
+      return;
+    }
+
+    // Clear previous debounce timeout
+    clearTimeout(usernameCheckTimeout);
+
+    // Debounce — wait 500ms after user stops typing
+    usernameCheckTimeout = setTimeout(async () => {
+
+      console.log("Checking username availability for:", trimmed);
+      try {
+        setUsernameStatus("checking");
+        setUsernameMessage("Checking availability…");
+
+        const res = await axiosInstance.get("/api/users/checkUserNameExist", {
+          params: { userName: trimmed },
+        });
+
+        const exists = res.data === true || res.data === "true";
+
+        if (exists) {
+          setUsernameStatus("taken");
+          setUsernameMessage("Username is already taken.");
+        } else {
+          setUsernameStatus("available");
+          setUsernameMessage("Username is available!");
+        }
+      } catch (err) {
+        console.error("Username check error:", err);
+        setUsernameStatus("taken");
+        setUsernameMessage("Unable to check username. Try again.");
+      }
+    }, 500);
+  };
+
+  // ✅ Email validation function
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      setEmailValid(null);
+      setEmailMessage("");
+      return;
+    }
+    if (regex.test(email)) {
+      setEmailValid(true);
+      setEmailMessage("Valid email address.");
+    } else {
+      setEmailValid(false);
+      setEmailMessage("Invalid email format.");
+    }
+  };
+
 
   const passwordHints = [
     { label: "At least 6 characters", test: (pwd: string) => pwd.length >= 6 },
@@ -114,17 +274,6 @@ const Register: React.FC = () => {
       password: formData.password
     });
     console.log('Partial data saved');
-
-    // const success = await registerUser(
-    //   formData.name,
-    //   formData.username,
-    //   formData.email,
-    //   formData.password,
-    //   formData.bio,
-    //   formData.profilePicture,
-    //   formData.location,
-    //   formData.mainHobby,
-    // );
 
     // if (success) {
     navigate('/profilesetup');
@@ -213,6 +362,18 @@ const Register: React.FC = () => {
                   className="pl-10"
                   fullWidth
                 />
+                {usernameStatus !== "idle" && (
+                  <p
+                    className={`text-xs mt-1 ${usernameStatus === "available"
+                        ? "text-green-600"
+                        : usernameStatus === "taken"
+                          ? "text-red-600"
+                          : "text-gray-500"
+                      }`}
+                  >
+                    {usernameMessage}
+                  </p>
+                )}
               </div>
 
               <div className="relative">
@@ -232,16 +393,25 @@ const Register: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
                   onFocus={() => setFocused(true)}
                   error={errors.password}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   fullWidth
                 />
+
+                {/* 👁 Eye Icon for show/hide toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-2.5 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
                 {focused && strength && (
                   // <p className="font-semibold text-sm" style={{ color: getColor() }}>
                   //   Strength: {strength}
@@ -278,15 +448,24 @@ const Register: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="confirmPassword"
                   placeholder="Confirm Password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   error={errors.confirmPassword}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   fullWidth
                 />
+
+                {/* 👁 Eye Icon for show/hide toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-2.5 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
 
               <div className="flex items-center">
@@ -296,10 +475,40 @@ const Register: React.FC = () => {
                   className="form-checkbox text-navy-600 rounded"
                   required
                 />
-                <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+                {/* <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
                   I agree to the <a href="#" className="text-navy-600 hover:underline">Terms of Service</a> and{' '}
                   <a href="#" className="text-navy-600 hover:underline">Privacy Policy</a>
+                </label> */}
+
+                <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(true)}
+                    className="text-navy-600 hover:underline"
+                  >
+                    Terms of Service
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacy(true)}
+                    className="text-navy-600 hover:underline"
+                  >
+                    Privacy Policy
+                  </button>
+                  .
                 </label>
+
+                {/* 🔹 Modals for Terms & Privacy */}
+                <TermsOfServiceModal
+                  isOpen={showTerms}
+                  onClose={() => setShowTerms(false)}
+                />
+                <PrivacyPolicyModal
+                  isOpen={showPrivacy}
+                  onClose={() => setShowPrivacy(false)}
+                />
               </div>
 
               <Button
@@ -325,14 +534,20 @@ const Register: React.FC = () => {
 
               <div className="w-full flex items-center justify-center space-x-1">
 
-                <button className="w-full flex items-center justify-center">
+                <button className="w-full flex items-center justify-center"
+                  type="button"
+                  onClick={() => googleLogin()}
+                  disabled={googleLoading}
+                // {/* className="w-full flex items-center justify-center px-3 py-2 border rounded-lg hover:bg-gray-50 transition" */}
+                >
                   <img
                     src="https://www.google.com/favicon.ico"
                     alt="Google"
                     className="w-6 h-6"
                   />
-                  {/* <span className="text-md">Sign in with Google</span> */}
                 </button>
+                {socialError && <div className="text-sm text-red-500 mt-2">{socialError}</div>}
+
 
                 <button className="w-full flex items-center justify-center">
                   <img
@@ -342,13 +557,13 @@ const Register: React.FC = () => {
                   />
                 </button>
 
-                <button className="w-full flex items-center justify-center">
+                {/* <button className="w-full flex items-center justify-center">
                   <img
                     src="https://www.microsoft.com/favicon.ico"
                     alt="Microsoft"
                     className="w-6 h-6"
                   />
-                </button>
+                </button> */}
               </div>
             </form>
 
