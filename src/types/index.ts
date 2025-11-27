@@ -12,13 +12,15 @@ export interface User {
 export interface Post {
   id: string;
   userId: string;
-  user: User;
+  user?: User;
   content: string;
   images?: string[];
+  profilePicture: string;
   likes: number;
   comments: number;
   timestamp: string;
   liked: boolean;
+  privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
 }
 
 export interface Story {
@@ -57,4 +59,21 @@ export interface Conversation {
   lastMessage: string;
   timestamp: string;
   unread: number;
+}  
+
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  coverImage: string;
+  membersCount: number;
+  privacy: 'PUBLIC' | 'PRIVATE';
+  joined: boolean;
 }
+
+export interface Follower {
+  id: number;
+  fullName: string;
+  username: string;
+  avatarUrl?: string; // optional
+};

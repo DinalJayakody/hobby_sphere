@@ -19,7 +19,7 @@ const ProfileSetup: React.FC = () => {
   const [profileData, setProfileData] = useState({
     bio: '',
     profilePicture: null as File | null,
-    location: { lat: 0, lng: 0 },
+    location: { lat: 0, lng: 0, city: '' },
     mainHobby: '',
     customHobby: '',
   });
@@ -47,14 +47,15 @@ const ProfileSetup: React.FC = () => {
       profileData.bio,
       profileData.profilePicture,
       profileData.location.lat.toString(),
-      profileData.location.lng.toString(), 
+      profileData.location.lng.toString(),
       finalHobby,
+      profileData.location.city,
     );
 
-    console.log('Test Lat Lan:', profileData.location.lat, profileData.location.lng);
+    console.log('Test Lat Lan:', profileData.location);
 
     if (success) {
-      navigate('/');
+      navigate('/RegisterSuccess');
     }
   };
 

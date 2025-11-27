@@ -4,14 +4,22 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
 import Button from '../components/ui/Button';
-import { AtSign, Lock } from 'lucide-react';
+import { AtSign, Eye, EyeOff, Lock } from 'lucide-react';
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from 'axios';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loading } = useAuth();
+  const { login, loading, loginWithGoogleToken } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialError, setSocialError] = useState("");
+
+    const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +38,65 @@ const Login: React.FC = () => {
       setError('Invalid username or password');
     }
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setSocialError("");
+        setGoogleLoading(true);
+
+        // 1) Fetch Google profile using access_token
+        const googleProfileRes = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+        const googleProfile = googleProfileRes.data; // contains email, name, picture, sub, email_verified, etc.
+
+        // 2) Send token (or profile) to your backend to verify/create account and issue your app JWT
+        // Backend endpoint example: POST /api/auth/google { access_token }
+        // const backendRes = await axios.post("/api/auth/google", {
+        //   access_token: tokenResponse.access_token,
+        //   // optional: send profile data too: profile: googleProfile
+        // });
+
+        const backendRes = await axios.post("/api/auth/google", {
+          access_token: tokenResponse.access_token,
+        }, {
+          withCredentials: true
+        });
+
+        // 3) Backend should return { token: "<your-jwt>", user: { ... } }
+        console.log("Google login backend response", backendRes);
+        // const { token } = backendRes.data;
+        const { token, type } = backendRes.data;
+      const fullToken = `${type} ${token}`;
+
+        // 4) Save token into your auth context / localStorage and fetch user / set auth state
+        if (loginWithGoogleToken) {
+          await loginWithGoogleToken(fullToken); // recommended: implement this in AuthContext
+        } else {
+          localStorage.setItem("token", fullToken);
+          `Bearer ${token}`
+          // If your app expects a current user fetch, trigger it (or reload)
+          window.location.href = "/";
+        }
+      } catch (err) {
+        console.error("Error during Google sign-in →", err);
+        // setSocialError("Google sign-in failed. Please try again.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error("Google login failed:", err);
+      setSocialError("Google sign-in failed.");
+    },
+  });
+
 
   return (
     <div className="min-h-screen flex">
@@ -106,24 +173,42 @@ const Login: React.FC = () => {
 
               <div className="relative">
                 <Lock className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  fullWidth
-                />
-              </div>
+           <Input
+        type={showPassword ? "text" : "password"}
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="pl-10 pr-10 text-sm"
+        fullWidth
+      />
+
+      {/* 👁️ Eye icon for toggle */}
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute top-3 right-3 text-gray-400 hover:text-sky-500 transition"
+        aria-label={showPassword ? "Hide password" : "Show password"}
+      >
+        {showPassword ? (
+          <EyeOff className="w-5 h-5" />
+        ) : (
+          <Eye className="w-5 h-5" />
+        )}
+      </button>
+    </div>
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center">
                   <input type="checkbox" className="form-checkbox text-navy-600 rounded" />
                   <span className="ml-2 text-sm text-gray-600">Remember me</span>
                 </label>
-                <a href="/ProfileSetup" className="text-sm text-navy-600 hover:underline">
+
+                <Link
+                  to="/ForgotPassword"
+                  className="text-sm text-navy-600 hover:underline"
+                >
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <Button
@@ -149,14 +234,19 @@ const Login: React.FC = () => {
 
               <div className="w-full flex items-center justify-center space-x-1">
 
-                <button className="w-full flex items-center justify-center">
+                <button className="w-full flex items-center justify-center"
+                  type="button"
+                  onClick={() => googleLogin()}
+                  disabled={googleLoading}
+                // {/* className="w-full flex items-center justify-center px-3 py-2 border rounded-lg hover:bg-gray-50 transition" */}
+                >
                   <img
                     src="https://www.google.com/favicon.ico"
                     alt="Google"
                     className="w-6 h-6"
                   />
-                  {/* <span className="text-md">Sign in with Google</span> */}
                 </button>
+                {socialError && <div className="text-sm text-red-500 mt-2">{socialError}</div>}
 
                 <button className="w-full flex items-center justify-center">
                   <img
@@ -166,13 +256,13 @@ const Login: React.FC = () => {
                   />
                 </button>
 
-                <button className="w-full flex items-center justify-center">
+                {/* <button className="w-full flex items-center justify-center">
                   <img
                     src="https://www.microsoft.com/favicon.ico"
                     alt="Microsoft"
                     className="w-6 h-6"
                   />
-                </button>
+                </button> */}
               </div>
             </form>
 

@@ -13,11 +13,14 @@ const CreatePostCard: React.FC = () => {
   const [content, setContent] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
+  const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY'>('PUBLIC');
+  const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
 
   // const fileInputRef = useRef<HTMLInputElement>(null);  // Reference to the hidden file input
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);       // State to store selected image previews
 
   const [images, setSelectedFiles] = useState<File[]>([]);    // State to store actual image files for uploading
+
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
@@ -26,13 +29,14 @@ const CreatePostCard: React.FC = () => {
 
     addPost({
       userId: String(user.id),
-      user: user,
+      // user: user,
       content,
       images, 
-      // ...(imagePreviews && { image: imagePreviews }),
+      ...(imagePreviews && { image: imagePreviews }),
       likes: 0,
       comments: 0,
       liked: false,
+      privacy,
     });
 
     setContent('');
@@ -69,29 +73,79 @@ const CreatePostCard: React.FC = () => {
     }
   };
 
-  // Handle file selection
-  // const handleFileChange = (event) => {
-  //   const files = Array.from(event.target.files); // Convert FileList to array
-  //   setSelectedFiles(files); // Save selected files
-
-
-  // };
-
-
-
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-      <div className="flex items-center space-x-3 mb-3">
-        <Avatar
-          src={imageSrc}
-          alt={user.fullName}
-          size="md"
-        />
-        <div className="flex-1 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full px-4 py-2.5 text-gray-700 font-medium shadow-sm"
+{/* 👤 User info + Privacy dropdown */}
+{/* 👤 User info + Privacy dropdown */}
+<div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+  <div className="flex items-center space-x-3">
+    <Avatar src={imageSrc} alt={user.fullName} size="md" />
+    <div>
+      <p className="font-medium text-gray-800 text-sm sm:text-base">{user.fullName}</p>
+
+      {/* 🔒 Compact Privacy Dropdown */}
+      <div className="relative inline-block text-left mt-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowPrivacyMenu((prev) => !prev);
+          }}
+          className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 text-[11px] sm:text-xs font-medium px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-100 transition-all duration-200 ease-in-out"
         >
-          {user.fullName}
-        </div>
+          {privacy === "PUBLIC" && <span className="text-[13px]">🌍</span>}
+          {privacy === "FRIENDS_ONLY" && <span className="text-[13px]">👥</span>}
+          {privacy === "PRIVATE" && <span className="text-[13px]">🔒</span>}
+          <span>
+            {privacy === "PUBLIC"
+              ? "Public"
+              : privacy === "FRIENDS_ONLY"
+              ? "Friends Only"
+              : "Private"}
+          </span>
+          <svg
+            className="w-3 h-3 text-blue-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* Dropdown menu */}
+        {showPrivacyMenu && (
+          <div
+            className="absolute z-10 mt-1 w-32 origin-top-left bg-white border border-gray-100 rounded-lg shadow-md ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-200 ease-in-out"
+          >
+            {[
+              { label: "Public", value: "PUBLIC", icon: "🌍", color: "text-green-600" },
+              { label: "Friends Only", value: "FRIENDS_ONLY", icon: "👥", color: "text-blue-600" },
+              { label: "Private", value: "PRIVATE", icon: "🔒", color: "text-gray-600" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPrivacy(option.value as 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY');
+                  setShowPrivacyMenu(false);
+                }}
+                className={`flex items-center w-full px-2 py-1 text-[11px] sm:text-xs hover:bg-blue-50 rounded-md ${option.color} transition-all duration-150 ease-in-out`}
+              >
+                <span className="mr-1 text-[12px]">{option.icon}</span>
+                <span className="text-gray-700">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+    </div>
+  </div>
+</div>
+
+
+
 
       <div className="px-3">
         <textarea

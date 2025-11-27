@@ -24,9 +24,13 @@ const CreatePost: React.FC = () => {
     
     addPost({
       userId: user.id,
-      user: user,
+      // user: user,
       content,
-      ...(imageURL && { image: imageURL })
+      ...(imageURL && { image: imageURL }),
+      profilePicture: '',
+      likes: 0,
+      comments: 0,
+      liked: false
     });
     
     navigate('/');
@@ -60,11 +64,11 @@ const CreatePost: React.FC = () => {
             <div className="flex items-center">
               <Avatar 
                 src={user.profilePicture} 
-                alt={user.name}
+                alt={user.fullName}
                 size="md"
               />
               <div className="ml-3">
-                <h3 className="font-semibold">{user.name}</h3>
+                <h3 className="font-semibold">{user.fullName}</h3>
                 <div className="mt-1">
                   <select 
                     value={privacy}
