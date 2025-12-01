@@ -48,8 +48,8 @@ savePartialRegistration: (regdata: any) => void;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Set base URL for axios (adjust if your backend URL changes)
-axios.defaults.baseURL = 'http://localhost:8080';
-// axios.defaults.baseURL = 'http://16.170.26.131:8080';
+// axios.defaults.baseURL = 'http://localhost:8080';
+axios.defaults.baseURL = 'http://16.170.26.131:8080';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
