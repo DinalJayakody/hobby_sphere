@@ -61,7 +61,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const goToProfile = () => {
     // navigate(`/profile/${post.userId}`);
-    navigate(`/FriendProfile/${post.id}`);
+    navigate(`/FriendProfile/${post.userId}`);
 
 
   };
