@@ -96,7 +96,7 @@ const VerifyCode: React.FC = () => {
       await verifyResetCode(code);
       navigate("/ResetPassword");
     } catch (err: any) {
-      navigate("/ResetPassword");
+//       navigate("/ResetPassword");
       setError(err.response?.data?.message || "Invalid or expired code");
     }
   };
