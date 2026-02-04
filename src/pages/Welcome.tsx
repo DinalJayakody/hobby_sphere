@@ -1,10 +1,70 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import logo from '../assets/HS_logo.png';
 import { LogIn, UserPlus } from 'lucide-react';
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const Welcome: React.FC = () => {
+
+  const { loginWithGoogleToken } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialError, setSocialError] = useState("");
+
+ const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setSocialError("");
+        setGoogleLoading(true);
+
+        // 1) Fetch Google profile using access_token
+        const googleProfileRes = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+        const googleProfile = googleProfileRes.data; // contains email, name, picture, sub, email_verified, etc.
+
+        const backendRes = await axios.post("/api/auth/google", {
+          access_token: tokenResponse.access_token,
+        }, {
+          withCredentials: true
+        });
+
+        // 3) Backend should return { token: "<your-jwt>", user: { ... } }
+        console.log("Google login backend response", backendRes);
+        // const { token } = backendRes.data;
+        const { token, type } = backendRes.data;
+      const fullToken = `${type} ${token}`;
+
+        // 4) Save token into your auth context / localStorage and fetch user / set auth state
+        if (loginWithGoogleToken) {
+          await loginWithGoogleToken(fullToken); // recommended: implement this in AuthContext
+        } else {
+          localStorage.setItem("token", fullToken);
+          `Bearer ${token}`
+          // If your app expects a current user fetch, trigger it (or reload)
+          window.location.href = "/";
+        }
+      } catch (err) {
+        console.error("Error during Google sign-in →", err);
+        // setSocialError("Google sign-in failed. Please try again.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error("Google login failed:", err);
+      setSocialError("Google sign-in failed.");
+    },
+  });
+
+
   return (
     <div className="min-h-screen flex">
       {/* Left Grid - Animated Background (2/3) */}
@@ -94,7 +154,11 @@ const Welcome: React.FC = () => {
               {/* <button className="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:scale-105"> */}
               <div className="w-full flex items-center justify-center space-x-1">
 
-              <button className="w-full flex items-center justify-center">
+              <button className="w-full flex items-center justify-center"
+              type="button"
+                  onClick={() => googleLogin()}
+                  disabled={googleLoading}
+              >
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"
@@ -102,6 +166,7 @@ const Welcome: React.FC = () => {
                 />
                 {/* <span className="text-md">Sign in with Google</span> */}
               </button>
+              {socialError && <div className="text-sm text-red-500 mt-2">{socialError}</div>}
 
               <button className="w-full flex items-center justify-center">
                 <img

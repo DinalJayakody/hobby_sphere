@@ -28,7 +28,7 @@ interface AuthContextType {
   loginWithGoogleToken: (token: string) => Promise<boolean>;
   login: (username: string, password: string) => Promise<boolean>;
   pendingRegistration: any; // For partial registration data
-savePartialRegistration: (regdata: any) => void;
+  savePartialRegistration: (regdata: any) => void;
   register: (name: string,
     username: string,
     email: string,
@@ -39,8 +39,15 @@ savePartialRegistration: (regdata: any) => void;
     lan: string,
     mainHobby: string,
     location: string) => Promise<boolean>;
-    
-  logout: () => void;
+
+  logout: () => void
+
+  // 🔹 Forgot password flow
+  forgotEmail: string | null;
+  forgotPassword: (email: string) => Promise<boolean>;
+  verifyResetCode: (otp: string) => Promise<boolean>;
+  resetPassword: (newPassword: string) => Promise<boolean>;
+
   loading: boolean;        // loading for login/register calls
   loadingUser: boolean;    // loading for initial user fetch
 }
@@ -55,13 +62,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
-  // const { clearData } = useData();
+
+  // FOrgot passwrod context
+  const [forgotEmail, setForgotEmail] = useState<string | null>(null);
 
   const [pendingRegistration, setPendingRegistration] = useState<any>(null);
 
-const savePartialRegistration = (regdata: any) => {
-  setPendingRegistration(regdata);
-};
+  const savePartialRegistration = (regdata: any) => {
+    setPendingRegistration(regdata);
+  };
 
 
   useEffect(() => {
@@ -74,63 +83,63 @@ const savePartialRegistration = (regdata: any) => {
   }, []);
 
 
-// Fetch user details function
-const fetchUserDetails = async () => {
-  try {
+  // Fetch user details function
+  const fetchUserDetails = async () => {
+    try {
 
-    console.log("🔎 Fetching user details with token:", axios.defaults.headers.common['Authorization']);
-    
-    const response = await axiosInstance.get<User>('/api/users/userDetail');
+      console.log("🔎 Fetching user details with token:", axios.defaults.headers.common['Authorization']);
 
-    setUser(response.data);
-  } catch (error: any) {
-    console.error('Failed to fetch user details:', error);
+      const response = await axiosInstance.get<User>('/api/users/userDetail');
+
+      setUser(response.data);
+    } catch (error: any) {
+      console.error('Failed to fetch user details:', error);
 
 
-    // Only logout if it's a real auth error (401 / 403)
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      logout(); 
+      // Only logout if it's a real auth error (401 / 403)
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        logout();
+      }
     }
-  }
-};
+  };
 
-// On mount, load token and fetch user details
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    // ✅ Always prefix with Bearer
-        axios.defaults.headers.common['Authorization'] = 
-      token.startsWith("Bearer") ? token : `Bearer ${token}`;
-    // axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  // On mount, load token and fetch user details
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // ✅ Always prefix with Bearer
+      axios.defaults.headers.common['Authorization'] =
+        token.startsWith("Bearer") ? token : `Bearer ${token}`;
+      // axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    fetchUserDetails().finally(() => setLoadingUser(false));
-  } else {
-    setLoadingUser(false);
-  }
-}, []);
+      fetchUserDetails().finally(() => setLoadingUser(false));
+    } else {
+      setLoadingUser(false);
+    }
+  }, []);
 
 
-// inside your AuthProvider
-const loginWithGoogleToken = async (token: string) => {
-  try {
-    // store token (secure cookie or localStorage depending on your strategy)
-    localStorage.setItem("token", token);
+  // inside your AuthProvider
+  const loginWithGoogleToken = async (token: string) => {
+    try {
+      // store token (secure cookie or localStorage depending on your strategy)
+      localStorage.setItem("token", token);
 
-    // set default header for future requests (if you use axios)
+      // set default header for future requests (if you use axios)
       axios.defaults.headers.common['Authorization'] = token;
-    
 
-    // fetch current user
-    // const res = await axios.get("/api/auth/me"); // backend: return current user info for token
-    // setUser(res.data);
-    // return true;
+
+      // fetch current user
+      // const res = await axios.get("/api/auth/me"); // backend: return current user info for token
+      // setUser(res.data);
+      // return true;
       await fetchUserDetails();
       return true;
-  } catch (err) {
-    console.error("loginWithToken error", err);
-    return false;
-  }
-};
+    } catch (err) {
+      console.error("loginWithToken error", err);
+      return false;
+    }
+  };
 
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -209,6 +218,67 @@ const loginWithGoogleToken = async (token: string) => {
     //  clearData();
   };
 
+  //Forgot password functions added here
+  const forgotPassword = async (email: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      await axios.post("/api/auth/forgot-password", { email });
+
+      // store email temporarily
+      setForgotEmail(email);
+
+      return true;
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const verifyResetCode = async (otp: string): Promise<boolean> => {
+    if (!forgotEmail) throw new Error("Email missing");
+
+    setLoading(true);
+    try {
+      await axios.post("/api/auth/verify-reset-code", {
+        email: forgotEmail,
+        otp,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("OTP verification failed:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (newPassword: string): Promise<boolean> => {
+    if (!forgotEmail) throw new Error("Email missing");
+
+    setLoading(true);
+    try {
+      await axios.post("/api/auth/reset-password", {
+        email: forgotEmail,
+        newPassword,
+      });
+
+      // cleanup
+      setForgotEmail(null);
+
+      return true;
+    } catch (error: any) {
+      console.error("Reset password failed:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <AuthContext.Provider
       value={{
@@ -219,10 +289,14 @@ const loginWithGoogleToken = async (token: string) => {
         savePartialRegistration,
         register,
         logout,
+        forgotEmail,
+        forgotPassword,
+        verifyResetCode,
+        resetPassword,
         loading,
         loadingUser,
         pendingRegistration,
-       
+
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -14,8 +14,11 @@ import Kavindu from "../assets/Kavindu.jpg";
 import Tharinda from "../assets/Tharinda.jpg";
 import Prabs from "../assets/Prabs.jpg";
 import axiosInstance from "../types/axiosInstance"; // adjust path
-import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle } from 'lucide-react';
+import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle, UserPlus } from 'lucide-react';
 import { Post } from '../types';
+import SavedPostModal from '../components/modals/SavedPostModal';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import SavedPostCard from '../components/profile/SavedPostCard';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -70,16 +73,33 @@ const Profile: React.FC = () => {
   ]);
   const [followingList, setFollowingList] = useState<any[]>([]);
 
+  const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  console.log('Current User followers:', followers);
-useEffect(() => {
+  // Saved Posts componenets
+const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+const [savedPage, setSavedPage] = useState(0);
+const [savedHasMore, setSavedHasMore] = useState(true);
+const [savedLoading, setSavedLoading] = useState(false);
+
+
+const observerRef = useRef<HTMLDivElement | null>(null);
+
+// Modal
+const [selectedPost, setSelectedPost] = useState<any>(null);
+
+
+
+
+
+  useEffect(() => {
     if (!currentUser?.id) return;
     // fetch followers on mount; pass userId if you need followers of a specific profile
     fetchFollowers(Number(currentUser.id));
   }, [fetchFollowers, currentUser?.id]);
 
-//   if (followersLoading) return <div>Loading followers...</div>;
-//   if (followersError) return <div className="text-red-500">{followersError}</div>;
+  //   if (followersLoading) return <div>Loading followers...</div>;
+  //   if (followersError) return <div className="text-red-500">{followersError}</div>;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -115,6 +135,91 @@ useEffect(() => {
   }, [currentUser?.id]);
 
 
+const fetchSavedPosts = async (page: number) => {
+  if (!user?.id || savedLoading || !savedHasMore) return;
+
+  try {
+    setSavedLoading(true);
+
+    const res = await axiosInstance.get(
+      `/api/savePost/${user.id}?page=${page}&size=10`
+    );
+
+    const content = res.data.content ?? [];
+
+    // ✅ normalize SavedPost → Post
+    const posts: Post[] = content
+      .map((item: any) => item?.post)
+      .filter((post: any) => post && post.id);
+
+    setSavedPosts((prev) => [...prev, ...posts]);
+
+    if (posts.length < 10) {
+      setSavedHasMore(false);
+    }
+  } catch (err) {
+    console.error("Failed to fetch saved posts", err);
+  } finally {
+    setSavedLoading(false);
+  }
+};
+
+
+useEffect(() => {
+  if (activeTab === "saved") {
+    fetchSavedPosts(savedPage);
+  }
+}, [savedPage, activeTab]);
+
+
+
+useEffect(() => {
+  if (activeTab === "saved") {
+    setSavedPosts([]);
+    setSavedPage(0);
+    setSavedHasMore(true);
+  }
+}, [activeTab]);
+
+const loadMoreSaved = useCallback(() => {
+  if (!savedLoading && savedHasMore) {
+    setSavedPage((prev) => prev + 1);
+  }
+}, [savedLoading, savedHasMore]);
+
+
+const savedObserverRef = useInfiniteScroll({
+  loading: savedLoading,
+  hasMore: savedHasMore,
+  onLoadMore: loadMoreSaved,
+});
+
+
+
+
+  const handleUnfollow = async (id: number | string) => {
+      
+    console.log("Unfollow button clicked for user ID:", id);
+    try {
+      setLoading(true);
+      if (isFollowing) {
+        // 👉 Follow API
+        console.log("Following user with ID:", id);
+        await axiosInstance.post(`/api/users/${id}/follow`);
+        setIsFollowing(true);
+      } else {
+        console.log("Unfollowing user with ID:", id);
+        // 👉 Unfollow API (assuming your backend has it)
+        await axiosInstance.post(`/api/users/${id}/unfollow`);
+        setIsFollowing(false);
+      }
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!currentUser) return null;
 
   // In a real app, you'd fetch the user profile based on the username
@@ -128,6 +233,7 @@ useEffect(() => {
   console.log('Post:', posts);
   // user.location = 'Gampaha';
   console.log('User hobby', user.mainHobby);
+  console.log('User username', user.username);
   return (
     <div className="min-h-screen bg-sky-50">
       <Navbar />
@@ -187,8 +293,8 @@ useEffect(() => {
               <div className="flex flex-wrap justify-between mb-2">
                 <div className="mr-6 mb-2">
                   <span className="font-semibold text-gray-900">
-  {userPosts ? userPosts.length : 0}
-</span>
+                    {userPosts ? userPosts.length : 0}
+                  </span>
                   <span className="text-gray-600"> Posts</span>
                 </div>
                 {/* Followers Button */}
@@ -313,13 +419,33 @@ useEffect(() => {
           </>
         )}
 
-        {activeTab === 'saved' && (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <Bookmark className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">No Saved Posts</h3>
-            <p className="text-gray-500">When you save posts, they'll appear here.</p>
-          </div>
-        )}
+{activeTab === "saved" && (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {savedPosts.map(post => (
+      <SavedPostCard
+        key={post.id}
+        post={post}
+        onClick={() => setSelectedPost(post)}
+      />
+    ))}
+
+    {savedLoading && (
+      <p className="col-span-full text-center text-gray-500">
+        Loading...
+      </p>
+    )}
+
+    {!savedLoading && savedPosts.length === 0 && (
+      <div className="col-span-full text-center py-16">
+        <Bookmark className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+        <h3 className="font-semibold">No Saved Posts</h3>
+      </div>
+    )}
+  </div>
+)}
+
+
+
 
         {activeTab === 'tagged' && (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
@@ -328,6 +454,14 @@ useEffect(() => {
             <p className="text-gray-500">When people tag you in posts, they'll appear here.</p>
           </div>
         )}
+
+        {/* Saved post modal */}
+        {selectedPost && (
+  <SavedPostModal
+    post={selectedPost}
+    onClose={() => setSelectedPost(null)}
+  />
+)}
 
         {/* Followers Modal */}
         {showFollowers && (
@@ -354,21 +488,44 @@ useEffect(() => {
                 followers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
-                    onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                    className="flex items-center justify-between mb-3 rounded-lg p-2 hover:bg-sky-50"
                   >
-                    <img
-                      src={user.avatarUrl || "/default-avatar.png"}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
-                      <div className="text-sm text-gray-500">@{user.username}</div>
+                    {/* LEFT SIDE – clickable profile */}
+                    <div
+                      className="flex items-center space-x-3 cursor-pointer"
+                      onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                    >
+                      <img
+                        src={user.avatarUrl || "/default-avatar.png"}
+                        alt={user.username}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          {user.fullName || "No Name"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          @{user.username}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* RIGHT SIDE – Unfollow button (NOT clickable row) */}
+                                                      <Button
+                                        variant={isFollowing ? "outline" : "primary"}
+                                        size="sm"
+                                        onClick={handleUnfollow.bind(null, user.id)}
+                                        disabled={loading}
+                                    >
+                                        <UserPlus className="w-4 h-4 mr-1" />
+                                        {isFollowing ? "Follow" : "Unfollow"}
+                                    </Button>
                   </div>
+
                 ))
               )}
+
             </div>
           </div>
         )}
