@@ -46,7 +46,7 @@ const Hero: React.FC<Props> = ({ group, role }) => {
                                 <div className="text-right hidden md:block">
                                     <div className="flex items-center gap-2">
                                         {/* privacy badge */}
-                                        {group.privacy === "public" ? (
+                                        {group.groupPrivacy === "PUBLIC" ? (
                                             <span className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full border border-sky-100 text-sm text-sky-600 shadow-sm">
                                                 <Globe className="w-4 h-4" /> Public
                                             </span>
@@ -57,7 +57,7 @@ const Hero: React.FC<Props> = ({ group, role }) => {
                                         )}
                                     </div>
 
-                                    <div className="text-xs text-gray-500 mt-2">{group.membersCount ?? 0} members</div>
+                                    <div className="text-xs text-gray-500 mt-2">{group.groupMemberCount ?? 0} members</div>
                                 </div>
                             </div>
 
