@@ -94,7 +94,7 @@ const Navbar: React.FC = () => {
         `/api/users/search?query=${encodeURIComponent(query)}&hobby=${hobby}&nearby=${nearby}&page=${pageNum}&size=5`
       );
 
-
+      console.log("Search results:", res.data);
       setResults(res.data);
 
       const newResults = res.data.data || [];
@@ -294,7 +294,7 @@ const handleScroll = (e?: React.UIEvent<HTMLDivElement>) => {
                 <div>
                   <div className="font-semibold text-gray-800 dark:text-gray-200">{friend.fullName || "No Name"}</div>
                   <div className="text-sm text-gray-500">@{friend.username}</div>
-                  <div className="text-xs text-gray-400">🎯 {friend.hobby || "No hobby"} · 📍 {friend.location || "Unknown"}</div>
+                  <div className="text-xs text-gray-400">🎯 {friend.mainHobby || "No hobby"} · 📍 {friend.location || "Unknown"}</div>
                 </div>
               </motion.div>
             );

@@ -77,3 +77,14 @@ export interface Follower {
   username: string;
   avatarUrl?: string; // optional
 };
+
+export interface SavedPost {
+  id: number;
+  userId: number;
+  content: string;
+  imageUrls: string[];
+  likesCount: number;
+  commentsCount: number;
+  sharesCount: number;
+  createdAt: string;
+}

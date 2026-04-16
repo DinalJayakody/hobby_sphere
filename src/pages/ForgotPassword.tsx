@@ -7,35 +7,34 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import logo_home from "../assets/logo_home.png";
 import axiosInstance from "../types/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { forgotPassword, loading } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const response = await axiosInstance.post("/api/auth/forgot-password", { email });
+  if (!email.trim()) {
+    setError("Email is required");
+    return;
+  }
 
-      if (response.status === 200) {
-        // ✅ Go to Verify Code page and pass email
-        navigate("/VerifyCode", { state: { email } });
-      } else {
-        setError(response.data?.message || "Something went wrong. Try again.");
-      }
-    } catch (err: any) {
-        //  navigate("/VerifyCode", { state: { email } });
-      console.error("Forgot password error:", err);
-      setError(err.response?.data?.message || "Unable to send verification code.");
-    } finally {
-      setLoading(false);
+  try {
+    const success = await forgotPassword(email);
+    if (success) {
+      navigate("/VerifyCode");
     }
-  };
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Unable to send code");
+  }
+};
+
 
   return (
     <>
