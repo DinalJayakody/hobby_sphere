@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useData } from "../context/DataContext"; // import your DataContext function
 import AdminPanel from "../components/group/AdminPanel";
 import Tabs from "../components/group/Tabs";
-import Hero from "../components/group/hero";
+import Hero from "../components/group/Hero";
 
 /**
  * GroupPage (route: /Group/:groupId)
