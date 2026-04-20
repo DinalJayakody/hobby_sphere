@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: "http://localhost:8080",
-  baseURL: "https://hobbysphereai.com",
+  baseURL: "http://localhost:8080",
+  // baseURL: "https://hobbysphereai.com",
 });
 
 // Interceptor: runs before every request

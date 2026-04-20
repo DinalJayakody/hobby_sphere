@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { posts as initialPosts, stories as initialStories, notifications as initialNotifications } from '../data/mockData';
-import { Post, Story, Notification, Follower } from '../types';
+import {
+  //  posts as initialPosts, 
+  // stories as initialStories, 
+  notifications as initialNotifications } from '../data/mockData';
+import { Post, Story, Notification, Follower, Reply } from '../types';
 import { useAuth } from '../context/AuthContext';
 // import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
@@ -20,9 +23,25 @@ interface DataContextType {
   posts: Post[];
   stories: Story[];
   notifications: Notification[];
+  // ✅ COMMENTS STATE
+  comments: { [postId: string]: Comment[] };
+  replies: { [commentId: string]: Reply[] };
+
+  // ✅ COMMENT FUNCTIONS
+  fetchComments: (postId: string) => Promise<void>;
+  // fetchAllComments: (postId: string) => Promise<Comment[]>;
+  addComment: (postId: string, content: string) => Promise<void>;
+  deleteComment: (commentId: string, postId: string) => Promise<void>;
+
+  // ✅ COMMENT LIKE
+  likeComment: (commentId: string, postId: string) => Promise<void>;
+
+  // ✅ REPLIES
+  fetchReplies: (commentId: string) => Promise<void>;
+  addReply: (commentId: string, content: string) => Promise<void>;
   addPost: (post: Omit<Post, 'id' | 'timestamp'> & { images?: File[] }) => Promise<boolean>;
   addStory: (story: Omit<Story, 'id' | 'timestamp'>) => void;
-  likePost: (postId: string) => void;
+  likePost: (postId: string) => Promise<void>;
   savePost: (postId: string, userId: string) => Promise<boolean>;
   viewStory: (storyId: string) => void;
   markNotificationAsRead: (notificationId: string) => void;
@@ -58,7 +77,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [page, setPage] = useState(0); // Start from page 0
   const [hasMore, setHasMore] = useState(true); // Track if more posts exist
   const [post, setPost] = useState<Post | null>(null);
-  const [stories, setStories] = useState<Story[]>(initialStories);
+  const [stories, setStories] = useState<Story[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
     const [managedGroups, setManagedGroups] = useState<Group[]>([]);
@@ -68,6 +87,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [followers, setFollowers] = useState<Follower[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [followersError, setFollowersError] = useState<string | null>(null);
+
+  const [comments, setComments] = useState<{ [postId: string]: Comment[] }>({});
+const [replies, setReplies] = useState<{ [commentId: string]: Reply[] }>({});
 
   const clearData = () => {
     setPosts([]);
@@ -125,7 +147,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         likes: p.likesCount || 0,
         comments: p.commentsCount || 0,
         timestamp: p.createdAt || new Date().toISOString(),
-        liked: p.liked || false,
+        currentUserLikeStatus: p.currentUserLikeStatus || false,
       }));
 
       setPosts((prevPosts) => {
@@ -205,20 +227,157 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setStories([newStory, ...stories]);
   };
 
-  const likePost = (postId: string) => {
-    setPosts(
-      posts.map(post => {
+const likePost = async (postId: string) => {
+  try {
+    const userId = user?.id;
+    if (!userId) return;
+
+    // 1️⃣ Find current post
+    const targetPost = posts.find(p => p.id === postId);
+    if (!targetPost) return;
+
+    const isLiked = targetPost.currentUserLikeStatus;
+
+    // 2️⃣ Optimistic UI Update (instant UI change)
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
         if (post.id === postId) {
           return {
             ...post,
-            liked: !post.liked,
-            likes: post.liked ? post.likes - 1 : post.likes + 1
+            currentUserLikeStatus: !isLiked,
+            likes: isLiked ? post.likes - 1 : post.likes + 1
           };
         }
         return post;
       })
     );
-  };
+
+    // 3️⃣ API Call
+    if (!isLiked) {
+      // LIKE
+      await axiosInstance.post(`/api/post/${postId}/like`, null, {
+        params: { userId }
+      });
+    } else {
+      // UNLIKE
+      await axiosInstance.delete(`/api/post/${postId}/like`, {
+        params: { userId }
+      });
+    }
+
+  } catch (error) {
+    console.error("Like API failed:", error);
+
+    // ❗ Rollback UI if API fails
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            currentUserLikeStatus: !post.currentUserLikeStatus,
+            likes: post.currentUserLikeStatus
+              ? post.likes - 1
+              : post.likes + 1
+          };
+        }
+        return post;
+      })
+    );
+  }
+};
+
+// Comments functions 
+const fetchComments = async (postId: string) => {
+  try {
+    const res = await axiosInstance.get(`/api/posts/${postId}/comments`, {
+      params: { page: 0, size: 3 }
+    });
+
+    setComments(prev => ({
+      ...prev,
+      [postId]: res.data.content
+    }));
+  } catch (err) {
+    console.error("Fetch comments failed", err);
+  }
+};
+
+const addComment = async (postId: string, content: string) => {
+  try {
+    const res = await axiosInstance.post(`/api/posts/${postId}/comments`, {
+      content
+    });
+
+    setComments(prev => ({
+      ...prev,
+      [postId]: [res.data, ...(prev[postId] || [])]
+    }));
+  } catch (err) {
+    console.error("Add comment failed", err);
+  }
+};
+
+const deleteComment = async (commentId: string, postId: string) => {
+  try {
+    await axiosInstance.delete(`/api/comments/${commentId}`);
+
+    setComments(prev => ({
+      ...prev,
+      [postId]: prev[postId].filter(c => c.id !== commentId)
+    }));
+  } catch (err) {
+    console.error("Delete comment failed", err);
+  }
+};
+
+const likeComment = async (commentId: string, postId: string) => {
+  setComments(prev => ({
+    ...prev,
+    [postId]: prev[postId].map(c =>
+      c.id === commentId
+        ? {
+            ...c,
+            currentUserLikeStatus: !c.currentUserLikeStatus,
+            likes: c.currentUserLikeStatus ? c.likes - 1 : c.likes + 1
+          }
+        : c
+    )
+  }));
+
+  try {
+    await axiosInstance.post(`/api/comments/${commentId}/like`);
+  } catch (err) {
+    console.error("Like comment failed", err);
+  }
+};
+
+const fetchReplies = async (commentId: string) => {
+  try {
+    const res = await axiosInstance.get(`/api/comments/${commentId}/replies`);
+
+    setReplies(prev => ({
+      ...prev,
+      [commentId]: res.data
+    }));
+  } catch (err) {
+    console.error("Fetch replies failed", err);
+  }
+};
+
+const addReply = async (commentId: string, content: string) => {
+  try {
+    const res = await axiosInstance.post(`/api/comments/${commentId}/reply`, {
+      content
+    });
+
+    setReplies(prev => ({
+      ...prev,
+      [commentId]: [...(prev[commentId] || []), res.data]
+    }));
+  } catch (err) {
+    console.error("Reply failed", err);
+  }
+};
 
 
   const savePost = async (postId: string, userId: string): Promise<boolean> => {
@@ -460,7 +619,15 @@ console.log("Followers API response", res.data);
         followersLoading,
         followersError,
         clearData,
-        unreadNotificationsCount
+        unreadNotificationsCount,
+comments,
+replies,
+fetchComments,
+addComment,
+deleteComment,
+likeComment,
+fetchReplies,
+addReply,
       }}
     >
       {children}

@@ -6,7 +6,7 @@ import Tharinda from "../assets/Tharinda.jpg";
 
 export const currentUser: User = {
   id: 'user-1',
-  fullName: 'John Doe',
+  fullName: 'John Doe',  
   username: 'johndoe',
   profilePicture: '',
   bio: 'Digital creator | Photography enthusiast | Travel lover',
@@ -59,99 +59,99 @@ export const users: User[] = [
   }
 ];
 
-// Commented by DJ
+// // Commented by DJ
 
-export const posts: Post[] = [
-  {
-    id: 'post-1',
-    userId: 'user-2',
-    user: users[1],
-    content: 'Just finished this new artwork. What do you think?',
-    image: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg',
-    likes: 124,
-    comments: 32,
-    timestamp: '2023-04-12T14:30:00Z',
-    liked: true
-  },
-  {
-    id: 'post-2',
-    userId: 'user-3',
-    user: users[2],
-    content: 'Beautiful sunset from my balcony tonight!',
-    image: 'https://images.pexels.com/photos/2486168/pexels-photo-2486168.jpeg',
-    likes: 89,
-    comments: 14,
-    timestamp: '2023-04-12T12:15:00Z',
-    liked: false
-  },
-  {
-    id: 'post-3',
-    userId: 'user-4',
-    user: users[3],
-    content: 'Exploring the mountains this weekend. The view was breathtaking!',
-    image: 'https://images.pexels.com/photos/1687845/pexels-photo-1687845.jpeg',
-    likes: 213,
-    comments: 45,
-    timestamp: '2023-04-11T16:45:00Z',
-    liked: true
-  },
-  {
-    id: 'post-4',
-    userId: 'user-5',
-    user: users[4],
-    content: 'Captured this amazing shot during my morning walk.',
-    image: 'https://images.pexels.com/photos/1480807/pexels-photo-1480807.jpeg',
-    likes: 76,
-    comments: 9,
-    timestamp: '2023-04-11T08:20:00Z',
-    liked: false
-  },
-  {
-    id: 'post-5',
-    userId: 'user-1',
-    user: users[0],
-    content: 'Working on an exciting new project. Stay tuned!',
-    likes: 32,
-    comments: 7,
-    timestamp: '2023-04-10T19:30:00Z',
-    liked: false
-  }
-];
-// Commented by DJ
-export const stories: Story[] = [
-  {
-    id: 'story-1',
-    userId: 'user-2',
-    user: users[1],
-    image: Chanuka,
-    timestamp: '2023-04-12T18:30:00Z',
-    viewed: false
-  },
-  {
-    id: 'story-2',
-    userId: 'user-3',
-    user: users[2],
-    image: Dinal,
-    timestamp: '2023-04-12T17:45:00Z',
-    viewed: false
-  },
-  {
-    id: 'story-3',
-    userId: 'user-4',
-    user: users[3],
-    image: Prashan,
-    timestamp: '2023-04-12T16:30:00Z',
-    viewed: true
-  },
-  {
-    id: 'story-4',
-    userId: 'user-5',
-    user: users[4],
-    image: Tharinda,
-    timestamp: '2023-04-12T15:15:00Z',
-    viewed: true
-  }
-];
+// export const posts: Post[] = [
+//   {
+//     id: 'post-1',
+//     userId: 'user-2',
+//     user: users[1],
+//     content: 'Just finished this new artwork. What do you think?',
+//     image: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg',
+//     likes: 124,
+//     comments: 32,
+//     timestamp: '2023-04-12T14:30:00Z',
+//     liked: true
+//   },
+//   {
+//     id: 'post-2',
+//     userId: 'user-3',
+//     user: users[2],
+//     content: 'Beautiful sunset from my balcony tonight!',
+//     image: 'https://images.pexels.com/photos/2486168/pexels-photo-2486168.jpeg',
+//     likes: 89,
+//     comments: 14,
+//     timestamp: '2023-04-12T12:15:00Z',
+//     liked: false
+//   },
+//   {
+//     id: 'post-3',
+//     userId: 'user-4',
+//     user: users[3],
+//     content: 'Exploring the mountains this weekend. The view was breathtaking!',
+//     image: 'https://images.pexels.com/photos/1687845/pexels-photo-1687845.jpeg',
+//     likes: 213,
+//     comments: 45,
+//     timestamp: '2023-04-11T16:45:00Z',
+//     liked: true
+//   },
+//   {
+//     id: 'post-4',
+//     userId: 'user-5',
+//     user: users[4],
+//     content: 'Captured this amazing shot during my morning walk.',
+//     image: 'https://images.pexels.com/photos/1480807/pexels-photo-1480807.jpeg',
+//     likes: 76,
+//     comments: 9,
+//     timestamp: '2023-04-11T08:20:00Z',
+//     liked: false
+//   },
+//   {
+//     id: 'post-5',
+//     userId: 'user-1',
+//     user: users[0],
+//     content: 'Working on an exciting new project. Stay tuned!',
+//     likes: 32,
+//     comments: 7,
+//     timestamp: '2023-04-10T19:30:00Z',
+//     liked: false
+//   }
+// ];
+// // Commented by DJ
+// export const stories: Story[] = [
+//   {
+//     id: 'story-1',
+//     userId: 'user-2',
+//     user: users[1],
+//     image: Chanuka,
+//     timestamp: '2023-04-12T18:30:00Z',
+//     viewed: false
+//   },
+//   {
+//     id: 'story-2',
+//     userId: 'user-3',
+//     user: users[2],
+//     image: Dinal,
+//     timestamp: '2023-04-12T17:45:00Z',
+//     viewed: false
+//   },
+//   {
+//     id: 'story-3',
+//     userId: 'user-4',
+//     user: users[3],
+//     image: Prashan,
+//     timestamp: '2023-04-12T16:30:00Z',
+//     viewed: true
+//   },
+//   {
+//     id: 'story-4',
+//     userId: 'user-5',
+//     user: users[4],
+//     image: Tharinda,
+//     timestamp: '2023-04-12T15:15:00Z',
+//     viewed: true
+//   }
+// ];
 
 export const notifications: Notification[] = [
   {

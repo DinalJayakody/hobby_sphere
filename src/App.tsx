@@ -25,6 +25,7 @@ import ResetPassword from './pages/ResetPassword';
 import { ModalProvider } from './context/ModalContext';
 import RegisterSuccess from './pages/RegisterSuccess';
 import GroupPage from './pages/GroupPage';
+import ChatPage from './pages/ChatPage';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -95,7 +96,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="/profile/:username" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="/notifications" element={<ProtectedRoute element={<Notifications />} />} />
-        <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
+        <Route path="/chat" element={<ProtectedRoute element={<ChatPage />} />} />
         <Route path="/create" element={<ProtectedRoute element={<CreatePost />} />} />
         <Route path="/ProfileEdit" element={<ProtectedRoute element={<ProfileEdit />} />} />
         <Route path="/FriendProfile/:id" element={<ProtectedRoute element={<FriendProfile />} />} />

@@ -1,278 +1,245 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Navbar from '../components/layout/Navbar';
 import PostCard from '../components/home/PostCard';
 import Button from '../components/ui/Button';
-import cover from '../assets/cover.png';
-import Chanuka from "../assets/Chanuka.jpg";
-import Prashan from "../assets/Prashan.jpg";
-import Dinal from "../assets/Dinal.jpg";
-import Maniya from "../assets/Maniya.jpg";
-import Kavindu from "../assets/Kavindu.jpg";
-import Tharinda from "../assets/Tharinda.jpg";
-import Prabs from "../assets/Prabs.jpg";
-import axiosInstance from "../types/axiosInstance"; // adjust path
-import { Grid, Bookmark, Settings, Image, MapPin, Tag, Link as LinkIcon, Heart, MessageCircle, UserPlus } from 'lucide-react';
+import axiosInstance from "../types/axiosInstance";
+
+import {
+  Grid, Bookmark, Settings, Image, Tag,
+  Heart, MessageCircle
+} from 'lucide-react';
+
 import { Post } from '../types';
 import SavedPostModal from '../components/modals/SavedPostModal';
-import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import SavedPostCard from '../components/profile/SavedPostCard';
+import FollowersModal from "../components/modals/FollowersModal";
+import FollowingModal from "../components/modals/FollowingModal";
+import PostFeedModal from "../components/modals/FeedPage";
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import FeedPage from '../components/modals/FeedPage';
 
 const Profile: React.FC = () => {
-  const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
-  const { posts } = useData();
+  const [searchParams] = useSearchParams();
+  const { fetchFollowers } = useData();
+
   const [activeTab, setActiveTab] = useState('posts');
   const [userPosts, setUserPosts] = useState<Post[]>([]);
 
-  // For follwing and followers pop up
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
 
-  const { followers, fetchFollowers, followersLoading, followersError } = useData();
-  const [followersList, setFollowersList] = useState<any[]>([
-    {
-      id: 1,
-      fullName: "Tharinda Withanage",
-      username: "tharinda_withanage",
-      avatarUrl: Tharinda,
-    },
-    {
-      id: 2,
-      fullName: "Chanuka Nuwankalpa",
-      username: "chanuka_nuwankalpa",
-      avatarUrl: Chanuka,
-    },
-    {
-      id: 3,
-      fullName: "Prabuddha Rathnayaka",
-      username: "prabuddha_rathnayaka",
-      avatarUrl: Prabs,
-    },
-    {
-      id: 4,
-      fullName: "Prashan Thilakawardana",
-      username: "prashan_thilakawaradana",
-      avatarUrl: Prashan,
-    },
-    {
-      id: 5,
-      fullName: "Dinal Jayakody",
-      username: "dinal_jayakody",
-      avatarUrl: Dinal,
-    },
-    {
-      id: 6,
-      fullName: "Kavindu Rathnayaka",
-      username: "kavindu_rathnayaka",
-      avatarUrl: Kavindu,
-    },
-  ]);
+  const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
 
-  const [loading, setLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [showFeed, setShowFeed] = useState(false);
+
+  // Saved posts
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   // Saved Posts componenets
-const [savedPosts, setSavedPosts] = useState<Post[]>([]);
-const [savedPage, setSavedPage] = useState(0);
-const [savedHasMore, setSavedHasMore] = useState(true);
-const [savedLoading, setSavedLoading] = useState(false);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [savedPage, setSavedPage] = useState(0);
+  const [savedHasMore, setSavedHasMore] = useState(true);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
 
-const observerRef = useRef<HTMLDivElement | null>(null);
-
-// Modal
-const [selectedPost, setSelectedPost] = useState<any>(null);
-
+  if (!currentUser) return null;
+  const user = currentUser;
+  const imageSrc = `data:image/png;base64,${user.profilePicture}`;
 
 
-
-
+  // ================= FETCH POSTS =================
   useEffect(() => {
-    if (!currentUser?.id) return;
-    // fetch followers on mount; pass userId if you need followers of a specific profile
-    fetchFollowers(Number(currentUser.id));
-  }, [fetchFollowers, currentUser?.id]);
-
-  //   if (followersLoading) return <div>Loading followers...</div>;
-  //   if (followersError) return <div className="text-red-500">{followersError}</div>;
-
-  useEffect(() => {
-    if (!user?.id) return;
-
     const fetchUserPosts = async () => {
       try {
-        const response = await axiosInstance.get(`/api/post/user/${user.id}`);
-        const apiPosts = response.data.content || [];
-
-        const formattedPosts: Post[] = apiPosts.map((p: any) => ({
+        const res = await axiosInstance.get(`/api/post/user/${user.id}`);
+        const formatted = res.data.content.map((p: any) => ({
           id: p.id.toString(),
           userId: p.userId.toString(),
           user: {
             id: p.userId,
-            fullName: p.fullName || "Unknown User",
-            profilePicture: p.profilePictureUrl || "",
+            fullName: p.fullName,
+            profilePicture: p.profilePictureUrl,
           },
           content: p.content,
           images: p.imageUrls || [],
-          likes: p.likesCount || 0,
-          comments: p.commentsCount || 0,
-          timestamp: p.createdAt || new Date().toISOString(),
-          liked: p.liked || false,
+          likes: p.likesCount,
+          comments: p.commentsCount,
+          timestamp: p.createdAt,
         }));
-
-        setUserPosts(formattedPosts);
-      } catch (error) {
-        console.error("Failed to fetch user posts:", error);
+        setUserPosts(formatted);
+      } catch (e) {
+        console.error(e);
       }
     };
-
     fetchUserPosts();
-  }, [currentUser?.id]);
+  }, []);
 
 
-const fetchSavedPosts = async (page: number) => {
-  if (!user?.id || savedLoading || !savedHasMore) return;
+  // ================= FETCH SAVED POSTS =================
+  const fetchSavedPosts = async (page: number) => {
+    if (!user?.id || savedLoading || !savedHasMore) return;
 
-  try {
-    setSavedLoading(true);
-
-    const res = await axiosInstance.get(
-      `/api/savePost/${user.id}?page=${page}&size=10`
-    );
-
-    const content = res.data.content ?? [];
-
-    // ✅ normalize SavedPost → Post
-    const posts: Post[] = content
-      .map((item: any) => item?.post)
-      .filter((post: any) => post && post.id);
-
-    setSavedPosts((prev) => [...prev, ...posts]);
-
-    if (posts.length < 10) {
-      setSavedHasMore(false);
-    }
-  } catch (err) {
-    console.error("Failed to fetch saved posts", err);
-  } finally {
-    setSavedLoading(false);
-  }
-};
-
-
-useEffect(() => {
-  if (activeTab === "saved") {
-    fetchSavedPosts(savedPage);
-  }
-}, [savedPage, activeTab]);
-
-
-
-useEffect(() => {
-  if (activeTab === "saved") {
-    setSavedPosts([]);
-    setSavedPage(0);
-    setSavedHasMore(true);
-  }
-}, [activeTab]);
-
-const loadMoreSaved = useCallback(() => {
-  if (!savedLoading && savedHasMore) {
-    setSavedPage((prev) => prev + 1);
-  }
-}, [savedLoading, savedHasMore]);
-
-
-const savedObserverRef = useInfiniteScroll({
-  loading: savedLoading,
-  hasMore: savedHasMore,
-  onLoadMore: loadMoreSaved,
-});
-
-
-
-
-  const handleUnfollow = async (id: number | string) => {
-      
-    console.log("Unfollow button clicked for user ID:", id);
     try {
-      setLoading(true);
-      if (isFollowing) {
-        // 👉 Follow API
-        console.log("Following user with ID:", id);
-        await axiosInstance.post(`/api/users/${id}/follow`);
-        setIsFollowing(true);
-      } else {
-        console.log("Unfollowing user with ID:", id);
-        // 👉 Unfollow API (assuming your backend has it)
-        await axiosInstance.post(`/api/users/${id}/unfollow`);
-        setIsFollowing(false);
+      setSavedLoading(true);
+
+      const res = await axiosInstance.get(
+        `/api/savePost/${user.id}?page=${page}&size=10`
+      );
+      const content = res.data.content.map((p: any) => ({
+        id: p.id.toString(),
+        userId: p.userId.toString(),
+        user: {
+          id: p.userId,
+          fullName: p.fullName,
+          profilePicture: p.profilePictureUrl,
+        },
+        content: p.content,
+        images: p.imageUrls || [],
+        likes: p.likesCount,
+        comments: p.commentsCount,
+        timestamp: p.createdAt,
+      }));
+      // const content = res.data.content ?? [];
+
+      console.log("RAW API:", content);
+
+      const posts: Post[] = content
+        .map((item: any) => item?.post ?? item) // fallback if no nested post
+        .filter((post: any) => post && post.id);
+
+      setSavedPosts((prev) => {
+        const newPosts = posts.filter(
+          (p) => !prev.some((existing) => existing.id === p.id)
+        );
+        console.log("Saved Posts:", savedPosts);
+        return [...prev, ...newPosts];
+      });
+
+      if (posts.length < 10) {
+        setSavedHasMore(false);
       }
-    } catch (error) {
-      console.error("Error updating follow status:", error);
+    } catch (err) {
+      console.error("Failed to fetch saved posts", err);
     } finally {
-      setLoading(false);
+      setSavedLoading(false);
     }
   };
 
-  if (!currentUser) return null;
+  // Scroll to selected post in feed when feed opens
+  useEffect(() => {
+    if (showFeed) {
+      setTimeout(() => {
+        const el = document.getElementById(`post-${selectedIndex}`);
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [showFeed]);
 
-  // In a real app, you'd fetch the user profile based on the username
-  // For now, we'll just use the current user
-  const user = currentUser;
-  const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-  // Filter posts by the current user
-  // const userPosts = posts.filter(post => String(post.userId) === String(user?.id));
+  // Refetch saved posts when page changes or tab changes
+  useEffect(() => {
+    if (activeTab === "saved") {
+      fetchSavedPosts(savedPage);
+    }
+  }, [savedPage, activeTab]);
 
-  console.log('User posts:', userPosts);
-  console.log('Post:', posts);
-  // user.location = 'Gampaha';
-  console.log('User hobby', user.mainHobby);
-  console.log('User username', user.username);
+  // Listen to URL changes to switch tabs
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+
+    if (tab === "saved") {
+      setActiveTab("saved");
+    } else {
+      setActiveTab("posts");
+    }
+  }, [searchParams]);
+
+  // Reset saved posts when leaving tab
+  useEffect(() => {
+    if (activeTab === "saved") {
+      setSavedPosts([]);
+      setSavedPage(0);
+      setSavedHasMore(true);
+    }
+  }, [activeTab]);
+
+  // Infinite scroll handler for saved posts
+  const loadMoreSaved = useCallback(() => {
+    if (!savedLoading && savedHasMore) {
+      setSavedPage((prev) => prev + 1);
+    }
+  }, [savedLoading, savedHasMore]);
+
+  // Attach infinite scroll observer to the bottom div
+  const savedObserverRef = useInfiniteScroll({
+    loading: savedLoading,
+    hasMore: savedHasMore,
+    onLoadMore: loadMoreSaved,
+  });
+
+
+
+  // ================= FETCH FOLLOWERS =================
+  const loadFollowers = async () => {
+    try {
+      const res = await axiosInstance.get(`/api/users/${user.id}/followers`);
+      setFollowersList(res.data);
+      setShowFollowers(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadFollowing = async () => {
+    try {
+      const res = await axiosInstance.get(`/api/users/${user.id}/following`);
+      setFollowingList(res.data);
+      setShowFollowing(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-sky-50">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 pt-16 pb-20 md:pt-20 md:pb-6">
-        {/* Profile header */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-          {/* Cover photo */}
-          {/* <img
-            src={cover}
-            className="h-48 w-auto object-cover rounded-xl"
-          /> */}
-          <div
-            className="h-48 bg-gradient-to-r from-navy-500 to-sky-400" />
-          {/* className="h-48 bg-gradient-to-r from-navy-500 to-sky-400"/> */}
+      <div className="max-w-4xl mx-auto px-4 pt-16 pb-20">
 
-          {/* Profile info */}
+        {/* ================= HEADER ================= */}
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
+
+          <div className="h-40 bg-gradient-to-r from-indigo-500 to-sky-400" />
+
           <div className="px-6 py-4 flex flex-col md:flex-row">
-            <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 z-10">
-              <img
-                // src='https://kristalle.com/wp-content/uploads/2020/07/dummy-profile-pic-1.jpg'
-                src={imageSrc}
-                // alt={user.name}
-                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover"
-              />
-            </div>
 
-            <div className="flex-1 md:ml-6 md:mt-0">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <img
+              src={imageSrc}
+              className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-white -mt-16 object-cover shadow-lg"
+            />
+
+            <div className="flex-1 md:ml-6">
+
+              <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold">{user.fullName}</h1>
-                  <p className="text-gray-400 text-md font-bold">@{user.username}</p>
+                  <h1 className="text-xl font-bold">{user.fullName}</h1>
+                  <p className="text-gray-400">@{user.username}</p>
                 </div>
 
-                <div className="mt-3 md:mt-0 flex space-x-2">
-                  <Button variant="primary" size="sm" onClick={() => navigate("/ProfileEdit")}>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => navigate("/ProfileEdit")}>
                     Edit Profile
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/Settings")}>
+                  <Button size="sm" variant="outline">
                     <Settings className="w-4 h-4" />
                   </Button>
                 </div>
@@ -281,22 +248,21 @@ const savedObserverRef = useInfiniteScroll({
               <p className="text-gray-700 mb-4">
                 <span className="font-bold">Bio:</span> {user.bio}
               </p>
-              {/* <p className="text-gray-700 mb-4"> */}
 
-              {/* {user.location ? `Location: ${user.location}` : ' '} */}
+
               <div className="flex gap-x-12 mb-4">
                 <p className="text-gray-700">📍 {user.location || ""}</p>
                 <p className="text-gray-700">🎯 {user.mainHobby || ""}</p>
-
               </div>
 
-              <div className="flex flex-wrap justify-between mb-2">
-                <div className="mr-6 mb-2">
-                  <span className="font-semibold text-gray-900">
-                    {userPosts ? userPosts.length : 0}
-                  </span>
-                  <span className="text-gray-600"> Posts</span>
+
+              {/* COUNTS */}
+              <div className="flex gap-6 mt-3 text-sm">
+
+                <div>
+                  <b>{userPosts.length}</b> Posts
                 </div>
+
                 {/* Followers Button */}
                 <button
                   className="mr-6 mb-2 text-left"
@@ -305,7 +271,6 @@ const savedObserverRef = useInfiniteScroll({
                   <span className="font-semibold text-gray-900">{user.followersCount ?? 0}</span>{" "}
                   <span className="text-gray-600">Followers</span>
                 </button>
-
                 {/* Following Button */}
                 <button
                   className="mb-2 text-left"
@@ -314,265 +279,156 @@ const savedObserverRef = useInfiniteScroll({
                   <span className="font-semibold text-gray-900">{user.followingCount ?? 0}</span>{" "}
                   <span className="text-gray-600">Following</span>
                 </button>
+
+
               </div>
+
             </div>
           </div>
 
-          {/* Profile tabs */}
-          <div className="border-t border-gray-200">
-            <div className="flex">
+          {/* ================= TABS ================= */}
+          <div className="border-t flex">
+            {['posts', 'saved', 'tagged'].map(tab => (
               <button
-                className={`flex-1 py-3 font-medium text-sm flex items-center justify-center ${activeTab === 'posts'
-                  ? 'text-navy-600 border-b-2 border-navy-600'
-                  : 'text-gray-500'
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-3 text-sm font-medium ${activeTab === tab
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-400'
                   }`}
-                onClick={() => setActiveTab('posts')}
               >
-                <Grid className="w-5 h-5 mr-1" />
-                Posts
+                {tab.toUpperCase()}
               </button>
-              <button
-                className={`flex-1 py-3 font-medium text-sm flex items-center justify-center ${activeTab === 'saved'
-                  ? 'text-navy-600 border-b-2 border-navy-600'
-                  : 'text-gray-500'
-                  }`}
-                onClick={() => setActiveTab('saved')}
-              >
-                <Bookmark className="w-5 h-5 mr-1" />
-                Saved
-              </button>
-              <button
-                className={`flex-1 py-3 font-medium text-sm flex items-center justify-center ${activeTab === 'tagged'
-                  ? 'text-navy-600 border-b-2 border-navy-600'
-                  : 'text-gray-500'
-                  }`}
-                onClick={() => setActiveTab('tagged')}
-              >
-                <Tag className="w-5 h-5 mr-1" />
-                Tagged
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Post grid (for desktop) or list (for mobile) */}
+        {/* ================= POSTS GRID ================= */}
         {activeTab === 'posts' && (
-          <>
-            {/* Mobile view - post list */}
-            <div className="md:hidden space-y-4">
-              {userPosts.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                  <Image className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No Posts Yet</h3>
-                  <p className="text-gray-500 mb-4">When you share posts, they'll appear here.</p>
-                  <Button variant="primary">Create First Post</Button>
-                </div>
-              ) : (
-                userPosts.map(post => <PostCard key={post.id} post={post} />)
-              )}
-            </div>
+          <div className="grid grid-cols-3 gap-1">
+            {userPosts.map((post, index) => (
+              <div
+                key={post.id}
+                onClick={() => {
+                  setFeedPosts(userPosts);
+                  setSelectedIndex(index);
+                  setShowFeed(true);
+                }}
+                className="aspect-square bg-gray-100 relative cursor-pointer group"
+              >
+                <img
+                  src={
+                    post.images?.[0]
+                      ? `data:image/png;base64,${post.images[0]}`
+                      : "/no-image.png"
+                  }
+                  className="w-full h-full object-cover"
+                />
 
-            {/* Desktop view - post grid */}
-            <div className="hidden md:grid grid-cols-3 gap-1">
-              {userPosts.length === 0 ? (
-                <div className="col-span-3 bg-white rounded-lg shadow-sm p-8 text-center">
-                  <Image className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No Posts Yet</h3>
-                  <p className="text-gray-500 mb-4">When you share posts, they'll appear here.</p>
-                  <Button variant="primary">Create First Post</Button>
-                </div>
-              ) : (
-                userPosts.map(post => (
-                  <div key={post.id} className="aspect-square overflow-hidden bg-gray-100 relative group">
-                    {post.images && post.images.length > 0 ? (
-                      <img
-                        src={
-                          post.images && Array.isArray(post.images) && post.images.length > 0
-                            ? `data:image/png;base64,${post.images}`
-                            : undefined
-                        }
-                        alt="Post"
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <p className="text-sm text-gray-500 p-4 text-center">{post.content}</p>
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="flex space-x-4 text-white">
-                        <div className="flex items-center">
-                          <Heart className="w-6 h-6 mr-2" />
-                          <span>{post.likes}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <MessageCircle className="w-6 h-6 mr-2" />
-                          <span>{post.comments}</span>
-                        </div>
-                      </div>
-                    </div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
+                  <div className="flex items-center">
+                    <Heart className="w-5 mr-1" />
+                    {post.likes}
                   </div>
-                ))
-              )}
-            </div>
-          </>
-        )}
-
-{activeTab === "saved" && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {savedPosts.map(post => (
-      <SavedPostCard
-        key={post.id}
-        post={post}
-        onClick={() => setSelectedPost(post)}
-      />
-    ))}
-
-    {savedLoading && (
-      <p className="col-span-full text-center text-gray-500">
-        Loading...
-      </p>
-    )}
-
-    {!savedLoading && savedPosts.length === 0 && (
-      <div className="col-span-full text-center py-16">
-        <Bookmark className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <h3 className="font-semibold">No Saved Posts</h3>
-      </div>
-    )}
-  </div>
-)}
-
-
-
-
-        {activeTab === 'tagged' && (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <Tag className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">No Tagged Posts</h3>
-            <p className="text-gray-500">When people tag you in posts, they'll appear here.</p>
+                  <div className="flex items-center">
+                    <MessageCircle className="w-5 mr-1" />
+                    {post.comments}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
+        {/* ================= SAVED ================= */}
+        {activeTab === 'saved' && (
+          <div className="grid grid-cols-3 gap-1">
+            {savedPosts.map((post, index) => (
+              <div
+                key={post.id}
+                onClick={() => {
+                  setFeedPosts(savedPosts);
+                  setSelectedIndex(index);
+                  setShowFeed(true);
+                }}
+                className="aspect-square bg-gray-100 relative cursor-pointer group"
+              >
+                <img
+                  src={`data:image/png;base64,${post.images?.[0]}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition"
+                />
+
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
+                  <div className="flex items-center">
+                    <Heart className="w-5 mr-1" />
+                    {post.likes}
+                  </div>
+                  <div className="flex items-center">
+                    <MessageCircle className="w-5 mr-1" />
+                    {post.comments}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ================= MODALS ================= */}
+
         {/* Saved post modal */}
-        {selectedPost && (
+        {/* {selectedPost && (
   <SavedPostModal
     post={selectedPost}
     onClose={() => setSelectedPost(null)}
   />
+)} */}
+
+
+
+        {showFollowers && (
+          <FollowersModal
+            users={followersList}
+            onClose={() => setShowFollowers(false)}
+          />
+        )}
+
+        {showFollowing && (
+          <FollowingModal
+            users={followingList}
+            onClose={() => setShowFollowing(false)} open={false} />
+        )}
+
+        {showFeed && (
+  <FeedPage
+    posts={feedPosts}
+    startIndex={selectedIndex}
+    onClose={() => setShowFeed(false)}
+    title={activeTab === "saved" ? "Saved Posts" : "Posts"}
+  />
 )}
 
-        {/* Followers Modal */}
-        {showFollowers && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-            onClick={() => setShowFollowers(false)}
-          >
-            <div
-              className="bg-white rounded-lg w-80 max-h-[80vh] overflow-y-auto p-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
-                Followers
-                <button
-                  className="text-gray-500 text-xl font-bold"
-                  onClick={() => setShowFollowers(false)}
-                >
-                  ×
-                </button>
-              </h3>
-              {followers.length === 0 ? (
-                <p className="text-gray-500 text-center">No followers yet</p>
-              ) : (
-                followers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between mb-3 rounded-lg p-2 hover:bg-sky-50"
-                  >
-                    {/* LEFT SIDE – clickable profile */}
-                    <div
-                      className="flex items-center space-x-3 cursor-pointer"
-                      onClick={() => navigate(`/FriendProfile/${user.id}`)}
-                    >
-                      <img
-                        src={user.avatarUrl || "/default-avatar.png"}
-                        alt={user.username}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-
-                      <div>
-                        <div className="font-semibold text-gray-900">
-                          {user.fullName || "No Name"}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          @{user.username}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* RIGHT SIDE – Unfollow button (NOT clickable row) */}
-                                                      <Button
-                                        variant={isFollowing ? "outline" : "primary"}
-                                        size="sm"
-                                        onClick={handleUnfollow.bind(null, user.id)}
-                                        disabled={loading}
-                                    >
-                                        <UserPlus className="w-4 h-4 mr-1" />
-                                        {isFollowing ? "Follow" : "Unfollow"}
-                                    </Button>
-                  </div>
-
-                ))
-              )}
-
-            </div>
-          </div>
+        {/* {showPostFeed && (
+          <PostFeedModal
+            posts={userPosts}
+            startIndex={selectedIndex}
+            onClose={() => setShowPostFeed(false)}
+          />
         )}
 
-        {/* Following Modal pop up box */}
-        {showFollowing && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-            onClick={() => setShowFollowing(false)}
-          >
-            <div
-              className="bg-white rounded-lg w-80 max-h-[80vh] overflow-y-auto p-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
-                Following
-                <button
-                  className="text-gray-500 text-xl font-bold"
-                  onClick={() => setShowFollowing(false)}
-                >
-                  ×
-                </button>
-              </h3>
-              {followingList.length === 0 ? (
-                <p className="text-gray-500 text-center">Not following anyone yet</p>
-              ) : (
-                followingList.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-sky-50 rounded-lg p-2"
-                    onClick={() => navigate(`/FriendProfile/${user.id}`)}
-                  >
-                    <img
-                      src={user.avatarUrl || "/default-avatar.png"}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">{user.fullName || "No Name"}</div>
-                      <div className="text-sm text-gray-500">@{user.username}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          {showSavedPostFeed && (
+          <PostFeedModal
+            posts={savedPosts}
+            startIndex={selectedIndex}
+            onClose={() => setShowSavedPostFeed(false)}
+          />
         )}
+
+        {selectedPost && (
+          <SavedPostModal
+            post={selectedPost}
+            onClose={() => setSelectedPost(null)}
+          />
+        )} */}
 
       </div>
     </div>

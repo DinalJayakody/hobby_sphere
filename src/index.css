@@ -83,12 +83,12 @@ body {
 
 .page-enter {
   animation: page-enter 0.6s ease-in-out forwards;
-  perspective: 1000px;
+  /* perspective removed — avoid creating a containing block that breaks fixed positioning */
 }
 
 .page-exit {
   animation: page-exit 0.6s ease-in-out forwards;
-  perspective: 1000px;
+  /* perspective removed */
 }
 
 /* Custom animations */
@@ -191,39 +191,14 @@ body {
 
 
 @keyframes bounce-slow {
-  /* 0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-} */
-
-
- 0% {
-    transform: rotate(0deg);
-  }
-  15% {
-    transform: rotate(-5deg);
-  }
-  30% {
-    transform: rotate(5deg);
-  }
-  45% {
-    transform: rotate(-3deg);
-  }
-  60% {
-    transform: rotate(3deg);
-  }
-  75% {
-    transform: rotate(-2deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-5deg); }
+  30%  { transform: rotate(5deg); }
+  45%  { transform: rotate(-3deg); }
+  60%  { transform: rotate(3deg); }
+  75%  { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
 }
-
-
 
 .animate-bounce-slow {
   animation: bounce-slow 2.5s ease-in-out infinite;

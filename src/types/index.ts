@@ -1,12 +1,18 @@
 export interface User {
   id: string;
-  fullName: string;
   username: string;
-  profilePicture: string;
-  bio?: string;
-  followers: number;
-  following: number;
-  posts: number;
+  email: string;
+  fullName: string,
+  bio: string,
+  lat: string,
+  lan: string,
+  mainHobby: string,
+  location: string,
+  profilePicture: File | null,
+  // posts: any[], // Adjust type based on your posts structure
+  followersCount: number,
+  followingCount: number,
+  posts: number,
 }
 
 export interface Post {
@@ -19,7 +25,7 @@ export interface Post {
   likes: number;
   comments: number;
   timestamp: string;
-  liked: boolean;
+  currentUserLikeStatus: boolean;
   privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
 }
 
@@ -86,5 +92,32 @@ export interface SavedPost {
   likesCount: number;
   commentsCount: number;
   sharesCount: number;
+  createdAt: string;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  user: {
+    id: string;
+    fullName: string;
+    profilePicture: string;
+  };
+  content: string;
+  createdAt: string;
+  likes: number;
+  currentUserLikeStatus: boolean;
+  repliesCount?: number;
+}
+
+export interface Reply {
+  id: string;
+  commentId: string;
+  user: {
+    id: string;
+    fullName: string;
+    profilePicture: string;
+  };
+  content: string;
   createdAt: string;
 }

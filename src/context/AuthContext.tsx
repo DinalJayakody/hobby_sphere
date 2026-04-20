@@ -3,24 +3,25 @@ import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
 import { posts } from '../data/mockData';
 import { useData } from './DataContext';
+import { User } from '../types';
 
 // Define User interface to match your backend /userDetail response
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  fullName: string,
-  bio: string,
-  lat: string,
-  lan: string,
-  mainHobby: string,
-  location: string,
-  profilePicture: File | null,
-  // posts: any[], // Adjust type based on your posts structure
-  followersCount: number,
-  followingCount: number,
-  posts: number,
-}
+// export interface User {
+//   id: string;
+//   username: string;
+//   email: string;
+//   fullName: string,
+//   bio: string,
+//   lat: string,
+//   lan: string,
+//   mainHobby: string,
+//   location: string,
+//   profilePicture: File | null,
+//   // posts: any[], // Adjust type based on your posts structure
+//   followersCount: number,
+//   followingCount: number,
+//   posts: number,
+// }
 
 interface AuthContextType {
   user: User | null;
@@ -55,8 +56,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Set base URL for axios (adjust if your backend URL changes)
-// axios.defaults.baseURL = 'http://localhost:8080';
-axios.defaults.baseURL = 'http://82.29.160.211:8080';
+axios.defaults.baseURL = 'http://localhost:8080';
+// axios.defaults.baseURL = 'http://82.29.160.211:8080';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

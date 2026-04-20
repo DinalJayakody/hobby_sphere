@@ -203,35 +203,35 @@ const Register: React.FC = () => {
     }
 
     // Clear previous debounce timeout
-    clearTimeout(usernameCheckTimeout);
+    // clearTimeout(usernameCheckTimeout);
 
     // Debounce — wait 500ms after user stops typing
-    usernameCheckTimeout = setTimeout(async () => {
+    // usernameCheckTimeout = setTimeout(async () => {
 
-      console.log("Checking username availability for:", trimmed);
-      try {
-        setUsernameStatus("checking");
-        setUsernameMessage("Checking availability…");
+    //   console.log("Checking username availability for:", trimmed);
+    //   try {
+    //     setUsernameStatus("checking");
+    //     setUsernameMessage("Checking availability…");
 
-        const res = await axiosInstance.get("/api/users/checkUserNameExist", {
-          params: { userName: trimmed },
-        });
+    //     const res = await axiosInstance.get("/api/users/checkUserNameExist", {
+    //       params: { userName: trimmed },
+    //     });
 
-        const exists = res.data === true || res.data === "true";
+    //     const exists = res.data === true || res.data === "true";
 
-        if (exists) {
-          setUsernameStatus("taken");
-          setUsernameMessage("Username is already taken.");
-        } else {
-          setUsernameStatus("available");
-          setUsernameMessage("Username is available!");
-        }
-      } catch (err) {
-        console.error("Username check error:", err);
-        setUsernameStatus("taken");
-        setUsernameMessage("Unable to check username. Try again.");
-      }
-    }, 500);
+    //     if (exists) {
+    //       setUsernameStatus("taken");
+    //       setUsernameMessage("Username is already taken.");
+    //     } else {
+    //       setUsernameStatus("available");
+    //       setUsernameMessage("Username is available!");
+    //     }
+    //   } catch (err) {
+    //     console.error("Username check error:", err);
+    //     setUsernameStatus("taken");
+    //     setUsernameMessage("Unable to check username. Try again.");
+    //   }
+    // }, 500);
   };
 
   // ✅ Email validation function

@@ -24,6 +24,7 @@ const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const { posts } = useData();
   const navigate = useNavigate();
+  
 
   let imageSrc = "";
   if (user) {
@@ -52,9 +53,9 @@ const Home: React.FC = () => {
       <Navbar />
 
       {/* MAIN GRID */}
-      <div className="max-w-7xl mx-auto px-2 pt-16 pb-10 grid grid-cols-1 md:grid-cols-[72px_1fr_360px] gap-6">
+          <div className="max-w-7xl mx-auto px-2 pt-16 pb-24 md:pb-10 grid grid-cols-1 md:grid-cols-[72px_1fr_360px] gap-6">
 
-        {/* LEFT ICON PANEL (Instagram style) */}
+        {/* LEFT ICON PANEL */}
         <div className="hidden md:block">
           <div className="sticky top-24">
             <div className="group flex flex-col gap-2 bg-white/90 backdrop-blur rounded-2xl shadow p-2 w-[72px] hover:w-52 transition-all duration-300 overflow-hidden">
@@ -64,7 +65,7 @@ const Home: React.FC = () => {
                 { icon: Users, label: "Friends", action: () => navigate("/FriendsPage") },
                 { icon: UsersRound, label: "Groups", action: () => navigate("/GroupsPage") },
                 { icon: FileText, label: "Pages", action: () => navigate("/Pages") },
-                { icon: Bookmark, label: "Saved" },
+                { icon: Bookmark, label: "Saved", action: () => navigate(`/profile/${user.id}?tab=saved`) },
                 { icon: Calendar, label: "Events" },
               ].map(({ icon: Icon, label, action }) => (
                 <motion.button
@@ -126,7 +127,7 @@ const Home: React.FC = () => {
                 Suggestions For You
               </h3>
 
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 {[
                   { name: "Chanuka Nuwankalpa", role: "Music", src: Chanuka },
                   { name: "Tharinda Withanage", role: "Music", src: Prashan },
@@ -149,7 +150,7 @@ const Home: React.FC = () => {
                     </button>
                   </motion.div>
                 ))}
-              </div>
+              </div> */}
 
               <button className="w-full text-sky-600 text-sm font-medium mt-3 pt-3 border-t border-gray-100">
                 See All Suggestions

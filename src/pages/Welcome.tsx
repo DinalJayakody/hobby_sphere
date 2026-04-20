@@ -112,7 +112,7 @@ const Welcome: React.FC = () => {
               </h2>
               <p className="text-gray-600 text-lg">Join our community of passionate hobbyists</p>
             </div> */}
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center mb-4">
               <img src={logo} alt="Logo" className="center h-40 w-auto animate-bounce-slow" />
             </div>
 
