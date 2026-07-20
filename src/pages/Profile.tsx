@@ -25,6 +25,7 @@ const Profile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { id: routeUserId } = useParams(); // <-- added: route param if viewing another profile
   const { fetchFollowers } = useData();
 
   const [activeTab, setActiveTab] = useState('posts');
@@ -35,6 +36,7 @@ const Profile: React.FC = () => {
 
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
+   const [followersCount, setFollowersCount] = useState<number>(currentUser?.followersCount ?? 0);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -189,13 +191,71 @@ const Profile: React.FC = () => {
 
 
   // ================= FETCH FOLLOWERS =================
-  const loadFollowers = async () => {
+   const loadFollowers = async () => {
+    const targetId = routeUserId ?? user?.id;
+    if (!targetId) {
+      console.error("No user id available for loading followers");
+      return;
+    }
+
     try {
-      const res = await axiosInstance.get(`/api/users/${user.id}/followers`);
-      setFollowersList(res.data);
+      const res = await axiosInstance.get(`/api/users/followers`);
+      const data = res?.data;
+
+      // Normalize different possible response shapes into an array
+      let list: any[] = [];
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (Array.isArray(data?.content)) {
+        list = data.content;
+      } else if (Array.isArray(data?.followers)) {
+        list = data.followers;
+      } else if (data && typeof data === "object" && (data.id || data.userId || data.username)) {
+        // single follower object returned
+        list = [data];
+      } else {
+        list = [];
+      }
+
+      // Map to the Follower shape expected by the modal
+      const normalized = list.map((item: any) => ({
+        id: item.id ?? item.userId ?? item._id ?? "",
+        avatarUrl:
+          item.profilePictureUrl ??
+          item.profilePicture ??
+          item.avatarUrl ??
+          item.avatar ??
+          null,
+        fullName: item.fullName ?? item.name ?? item.full_name ?? "Unknown",
+        username: item.username ?? item.handle ?? item.userName ?? "",
+      }));
+
+      setFollowersList(normalized);
+      setFollowersCount(Array.isArray(normalized) ? normalized.length : 0);
       setShowFollowers(true);
-    } catch (e) {
-      console.error(e);
+
+      console.log("Fetched followers:", followersList);
+
+      console.debug("Normalized followers:", normalized, "raw:", res.data);
+    } catch (err) {
+      console.error("Failed to load followers:", err);
+      // Friendly UI feedback
+      alert("Unable to load followers. See console for details.");
+    }
+  };
+
+  // Unfollow handler passed to FollowersModal
+  const handleUnfollow = async (follower: any) => {
+    try {
+      // adjust endpoint to your backend (example: DELETE follower)
+      await axiosInstance.delete(`/api/users/${user.id}/followers/${follower.id}`);
+      // update local list and count
+      setFollowersList((prev) => prev.filter((f) => f.id !== follower.id));
+      setFollowersCount((c) => Math.max(0, c - 1));
+      // optionally refresh user/auth context here to keep global counts consistent
+    } catch (err) {
+      console.error("Failed to unfollow:", err);
+      throw err; // rethrow so modal's optimistic rollback works if implemented
     }
   };
 
@@ -266,15 +326,15 @@ const Profile: React.FC = () => {
                 {/* Followers Button */}
                 <button
                   className="mr-6 mb-2 text-left"
-                  onClick={() => setShowFollowers(true)}
+                  onClick={loadFollowers}
                 >
-                  <span className="font-semibold text-gray-900">{user.followersCount ?? 0}</span>{" "}
+                  <span className="font-semibold text-gray-900">{followersCount}</span>{" "}
                   <span className="text-gray-600">Followers</span>
                 </button>
                 {/* Following Button */}
                 <button
                   className="mb-2 text-left"
-                  onClick={() => setShowFollowing(true)}
+                  onClick={loadFollowing}
                 >
                   <span className="font-semibold text-gray-900">{user.followingCount ?? 0}</span>{" "}
                   <span className="text-gray-600">Following</span>
@@ -387,8 +447,9 @@ const Profile: React.FC = () => {
 
         {showFollowers && (
           <FollowersModal
-            users={followersList}
+            followers={followersList}
             onClose={() => setShowFollowers(false)}
+            onUnfollow={handleUnfollow}
           />
         )}
 
