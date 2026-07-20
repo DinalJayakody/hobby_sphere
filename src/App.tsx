@@ -1,31 +1,34 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
-import Welcome from './pages/Welcome';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
-import Notifications from './pages/Notifications';
-import Chat from './pages/Chat';
-import CreatePost from './pages/CreatePost';
-import ProfileSetup from './pages/ProfileSetup';
-import LoadingScreen from './components/ui/LoadingScreen';
-import ProfileEdit from './pages/ProfileEdit';
-import FriendProfile from './pages/FriendProfile';
-import FriendsPage from './pages/FriendsPage';
-import Pages from './pages/Pages';
-import Settings from './pages/Settings';
-import GroupsPage from './pages/GroupsPage';
-import CreateGroup from './pages/CreateGroup';
-import ForgotPassword from './pages/ForgotPassword';
-import VerifyCode from './pages/VerifyCode';
-import ResetPassword from './pages/ResetPassword';
 import { ModalProvider } from './context/ModalContext';
-import RegisterSuccess from './pages/RegisterSuccess';
-import GroupPage from './pages/GroupPage';
-import ChatPage from './pages/ChatPage';
+import LoadingScreen from './components/ui/LoadingScreen';
+
+// Route-level code splitting — each page ships as its own chunk instead of
+// bloating the initial bundle, so first load only pays for Welcome/Login.
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Home = lazy(() => import('./pages/Home'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const CreatePost = lazy(() => import('./pages/CreatePost'));
+const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
+const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
+const FriendProfile = lazy(() => import('./pages/FriendProfile'));
+const FriendsPage = lazy(() => import('./pages/FriendsPage'));
+const Pages = lazy(() => import('./pages/Pages'));
+const Settings = lazy(() => import('./pages/Settings'));
+const GroupsPage = lazy(() => import('./pages/GroupsPage'));
+const CreateGroup = lazy(() => import('./pages/CreateGroup'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const VerifyCode = lazy(() => import('./pages/VerifyCode'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const RegisterSuccess = lazy(() => import('./pages/RegisterSuccess'));
+const GroupPage = lazy(() => import('./pages/GroupPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -83,7 +86,10 @@ const AppRoutes: React.FC = () => {
 
   return (
     <PageTransitionWrapper>
+      <Suspense fallback={<LoadingScreen />}>
       <Routes>
+        {/* Apple/Google submissions require the exact URL hobbysphereai.com/privacy */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/welcome" element={<AuthRoute element={<Welcome />} />} />
         <Route path="/login" element={<AuthRoute element={<Login />} />} />
         <Route path="/register" element={<AuthRoute element={<Register />} />} />
@@ -109,6 +115,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
         <Route path="*" element={<Navigate to="/welcome" />} />
       </Routes>
+      </Suspense>
     </PageTransitionWrapper>
   );
 };

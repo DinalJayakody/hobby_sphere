@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Navbar from '../components/layout/Navbar';
 import PostCard from '../components/home/PostCard';
 import Button from '../components/ui/Button';
 import axiosInstance from "../types/axiosInstance";
+import * as usersApi from "../api/users";
 
 import {
   Grid, Bookmark, Settings, Image, Tag,
@@ -25,7 +27,10 @@ const Profile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { id: routeUserId } = useParams(); // <-- added: route param if viewing another profile
+  // Note: this page always shows the logged-in user's own data, regardless
+  // of a :username route param — the backend has no "view another user's
+  // followers" endpoint, so there's no other-profile mode to support here.
+  // FriendProfile.tsx is the page for viewing someone else's profile.
   const { fetchFollowers } = useData();
 
   const [activeTab, setActiveTab] = useState('posts');
@@ -191,68 +196,34 @@ const Profile: React.FC = () => {
 
 
   // ================= FETCH FOLLOWERS =================
-   const loadFollowers = async () => {
-    const targetId = routeUserId ?? user?.id;
-    if (!targetId) {
-      console.error("No user id available for loading followers");
-      return;
-    }
-
+  // Note: the backend only exposes the CURRENT user's own follower list —
+  // there's no endpoint to view another user's followers.
+  const loadFollowers = async () => {
     try {
-      const res = await axiosInstance.get(`/api/users/followers`);
-      const data = res?.data;
-
-      // Normalize different possible response shapes into an array
-      let list: any[] = [];
-      if (Array.isArray(data)) {
-        list = data;
-      } else if (Array.isArray(data?.content)) {
-        list = data.content;
-      } else if (Array.isArray(data?.followers)) {
-        list = data.followers;
-      } else if (data && typeof data === "object" && (data.id || data.userId || data.username)) {
-        // single follower object returned
-        list = [data];
-      } else {
-        list = [];
-      }
-
-      // Map to the Follower shape expected by the modal
-      const normalized = list.map((item: any) => ({
-        id: item.id ?? item.userId ?? item._id ?? "",
-        avatarUrl:
-          item.profilePictureUrl ??
-          item.profilePicture ??
-          item.avatarUrl ??
-          item.avatar ??
-          null,
-        fullName: item.fullName ?? item.name ?? item.full_name ?? "Unknown",
-        username: item.username ?? item.handle ?? item.userName ?? "",
+      const res = await usersApi.getMyFollowers();
+      const normalized = (res.data.data || []).map((item) => ({
+        id: item.userId,
+        avatarUrl: item.userProfilePic
+          ? (item.userProfilePic.startsWith('data:') ? item.userProfilePic : `data:image/png;base64,${item.userProfilePic}`)
+          : undefined,
+        fullName: item.name,
+        username: undefined,
       }));
 
       setFollowersList(normalized);
-      setFollowersCount(Array.isArray(normalized) ? normalized.length : 0);
+      setFollowersCount(normalized.length);
       setShowFollowers(true);
-
-      console.log("Fetched followers:", followersList);
-
-      console.debug("Normalized followers:", normalized, "raw:", res.data);
     } catch (err) {
       console.error("Failed to load followers:", err);
-      // Friendly UI feedback
-      alert("Unable to load followers. See console for details.");
     }
   };
 
   // Unfollow handler passed to FollowersModal
   const handleUnfollow = async (follower: any) => {
     try {
-      // adjust endpoint to your backend (example: DELETE follower)
-      await axiosInstance.delete(`/api/users/${user.id}/followers/${follower.id}`);
-      // update local list and count
+      await usersApi.unfollowUser(follower.id);
       setFollowersList((prev) => prev.filter((f) => f.id !== follower.id));
       setFollowersCount((c) => Math.max(0, c - 1));
-      // optionally refresh user/auth context here to keep global counts consistent
     } catch (err) {
       console.error("Failed to unfollow:", err);
       throw err; // rethrow so modal's optimistic rollback works if implemented
@@ -261,11 +232,19 @@ const Profile: React.FC = () => {
 
   const loadFollowing = async () => {
     try {
-      const res = await axiosInstance.get(`/api/users/${user.id}/following`);
-      setFollowingList(res.data);
+      const res = await usersApi.getUserFollowing(user.id);
+      const normalized = (res.data.data || []).map((u) => ({
+        id: u.id,
+        fullName: u.fullName,
+        username: u.username,
+        avatarUrl: u.profilePicture
+          ? (u.profilePicture.startsWith('data:') ? u.profilePicture : `data:image/png;base64,${u.profilePicture}`)
+          : undefined,
+      }));
+      setFollowingList(normalized);
       setShowFollowing(true);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load following:", e);
     }
   };
 
@@ -273,23 +252,29 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 pt-16 pb-20">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-16 pb-20">
 
         {/* ================= HEADER ================= */}
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white rounded-2xl shadow-md overflow-hidden mb-6"
+        >
 
-          <div className="h-40 bg-gradient-to-r from-indigo-500 to-sky-400" />
+          <div className="h-28 sm:h-40 bg-gradient-to-r from-indigo-500 to-sky-400" />
 
-          <div className="px-6 py-4 flex flex-col md:flex-row">
+          <div className="px-4 sm:px-6 py-4 flex flex-col md:flex-row">
 
             <img
               src={imageSrc}
-              className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-white -mt-16 object-cover shadow-lg"
+              alt={user.fullName}
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full border-4 border-white -mt-12 sm:-mt-16 object-cover shadow-lg"
             />
 
             <div className="flex-1 md:ml-6">
 
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                 <div>
                   <h1 className="text-xl font-bold">{user.fullName}</h1>
                   <p className="text-gray-400">@{user.username}</p>
@@ -305,12 +290,12 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 mb-4 mt-3 sm:mt-0">
                 <span className="font-bold">Bio:</span> {user.bio}
               </p>
 
 
-              <div className="flex gap-x-12 mb-4">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4">
                 <p className="text-gray-700">📍 {user.location || ""}</p>
                 <p className="text-gray-700">🎯 {user.mainHobby || ""}</p>
               </div>
@@ -325,7 +310,7 @@ const Profile: React.FC = () => {
 
                 {/* Followers Button */}
                 <button
-                  className="mr-6 mb-2 text-left"
+                  className="mr-6 mb-2 text-left hover:text-sky-600 transition-colors"
                   onClick={loadFollowers}
                 >
                   <span className="font-semibold text-gray-900">{followersCount}</span>{" "}
@@ -333,7 +318,7 @@ const Profile: React.FC = () => {
                 </button>
                 {/* Following Button */}
                 <button
-                  className="mb-2 text-left"
+                  className="mb-2 text-left hover:text-sky-600 transition-colors"
                   onClick={loadFollowing}
                 >
                   <span className="font-semibold text-gray-900">{user.followingCount ?? 0}</span>{" "}
@@ -361,11 +346,11 @@ const Profile: React.FC = () => {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* ================= POSTS GRID ================= */}
         {activeTab === 'posts' && (
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {userPosts.map((post, index) => (
               <div
                 key={post.id}
@@ -374,7 +359,7 @@ const Profile: React.FC = () => {
                   setSelectedIndex(index);
                   setShowFeed(true);
                 }}
-                className="aspect-square bg-gray-100 relative cursor-pointer group"
+                className="aspect-square bg-gray-100 relative cursor-pointer group overflow-hidden rounded-sm sm:rounded-lg animate-fade-in"
               >
                 <img
                   src={
@@ -382,7 +367,8 @@ const Profile: React.FC = () => {
                       ? `data:image/png;base64,${post.images[0]}`
                       : "/no-image.png"
                   }
-                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
@@ -402,7 +388,7 @@ const Profile: React.FC = () => {
 
         {/* ================= SAVED ================= */}
         {activeTab === 'saved' && (
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {savedPosts.map((post, index) => (
               <div
                 key={post.id}
@@ -411,11 +397,12 @@ const Profile: React.FC = () => {
                   setSelectedIndex(index);
                   setShowFeed(true);
                 }}
-                className="aspect-square bg-gray-100 relative cursor-pointer group"
+                className="aspect-square bg-gray-100 relative cursor-pointer group overflow-hidden rounded-sm sm:rounded-lg animate-fade-in"
               >
                 <img
                   src={`data:image/png;base64,${post.images?.[0]}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition"
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
@@ -456,7 +443,9 @@ const Profile: React.FC = () => {
         {showFollowing && (
           <FollowingModal
             users={followingList}
-            onClose={() => setShowFollowing(false)} open={false} />
+            onClose={() => setShowFollowing(false)}
+            open={showFollowing}
+          />
         )}
 
         {showFeed && (

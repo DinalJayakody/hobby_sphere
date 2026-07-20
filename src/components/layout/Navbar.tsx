@@ -427,9 +427,6 @@ const Navbar: React.FC = () => {
           document.body
         )}
 
-      {/* </div>
-      </div> */}
-
       {/* Mobile search header */}
       <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 z-20 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
@@ -558,49 +555,6 @@ const Navbar: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Menu dropdown */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={toggleMenu}
-        >
-          <div
-            className="absolute bottom-16 right-4 md:top-14 md:bottom-auto md:right-4 bg-white rounded-lg shadow-xl w-64 p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center space-x-3 border-b border-gray-100 pb-4 mb-2">
-              <Avatar src={imageSrc} alt={user.username} size="md" />
-              <div>
-                <h3 className="font-semibold">{user.fullName}</h3>
-                <p className="text-sm text-gray-500">@{user.username}</p>
-              </div>
-            </div>
-            <div className="space-y-2 pt-2">
-              {menuItems.map((item) => (
-                <div
-                  key={item.path}
-                  className="flex items-center space-x-3 px-2 py-2 hover:bg-sky-50 rounded-lg cursor-pointer"
-                  onClick={() => {
-                    navigate(item.path);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <item.icon className="w-5 h-5 text-navy-600" />
-                  <span>{item.label}</span>
-                </div>
-              ))}
-              <div
-                className="flex items-center space-x-3 px-2 py-2 hover:bg-sky-50 rounded-lg cursor-pointer text-red-500"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-5 h-5" />
-                <span>Logout</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

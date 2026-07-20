@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
@@ -6,10 +6,8 @@ import Navbar from "../components/layout/Navbar";
 import Stories from "../components/home/Stories";
 import CreatePostCard from "../components/home/CreatePostCard";
 import PostCard from "../components/home/PostCard";
-import Chanuka from "../assets/Chanuka.jpg";
-import Prashan from "../assets/Prashan.jpg";
-import Dinal from "../assets/Dinal.jpg";
 import Avatar from "../components/ui/Avatar";
+import * as usersApi from "../api/users";
 import {
   Users,
   Bookmark,
@@ -22,14 +20,54 @@ import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
   const { user, loading } = useAuth();
-  const { posts } = useData();
+  const { posts, postsLoading, hasMorePosts, loadMorePosts } = useData();
   const navigate = useNavigate();
-  
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const [suggestions, setSuggestions] = useState<usersApi.UserSuggestionDto[]>([]);
+  const [followedIds, setFollowedIds] = useState<Set<number>>(new Set());
 
   let imageSrc = "";
   if (user) {
     imageSrc = `data:image/png;base64,${user.profilePicture}`;
   }
+
+  // Friend suggestions — this endpoint is known to fail server-side
+  // (missing Redis cache config), so a failure here is expected and just
+  // means the panel stays empty rather than showing a broken error state.
+  useEffect(() => {
+    usersApi
+      .getUserSuggestions()
+      .then((res) => {
+        if (res.data.success) setSuggestions(res.data.data || []);
+      })
+      .catch(() => setSuggestions([]));
+  }, []);
+
+  // Infinite scroll for the feed
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMorePosts && !postsLoading) {
+          loadMorePosts();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMorePosts, postsLoading, loadMorePosts]);
+
+  const handleFollowSuggestion = async (userId: number) => {
+    try {
+      await usersApi.followUser(userId);
+      setFollowedIds((prev) => new Set(prev).add(userId));
+    } catch (err) {
+      console.error("Follow suggestion failed:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -86,12 +124,32 @@ const Home: React.FC = () => {
         </div>
 
         {/* MIDDLE FEED (SHIFTED LEFT) */}
-        <div className="max-w-[640px] mx-auto w-full">
+        <div className="max-w-[640px] mx-auto w-full px-1 sm:px-0">
           <Stories />
           <CreatePostCard />
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          {posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: Math.min(index, 6) * 0.05 }}
+            >
+              <PostCard post={post} />
+            </motion.div>
           ))}
+
+          {postsLoading && (
+            <div className="text-center text-gray-400 py-4 animate-pulse">Loading posts...</div>
+          )}
+
+          {!postsLoading && posts.length === 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
+              Your feed is empty. Follow people or create your first post to get started.
+            </div>
+          )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={loadMoreRef} className="h-4" />
         </div>
 
         {/* RIGHT PANEL */}
@@ -99,13 +157,14 @@ const Home: React.FC = () => {
           <div className="sticky top-24 space-y-4">
 
             {/* USER CARD */}
-            <div className="bg-white rounded-2xl shadow p-4">
+            <div className="bg-white rounded-2xl shadow p-4 hover:shadow-lg transition-shadow duration-300">
               <div className="flex items-center space-x-3">
                 <img
                   src={imageSrc}
                   alt={user.fullName}
                   onClick={() => navigate("/profile")}
                   className="w-12 h-12 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-sky-400 transition"
+                  loading="lazy"
                 />
                 <div>
                   <h3
@@ -122,40 +181,46 @@ const Home: React.FC = () => {
             </div>
 
             {/* SUGGESTIONS */}
-            <div className="bg-white rounded-2xl shadow p-4">
-              <h3 className="font-semibold mb-3 text-sky-700">
-                Suggestions For You
-              </h3>
+            {suggestions.length > 0 && (
+              <div className="bg-white rounded-2xl shadow p-4 hover:shadow-lg transition-shadow duration-300">
+                <h3 className="font-semibold mb-3 text-sky-700">
+                  Suggestions For You
+                </h3>
 
-              {/* <div className="space-y-3">
-                {[
-                  { name: "Chanuka Nuwankalpa", role: "Music", src: Chanuka },
-                  { name: "Tharinda Withanage", role: "Music", src: Prashan },
-                  { name: "Dinal Jayakody", role: "Music", src: Dinal },
-                ].map((s, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ scale: 1.02 }}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Avatar src={s.src} alt={s.name} size="sm" />
-                      <div className="text-sm">
-                        <p className="font-medium">{s.name}</p>
-                        <p className="text-xs text-gray-500">{s.role}</p>
+                <div className="space-y-3">
+                  {suggestions.map((s) => (
+                    <motion.div
+                      key={s.userId}
+                      whileHover={{ scale: 1.02 }}
+                      className="flex items-center justify-between cursor-pointer"
+                      onClick={() => navigate(`/FriendProfile/${s.userId}`)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Avatar
+                          src={s.profilePicture ? `data:image/png;base64,${s.profilePicture}` : ''}
+                          alt={s.username}
+                          size="sm"
+                        />
+                        <div className="text-sm">
+                          <p className="font-medium">{s.username}</p>
+                          {s.hobby && <p className="text-xs text-gray-500">{s.hobby}</p>}
+                        </div>
                       </div>
-                    </div>
-                    <button className="text-sky-600 text-sm font-medium hover:underline">
-                      Follow
-                    </button>
-                  </motion.div>
-                ))}
-              </div> */}
-
-              <button className="w-full text-sky-600 text-sm font-medium mt-3 pt-3 border-t border-gray-100">
-                See All Suggestions
-              </button>
-            </div>
+                      <button
+                        disabled={followedIds.has(s.userId)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFollowSuggestion(s.userId);
+                        }}
+                        className="text-sky-600 text-sm font-medium hover:underline disabled:text-gray-400"
+                      >
+                        {followedIds.has(s.userId) ? 'Following' : 'Follow'}
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

@@ -5,7 +5,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
@@ -21,7 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   type = 'button',
   className = '',
 }) => {
-  const baseStyles = 'rounded-lg font-medium transition-all duration-200 flex items-center justify-center';
+  const baseStyles = 'rounded-lg font-medium transition-all duration-200 flex items-center justify-center active:scale-95';
   
   const variantStyles = {
     primary: 'bg-navy-600 text-white hover:bg-navy-700 active:bg-navy-800',

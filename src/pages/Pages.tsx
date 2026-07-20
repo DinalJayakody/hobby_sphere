@@ -51,9 +51,26 @@ const PagesPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-gradient-to-b from-blue-100 to-blue-200">
       <Navbar />
 
+      {/* Mobile tab bar */}
+      <div className="md:hidden flex gap-2 px-4 pt-16 pb-2 overflow-x-auto scrollbar-hide">
+        {panels.map((panel) => (
+          <button
+            key={panel}
+            onClick={() => setActivePanel(panel)}
+            className={`shrink-0 px-4 py-2 rounded-full text-sm transition ${
+              activePanel === panel
+                ? "bg-blue-500 text-white font-semibold shadow"
+                : "bg-white text-gray-700 hover:bg-blue-50"
+            }`}
+          >
+            {panel}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel */}
-        <aside className="w-64 bg-white shadow p-4 flex flex-col gap-4">
+        {/* Left Panel (desktop only) */}
+        <aside className="hidden md:flex w-64 bg-white shadow p-4 flex-col gap-4">
           <h2 className="text-2xl font-bold mb-2">📚 Pages</h2>
           <nav className="flex flex-col gap-2">
             {panels.map((panel) => (
@@ -70,11 +87,11 @@ const PagesPage: React.FC = () => {
           </nav>
         </aside>
 
-        {/* White divider */}
-        <div className="w-4 bg-white"></div>
+        {/* White divider (desktop only) */}
+        <div className="hidden md:block w-4 bg-white"></div>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 pb-20 md:pb-6">
           <AnimatePresence mode="wait">
             {filteredPages().map((page) => (
               <motion.div
@@ -88,18 +105,19 @@ const PagesPage: React.FC = () => {
                 <img
                   src={page.img}
                   alt={page.name}
-                  className="w-full h-64 object-cover"
+                  loading="lazy"
+                  className="w-full h-48 sm:h-64 object-cover"
                 />
                 <div className="p-4 flex flex-col gap-2">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                     {page.name} <span>🎯</span>
                   </h3>
-                  <p className="text-gray-700">{page.focus}</p>
+                  <p className="text-gray-700 text-sm sm:text-base">{page.focus}</p>
                   <div className="mt-2 flex gap-2">
-                    <button className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600">
+                    <button className="bg-green-500 text-white py-1.5 px-3 rounded hover:bg-green-600 transition-transform hover:scale-105 text-sm sm:text-base">
                       {activePanel === "Liked Pages" ? "Visit Page" : "Like Page"}
                     </button>
-                    <button className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
+                    <button className="bg-blue-500 text-white py-1.5 px-3 rounded hover:bg-blue-600 transition-transform hover:scale-105 text-sm sm:text-base">
                       Share
                     </button>
                   </div>

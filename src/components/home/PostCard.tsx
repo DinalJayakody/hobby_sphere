@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Post } from '../../types';
 import Avatar from '../ui/Avatar';
 import {
-  Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
-  ChevronDown, ChevronUp, Heart as HeartFilled
+  Heart, MessageCircle, Bookmark, MoreHorizontal,
+  Heart as HeartFilled
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import LikesModal from "../modals/LikesModal";
 
 interface PostCardProps {
   post: Post;
@@ -21,22 +20,24 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     likePost,
     fetchComments,
     addComment,
-    likeComment,
-    comments
+    comments,
+    toggleSavePost,
+    fetchReplies,
+    addReply,
+    replies,
   } = useData();
-  const [showLikesModal, setShowLikesModal] = useState(false);
-  const [likedUsers, setLikedUsers] = useState<any[]>([]);
   const [liking, setLiking] = useState(false);
-  const { savePost } = useData();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
 
   const imageSrc = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "";
-  const imageSrcPost = post?.user.profilePicture ? `data:image/png;base64,${post.user.profilePicture}` : "";
-
-  console.log('Post Card image details ', post);
+  const imageSrcPost = post?.user?.profilePicture ? `data:image/png;base64,${post.user.profilePicture}` : "";
 
   const timeAgo = (timestamp: string) => {
     const now = new Date();
@@ -69,17 +70,18 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setCommentText("");
   };
 
-  const toggleSaved = () => {
-    setSaved(!saved);
+  const toggleSaved = async () => {
+    if (!user?.id || saving) return;
 
-    // if (!saved) {
-    if (!user?.id) {
-      console.warn('Cannot save post: no authenticated user.');
-      return;
+    setSaving(true);
+    try {
+      const nowSaved = await toggleSavePost(post.id);
+      setSaved(nowSaved);
+    } catch (err) {
+      console.error('Save/unsave failed:', err);
+    } finally {
+      setSaving(false);
     }
-    console.log('Saving post with ID:', post.id, 'for user ID:', user.id);
-    savePost(post.id, user.id);
-    // }
   };
 
   const handleLike = async () => {
@@ -88,28 +90,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setLiking(true);
     await likePost(post.id);
     setLiking(false);
-  };
-
-  const fetchLikedUsers = async () => {
-    try {
-      // ✅ TEMP DUMMY DATA (for now)
-      setLikedUsers([
-        { id: 1, fullName: "John Doe", profilePicture: "" },
-        { id: 2, fullName: "Jane Smith", profilePicture: "" },
-        { id: 3, fullName: "Alex Perera", profilePicture: "" },
-      ]);
-
-      // 🔥 REAL API (UNCOMMENT WHEN READY)
-      /*
-      const res = await axiosInstance.get(
-        `/api/post/${post.id}/likes`
-      );
-      setLikedUsers(res.data);
-      */
-
-    } catch (error) {
-      console.error("Failed to fetch liked users", error);
-    }
   };
 
   const goToProfile = () => {
@@ -195,6 +175,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 : `data:image/png;base64,${post.images[0]}`
             }
             alt="Post"
+            loading="lazy"
             className="max-h-[350px] w-auto object-contain transition-transform duration-500 ease-in-out hover:scale-105"
           />
         </div>
@@ -205,15 +186,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="px-4 py-2 flex justify-between text-sm text-gray-500">
         <div>
           {post.likes > 0 && (
-            <button
-              onClick={() => {
-                fetchLikedUsers();
-                setShowLikesModal(true);
-              }}
-              className="hover:underline"
-            >
-              {post.likes} {post.likes === 1 ? "like" : "likes"}
-            </button>
+            <span>{post.likes} {post.likes === 1 ? "like" : "likes"}</span>
           )}
         </div>
         <div>
@@ -254,9 +227,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </button> */}
 
         <button
-          className={`flex-1 py-2 flex items-center justify-center space-x-1 ${saved ? 'text-navy-500' : 'text-gray-500 hover:text-gray-700'
+          className={`flex-1 py-2 flex items-center justify-center space-x-1 disabled:opacity-50 ${saved ? 'text-navy-500' : 'text-gray-500 hover:text-gray-700'
             }`}
           onClick={toggleSaved}
+          disabled={saving}
         >
           <Bookmark className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
           <span>Save</span>
@@ -297,41 +271,98 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <p className="text-sm text-gray-500">Loading comments...</p>
             )}
 
-            {(comments[post.id] || []).map((c) => (
-              <div key={c.id} className="flex space-x-2">
-                <Avatar
-                  src={(c as any).user?.profilePicture ?? (c as any).profilePicture ?? ''}
-                  alt={(c as any).user?.fullName ?? (c as any).fullName ?? 'User'}
-                  size="sm"
-                />
+            {(comments[post.id] || []).map((c) => {
+              const isReplyOpen = openReplyFor === c.id;
+              const isRepliesShown = expandedReplies.has(c.id);
+              const commentReplies = replies[c.id] || [];
 
-                <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm flex-1">
-                  <p className="font-semibold text-gray-800">
-                    {(c as any).user?.fullName ?? (c as any).fullName ?? 'Unknown User'}
-                  </p>
+              const toggleReplies = () => {
+                setExpandedReplies((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(c.id)) {
+                    next.delete(c.id);
+                  } else {
+                    next.add(c.id);
+                    if (!replies[c.id]) fetchReplies(c.id);
+                  }
+                  return next;
+                });
+              };
 
-                  <p className="text-gray-700">{c.content}</p>
+              const submitReply = async () => {
+                if (!replyText.trim()) return;
+                await addReply(post.id, c.id, replyText);
+                setReplyText('');
+                setOpenReplyFor(null);
+                if (!expandedReplies.has(c.id)) toggleReplies();
+              };
 
-                  <div className="flex items-center mt-1 space-x-3 text-xs text-gray-500">
+              return (
+                <div key={c.id} className="flex space-x-2">
+                  <Avatar
+                    src={c.profilePictureUrl ?? ''}
+                    alt={c.fullName ?? c.username ?? 'User'}
+                    size="sm"
+                  />
 
-                    {/* LIKE COMMENT */}
-                    <button
-                      onClick={() => likeComment(c.id, post.id)}
-                      className={c.currentUserLikeStatus ? "text-red-500" : ""}
-                    >
-                      {c.currentUserLikeStatus ? "Unlike" : "Like"} ({c.likes})
-                    </button>
+                  <div className="flex-1">
+                    <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm">
+                      <p className="font-semibold text-gray-800">
+                        {c.fullName ?? c.username ?? 'Unknown User'}
+                      </p>
+                      <p className="text-gray-700">{c.content}</p>
+                    </div>
 
-                    {/* REPLY (future) */}
-                    <button className="hover:text-navy-600">
-                      Reply
-                    </button>
+                    <div className="flex items-center mt-1 space-x-3 text-xs text-gray-500">
+                      <button
+                        className="hover:text-navy-600"
+                        onClick={() => setOpenReplyFor(isReplyOpen ? null : c.id)}
+                      >
+                        Reply
+                      </button>
 
-                    <span>{timeAgo(c.createdAt)}</span>
+                      {commentReplies.length > 0 && (
+                        <button className="hover:text-navy-600" onClick={toggleReplies}>
+                          {isRepliesShown ? 'Hide replies' : `View replies`}
+                        </button>
+                      )}
+
+                      <span>{timeAgo(c.createdAt)}</span>
+                    </div>
+
+                    {isReplyOpen && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && submitReply()}
+                          placeholder={`Reply to ${c.fullName ?? c.username ?? 'this comment'}...`}
+                          className="flex-1 bg-gray-100 rounded-full px-3 py-1 text-xs focus:outline-none"
+                          autoFocus
+                        />
+                        <button onClick={submitReply} className="text-sky-500 text-xs font-medium">
+                          Send
+                        </button>
+                      </div>
+                    )}
+
+                    {isRepliesShown && commentReplies.length > 0 && (
+                      <div className="mt-2 space-y-2 pl-4 border-l-2 border-gray-100">
+                        {commentReplies.map((r) => (
+                          <div key={r.id} className="flex space-x-2">
+                            <Avatar src={r.profilePictureUrl ?? ''} alt={r.fullName ?? 'User'} size="sm" />
+                            <div className="bg-gray-100 rounded-lg px-3 py-1.5 text-xs flex-1">
+                              <p className="font-semibold text-gray-800">{r.fullName ?? r.username ?? 'Unknown User'}</p>
+                              <p className="text-gray-700">{r.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* VIEW ALL COMMENTS */}
             {post.comments > 3 && (
@@ -378,13 +409,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         </div>
 
-      )}
-
-      {showLikesModal && (
-        <LikesModal
-          users={likedUsers}
-          onClose={() => setShowLikesModal(false)}
-        />
       )}
     </div>
 

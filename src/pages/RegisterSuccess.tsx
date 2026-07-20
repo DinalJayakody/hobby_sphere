@@ -158,11 +158,11 @@ const RegisterSuccess: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100 to-sky-200 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100 to-sky-200 p-4 sm:p-6">
       <div className="max-w-xl w-full text-center">
-        <div className="bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden border border-sky-100">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-10 relative overflow-hidden border border-sky-100">
           {/* Character SVG */}
-          <div className="mx-auto w-64 h-60 relative">
+          <div className="mx-auto w-48 h-44 sm:w-64 sm:h-60 relative">
             <svg
               ref={svgRef}
               viewBox="0 0 260 240"
@@ -238,7 +238,7 @@ const RegisterSuccess: React.FC = () => {
           {/* Animated Heading */}
           <h2
             ref={titleRef}
-            className="mt-8 text-3xl font-extrabold text-sky-700 flex justify-center space-x-1"
+            className="mt-8 text-2xl sm:text-3xl font-extrabold text-sky-700 flex justify-center flex-wrap space-x-1"
           >
             {"Welcome aboard!".split("").map((ch, i) => (
               <span key={i} className="inline-block opacity-0">

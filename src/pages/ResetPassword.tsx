@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useAuth } from "../context/AuthContext";
 import { StatusModal } from "../components/ui/StatusModal";
+import FloatingBlobs from "../components/ui/FloatingBlobs";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -92,11 +93,12 @@ const ResetPassword: React.FC = () => {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-6">
+    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-4 sm:px-6">
+      <FloatingBlobs />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8"
+        className="relative z-10 bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8"
       >
         {/* Header */}
         <div className="flex flex-col items-center mb-6">

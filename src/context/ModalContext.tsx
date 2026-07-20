@@ -27,8 +27,8 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  const showSuccess = useCallback((title?: string, message?: string, autoCloseMs = 3500) => show("success", title, message, autoCloseMs), [show]);
-  const showError = useCallback((title?: string, message?: string, autoCloseMs = 5000) => show("error", title, message, autoCloseMs), [show]);
+  const showSuccess = useCallback((title?: string, message?: string, autoCloseMs: number | null = 3500) => show("success", title, message, autoCloseMs), [show]);
+  const showError = useCallback((title?: string, message?: string, autoCloseMs: number | null = 5000) => show("error", title, message, autoCloseMs), [show]);
 
   const close = useCallback(() => setState(prev => ({ ...prev, open: false })), []);
 

@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import axiosInstance from "../types/axiosInstance";
-import { posts } from '../data/mockData';
-import { useData } from './DataContext';
 import { User } from '../types';
+import { API_BASE_URL } from '../config';
 
 // Define User interface to match your backend /userDetail response
 // export interface User {
@@ -55,9 +54,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Set base URL for axios (adjust if your backend URL changes)
-axios.defaults.baseURL = 'http://localhost:8080';
-// axios.defaults.baseURL = 'http://82.29.160.211:8080';
+// Set base URL for axios (adjust via VITE_BACKEND_URL, see src/config.ts)
+axios.defaults.baseURL = API_BASE_URL;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, RotateCcw } from "lucide-react";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
+import FloatingBlobs from "../components/ui/FloatingBlobs";
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_SECONDS = 300; // 5 minutes
@@ -120,15 +121,21 @@ const VerifyCode: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-6">
+    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-4 sm:px-6">
+      <FloatingBlobs />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8"
+        className="relative z-10 bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8"
       >
         {/* Header */}
         <div className="flex flex-col items-center mb-6">
-          <ShieldCheck className="w-12 h-12 text-sky-500 mb-3" />
+          <motion.div
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ShieldCheck className="w-12 h-12 text-sky-500 mb-3" />
+          </motion.div>
           <h2 className="text-2xl font-semibold text-gray-800">
             Verify your email
           </h2>
@@ -142,7 +149,7 @@ const VerifyCode: React.FC = () => {
         {/* OTP Form */}
         <form onSubmit={handleVerify} className="space-y-5">
           <div
-            className="flex justify-between gap-2"
+            className="flex justify-between gap-1.5 sm:gap-2"
             onPaste={handlePaste}
           >
             {otp.map((digit, index) => (
@@ -154,7 +161,7 @@ const VerifyCode: React.FC = () => {
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 maxLength={1}
                 inputMode="numeric"
-                className="w-12 h-14 text-center text-xl font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full max-w-[3rem] aspect-square text-center text-xl font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
               />
             ))}
           </div>

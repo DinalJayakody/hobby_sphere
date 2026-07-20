@@ -6,20 +6,14 @@ import { PlusCircle } from 'lucide-react';
 
 interface StoryCircleProps {
   story?: Story;
-  user?: {
-    id: string;
-    username: string;
-    profilePicture: string;
-  };
   isCreateStory?: boolean;
   onClick?: () => void;
 }
 
-const StoryCircle: React.FC<StoryCircleProps> = ({ 
-  story, 
-  user, 
+const StoryCircle: React.FC<StoryCircleProps> = ({
+  story,
   isCreateStory = false,
-  onClick 
+  onClick
 }) => {
   const navigate = useNavigate();
 
@@ -35,12 +29,12 @@ const StoryCircle: React.FC<StoryCircleProps> = ({
 
   if (isCreateStory) {
     return (
-      <div 
+      <div
         className="flex flex-col items-center cursor-pointer group"
         onClick={handleClick}
       >
         <div className="relative mb-1">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center transition-transform group-hover:scale-105">
             <PlusCircle className="w-8 h-8 text-navy-600" />
           </div>
         </div>
@@ -49,32 +43,23 @@ const StoryCircle: React.FC<StoryCircleProps> = ({
     );
   }
 
-  if (!story && !user) return null;
-
-  const displayUser = story?.user || user;
-  if (!displayUser) return null;
+  if (!story) return null;
 
   return (
-    <div 
+    <div
       className="flex flex-col items-center cursor-pointer group"
       onClick={handleClick}
     >
-      <div 
-        className={`relative mb-1 p-0.5 rounded-full ${
-          story && !story.viewed
-            ? 'bg-gradient-to-tr from-navy-500 to-sky-400'
-            : 'bg-gray-200'
-        }`}
-      >
+      <div className="relative mb-1 p-0.5 rounded-full bg-gradient-to-tr from-navy-500 to-sky-400 transition-transform group-hover:scale-105">
         <Avatar
-          src={displayUser.profilePicture}
-          alt={displayUser.username}
+          src={story.profilePictureUrl || ''}
+          alt={story.username}
           size="lg"
           border
         />
       </div>
       <span className="text-xs text-gray-600 font-medium truncate w-16 text-center">
-        {displayUser.username}
+        {story.username}
       </span>
     </div>
   );

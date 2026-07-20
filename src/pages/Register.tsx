@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import logo from '../assets/logo_home.png';
@@ -7,9 +8,9 @@ import Button from '../components/ui/Button';
 import { User, AtSign, Mail, Lock, EyeOff, Eye } from 'lucide-react';
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
-import { PrivacyPolicyModal } from "../components/modals/PrivacyPolicyModal";
 import { TermsOfServiceModal } from '../components/modals/TermsOfServiceModal';
 import axiosInstance from '../types/axiosInstance';
+import FloatingBlobs from '../components/ui/FloatingBlobs';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,6 @@ const Register: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [socialError, setSocialError] = useState("");
 
-  const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -319,18 +319,24 @@ const Register: React.FC = () => {
       </div>
 
       {/* Right Grid - Register Form (1/3) */}
-      <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-navy-50 to-sky-400">
-        <div className="w-full max-w-md animate-fade-in" style={{ animationDelay: '0.7s' }}>
-          <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
+      <div className="relative w-full lg:w-1/3 flex items-center justify-center px-4 py-10 sm:p-8 bg-gradient-to-br from-navy-50 to-sky-400 overflow-hidden">
+        <FloatingBlobs />
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-6 sm:p-8 transform hover:scale-[1.01] transition-transform duration-300 animate-pulse-glow">
             <div className="flex flex-col items-center justify-center text-center mb-8 animate-fade-in">
 
               <img
                 src={logo}
                 alt="Hobby Sphere Logo"
-                className="w-24 h-24 mb-4 animate-bounce-slow"
+                className="w-20 h-20 sm:w-24 sm:h-24 mb-4 animate-bounce-slow"
               />
 
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">Join Hobby Sphere</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">Join Hobby Sphere</h2>
 
               <p className="text-gray-600">Join our community today</p>
             </div>
@@ -490,24 +496,21 @@ const Register: React.FC = () => {
                     Terms of Service
                   </button>{" "}
                   and{" "}
-                  <button
-                    type="button"
-                    onClick={() => setShowPrivacy(true)}
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-navy-600 hover:underline"
                   >
                     Privacy Policy
-                  </button>
+                  </Link>
                   .
                 </label>
 
-                {/* 🔹 Modals for Terms & Privacy */}
+                {/* 🔹 Modal for Terms */}
                 <TermsOfServiceModal
                   isOpen={showTerms}
                   onClose={() => setShowTerms(false)}
-                />
-                <PrivacyPolicyModal
-                  isOpen={showPrivacy}
-                  onClose={() => setShowPrivacy(false)}
                 />
               </div>
 
@@ -576,7 +579,7 @@ const Register: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

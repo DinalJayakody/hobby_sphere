@@ -1,27 +1,30 @@
 export interface User {
-  id: string;
+  id: number;
   username: string;
   email: string;
-  fullName: string,
-  bio: string,
-  lat: string,
-  lan: string,
-  mainHobby: string,
-  location: string,
-  profilePicture: File | null,
-  // posts: any[], // Adjust type based on your posts structure
-  followersCount: number,
-  followingCount: number,
-  posts: number,
+  fullName: string;
+  bio: string;
+  mainHobby: string;
+  location: string;
+  profilePicture: string | null;
+  followersCount: number;
+  followingCount: number;
+  following?: boolean;
+  active?: boolean;
+  createdAt?: string;
 }
 
 export interface Post {
   id: string;
   userId: string;
-  user?: User;
+  user?: {
+    id: string;
+    fullName: string;
+    username?: string;
+    profilePicture: string;
+  };
   content: string;
   images?: string[];
-  profilePicture: string;
   likes: number;
   comments: number;
   timestamp: string;
@@ -32,21 +35,38 @@ export interface Post {
 export interface Story {
   id: string;
   userId: string;
-  user: User;
-  image: string;
+  username: string;
+  profilePictureUrl: string | null;
+  mediaUrl: string;
+  caption?: string;
+  storyType?: string;
   timestamp: string;
-  viewed: boolean;
+  expiresAt?: string;
 }
+
+export type NotificationType =
+  | 'FOLLOW'
+  | 'LIKE'
+  | 'COMMENT'
+  | 'REPLY'
+  | 'MENTION'
+  | 'MESSAGE'
+  | 'POST_LIKED'
+  | 'POST_COMMENTED'
+  | 'FOLLOWER_POST';
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'tag';
-  userId: string;
-  user: User;
-  postId?: string;
-  content: string;
-  timestamp: string;
+  recipientId: string;
+  actorId: string;
+  actorName: string;
+  actorProfilePicture: string | null;
+  type: NotificationType;
+  message: string;
+  relatedId?: string;
+  relatedType?: string;
   read: boolean;
+  timestamp: string;
 }
 
 export interface Message {
@@ -65,7 +85,7 @@ export interface Conversation {
   lastMessage: string;
   timestamp: string;
   unread: number;
-}  
+}
 
 export interface Group {
   id: string;
@@ -80,9 +100,9 @@ export interface Group {
 export interface Follower {
   id: number;
   fullName: string;
-  username: string;
-  avatarUrl?: string; // optional
-};
+  username?: string;
+  avatarUrl?: string;
+}
 
 export interface SavedPost {
   id: number;
@@ -98,26 +118,13 @@ export interface SavedPost {
 export interface Comment {
   id: string;
   postId: string;
-  user: {
-    id: string;
-    fullName: string;
-    profilePicture: string;
-  };
+  userId: string;
+  parentCommentId?: string | null;
+  username?: string;
+  fullName?: string;
+  profilePictureUrl?: string | null;
   content: string;
   createdAt: string;
-  likes: number;
-  currentUserLikeStatus: boolean;
-  repliesCount?: number;
 }
 
-export interface Reply {
-  id: string;
-  commentId: string;
-  user: {
-    id: string;
-    fullName: string;
-    profilePicture: string;
-  };
-  content: string;
-  createdAt: string;
-}
+export interface Reply extends Comment {}

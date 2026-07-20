@@ -11,8 +11,6 @@ const CreatePostCard: React.FC = () => {
   const { user } = useAuth();
   const { addPost } = useData();
   const [content, setContent] = useState('');
-  const [imageURL, setImageURL] = useState('');
-  const [showImageInput, setShowImageInput] = useState(false);
   const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY'>('PUBLIC');
   const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
 
@@ -22,28 +20,24 @@ const CreatePostCard: React.FC = () => {
   const [images, setSelectedFiles] = useState<File[]>([]);    // State to store actual image files for uploading
 
 
+  const [posting, setPosting] = useState(false);
+
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-  const handleSubmit = () => {
-    if (!content.trim()) return;
 
-    addPost({
-      userId: String(user.id),
-      // user: user,
-      content,
-      images, 
-      ...(imagePreviews && { image: imagePreviews }),
-      likes: 0,
-      comments: 0,
-      liked: false,
-      privacy,
-    });
+  const handleSubmit = async () => {
+    if (!content.trim() || posting) return;
 
-    setContent('');
-    setImageURL('');
-    setShowImageInput(false);
-    setImagePreviews([]);
-    setSelectedFiles([]);
+    setPosting(true);
+    const success = await addPost({ content, privacy, images });
+    setPosting(false);
+
+    if (success) {
+      setContent('');
+      imagePreviews.forEach((src) => URL.revokeObjectURL(src));
+      setImagePreviews([]);
+      setSelectedFiles([]);
+    }
   };
 
   const handleCreatePost = () => {
@@ -55,22 +49,23 @@ const CreatePostCard: React.FC = () => {
     }
   };
 
-  // Handle File Image Select
+  // Handle file select (appends, doesn't replace, so multiple picks accumulate)
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File selected:', e.target.files);
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.type.startsWith('image/')) {
-        const files = Array.from(e.target.files); // Convert FileList to array
-        console.log('Image file selected:', files);
-        setSelectedFiles(files);
+    if (!e.target.files || e.target.files.length === 0) return;
+    const files = Array.from(e.target.files).filter((f) => f.type.startsWith('image/'));
+    if (!files.length) return;
 
-        // Create image preview URLs for display
-        const previews = files.map(file => URL.createObjectURL(file));
-        // const previewsArray = Array.from(previews);
-        setImagePreviews(previews);
-      }
-    }
+    setSelectedFiles((prev) => [...prev, ...files]);
+    setImagePreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   return (
@@ -181,8 +176,8 @@ const CreatePostCard: React.FC = () => {
 
               {/* Remove button on top of image */}
               <button
-                onClick={() => setImagePreviews([])}
-                className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full p-1"
+                onClick={() => removeImage(index)}
+                className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full p-1 hover:bg-opacity-70 transition-transform hover:scale-110"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -275,9 +270,9 @@ const CreatePostCard: React.FC = () => {
           variant={content.trim() ? 'primary' : 'secondary'}
           size="sm"
           onClick={handleCreatePost}
-          disabled={!imagePreviews && !content.trim()}
+          disabled={posting}
         >
-          {content.trim() ? 'Share Post' : 'Create Post'}
+          {posting ? 'Posting...' : content.trim() ? 'Share Post' : 'Create Post'}
         </Button>
       </div>
     </div>

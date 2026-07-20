@@ -4,13 +4,13 @@ import {
   getMessages,
   markAsRead,
 } from "../api/Chat";
-import { connectSocket, subscribeConversation } from "../websocket/Socket";
+import { connectSocket, subscribeConversation, sendMessageWS } from "../websocket/Socket";
 import { useAuth } from "./AuthContext";
 
 const ChatContext = createContext<any>(null);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAuth() as any;
+  const { user } = useAuth() as any;
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConv, setActiveConv] = useState<any>(null);
@@ -46,19 +46,36 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 🔹 WebSocket message handler
+  // The REST MessageDto schema has no envelope "type" field, so this
+  // backend's actual broadcast shape over STOMP is undocumented — handle
+  // both a { type: "MESSAGE", payload } envelope and a raw MessageDto.
   const handleWSMessage = (event: any) => {
-    if (event.type === "MESSAGE") {
-      setMessages((prev) => [...prev, event.payload]);
+    const message = event?.type === "MESSAGE" ? event.payload : event;
+    if (message?.id && message?.content !== undefined) {
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
     }
   };
 
-  // 🔹 Connect WS on load
+  // 🔹 Send message over the STOMP connection — there is no REST endpoint
+  // for creating a message, only the /app/chat.send destination. The sent
+  // message is expected to come back through the conversation subscription
+  // (handleWSMessage), which is what actually appends it to state.
+  const sendMessage = (content: string) => {
+    if (!activeConv || !content.trim()) return;
+    sendMessageWS({ conversationId: activeConv.id, content });
+  };
+
+  // 🔹 Connect WS once the user is authenticated
+  // (AuthContext doesn't expose the raw token, so read it from localStorage
+  // where login/register/loginWithGoogleToken already store it)
   useEffect(() => {
-    if (token) {
-      connectSocket(token, handleWSMessage, () => {});
-      loadConversations();
-    }
-  }, [token]);
+    if (!user) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    connectSocket(token, handleWSMessage, () => {});
+    loadConversations();
+  }, [user]);
 
   return (
     <ChatContext.Provider
@@ -66,8 +83,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         conversations,
         activeConv,
         messages,
+        currentUserId: user?.id,
         selectConversation,
         loadOlder,
+        sendMessage,
       }}
     >
       {children}

@@ -3,9 +3,11 @@ import React, { useState } from "react";
 // import ImagePicker from "./ImagePicker";
 import { useData } from "../context/DataContext";
 import { useNavigate } from "react-router-dom";
-import { Shield, Globe, Lock, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import ImagePicker from "../components/layout/ImagePicker";
+import Navbar from "../components/layout/Navbar";
+import { useModal } from "../context/ModalContext";
 
 type FormState = {
   name: string;
@@ -16,6 +18,7 @@ type FormState = {
 const CreateGroup: React.FC = () => { 
   const navigate = useNavigate();
   const { createGroup } = useData();
+  const { showError } = useModal();
   const [form, setForm] = useState<FormState>({
     name: "",
     description: "",
@@ -35,13 +38,12 @@ const CreateGroup: React.FC = () => {
     e?.preventDefault();
     const err = validate();
     if (err) {
-      alert(err);
+      showError("Check your details", err);
       return;
     }
 
     try {
       setLoading(true);
-      // call DataContext createGroup method (multipart handled there)
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -49,28 +51,31 @@ const CreateGroup: React.FC = () => {
       };
 
       const result = await createGroup(payload, file);
-      // success UX — navigate to new group page or show toast
-      // assuming backend returns created group id in result.id
-      const groupId = result?.id;
+      const groupId = result?.groupId ?? result?.id;
       if (groupId) {
         navigate(`/Group/${groupId}`);
       } else {
-        // fallback: go to groups list
         navigate("/GroupsPage");
       }
     } catch (err: any) {
-      // better: display a friendly toast or inline error
       console.error("Create group error:", err);
-      const message = err?.response?.data?.message || "Failed to create group.";
-      alert(message);
+      const message = err?.response?.data?.message || "Something went wrong on our end creating the group. Please try again shortly.";
+      showError("Couldn't create group", message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <div className="bg-white rounded-2xl shadow-lg p-5 border border-sky-100">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-100">
+      <Navbar />
+      <div className="max-w-xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:pt-20 md:pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="bg-white rounded-2xl shadow-lg p-4 sm:p-5 border border-sky-100"
+        >
         <div className="flex items-center gap-3 mb-4">
           <motion.div
             initial={{ scale: 0.96 }}
@@ -155,15 +160,18 @@ const CreateGroup: React.FC = () => {
           </div>
 
           <div className="pt-2">
-            <button
+            <motion.button
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 text-white font-semibold hover:shadow-lg transition disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create Group"}
-            </button>
+            </motion.button>
           </div>
         </form>
+        </motion.div>
       </div>
     </div>
   );

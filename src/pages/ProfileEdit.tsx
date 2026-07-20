@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { User, Mail, Phone, Globe, Save, Upload, Palette, UserCircle } from "lucide-react";
+import { User, Mail, Save, Upload, Palette, UserCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import { useAuth } from "../context/AuthContext";
 import LocationPicker from "../components/modals/LocationPicker";
 import axiosInstance from "../types/axiosInstance";
-import { main } from "framer-motion/client";
-import HobbySelector from "../components/profile-setup/HobbySelector";
-import HobbySelectEditProfile from "../components/modals/HobbySelectEditProfile";
 import HobbySelectEditProfileModal from "../components/modals/HobbySelectEditProfile";
-import { StatusModal } from "../components/ui/StatusModal";
 import { useModal } from "../context/ModalContext";
 
 const ProfileEdit: React.FC = () => {
@@ -18,18 +15,15 @@ const ProfileEdit: React.FC = () => {
     fullName: "",
     userName: "",
     email: "",
-    // phone: "",
     bio: "",
     mainHobby: "",
     location: "",
-    // profilePicture: "",
     lat: "",
     lon: "",
   });
 
   const [previewImage, setPreviewImage] = useState("/default-avatar.png");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
 
   // initial username loaded from server when the form mounts
   const [originalUsername, setOriginalUsername] = useState("");
@@ -56,9 +50,8 @@ const ProfileEdit: React.FC = () => {
         bio: user.bio || "",
         mainHobby: user.mainHobby || "",
         location: user.location || "",
-        lat: user.lat,
-        lon: user.lan,
-        // profilePicture: user.profilePicture || "/default-avatar.png",
+        lat: "",
+        lon: "",
       });
 
       setOriginalUsername(user.username || "");
@@ -177,7 +170,18 @@ const ProfileEdit: React.FC = () => {
       // }
 
       // Update the rest of profile
-      const response = await axiosInstance.put("/api/users/profile", profileData);
+      const payload: Record<string, unknown> = {
+        fullName: profileData.fullName,
+        userName: profileData.userName,
+        bio: profileData.bio,
+        location: profileData.location,
+        mainHobby: profileData.mainHobby,
+      };
+      if (profileData.lat && profileData.lon) {
+        payload.lat = Number(profileData.lat);
+        payload.lon = Number(profileData.lon);
+      }
+      await axiosInstance.put("/api/users/profile", payload);
       showSuccess("Profile Updated!", "Your profile has been successfully updated.");
 
     } catch (error) {
@@ -193,18 +197,23 @@ const ProfileEdit: React.FC = () => {
       {/* Navbar */}
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 sm:py-12">
         {/* Avatar Upload */}
-        <div className="flex flex-col items-center mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center mb-8"
+        >
           <div className="relative">
             <img
               src={previewImage}
               alt="Avatar"
-              className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-lg"
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-white shadow-lg"
             />
             <label
               htmlFor="avatarUpload"
-              className="absolute bottom-0 right-0 bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-full shadow-md cursor-pointer transition"
+              className="absolute bottom-0 right-0 bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-full shadow-md cursor-pointer transition hover:scale-110 active:scale-95"
             >
               <Upload className="w-4 h-4" />
               <input
@@ -219,10 +228,15 @@ const ProfileEdit: React.FC = () => {
           <h2 className="mt-3 text-lg font-semibold text-gray-800">
             {profileData.fullName}
           </h2>
-        </div>
+        </motion.div>
 
         {/* Form Fields */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg space-y-5 border border-sky-100">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg space-y-5 border border-sky-100"
+        >
           {/* Full Name */}
           <div>
             <label className="block text-gray-700 text-sm mb-1">Full Name</label>
@@ -281,34 +295,17 @@ const ProfileEdit: React.FC = () => {
           </div>
 
 
-          {/* Email */}
+          {/* Email (read-only — not editable via this endpoint) */}
           <div>
             <label className="block text-gray-700 text-sm mb-1">Email</label>
-            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
-              <Mail className="text-sky-500 w-5 h-5 mr-2" />
+            <div className="flex items-center border-2 border-gray-200 rounded-lg p-2 bg-gray-100 shadow-sm">
+              <Mail className="text-gray-400 w-5 h-5 mr-2" />
               <input
                 type="email"
                 name="email"
                 value={profileData.email}
-                onChange={handleInputChange}
-                className="w-full bg-transparent outline-none"
-                placeholder="Enter your email"
-              />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-gray-700 text-sm mb-1">Phone</label>
-            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
-              <Phone className="text-sky-500 w-5 h-5 mr-2" />
-              <input
-                type="tel"
-                name="phone"
-                value={profileData.phone}
-                onChange={handleInputChange}
-                className="w-full bg-transparent outline-none"
-                placeholder="Enter your phone number"
+                disabled
+                className="w-full bg-transparent outline-none text-gray-500 cursor-not-allowed"
               />
             </div>
           </div>
@@ -365,15 +362,17 @@ const ProfileEdit: React.FC = () => {
 
           {/* Save Button */}
           <div className="flex justify-end">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleSave}
               className="flex items-center bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg shadow-md transition-all"
             >
               <Save className="w-4 h-4 mr-2" />
               Save Changes
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

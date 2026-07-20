@@ -1,6 +1,17 @@
 import React, { useState } from "react";
-import { Bell, Lock, User, Shield, LogOut, Palette, HelpCircle } from "lucide-react";
+import { Bell, Lock, User, Shield, LogOut, Palette, HelpCircle, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, delay: i * 0.08 },
+  }),
+};
 
 const Settings: React.FC = () => {
   const [notifications, setNotifications] = useState(true);
@@ -12,12 +23,24 @@ const Settings: React.FC = () => {
       {/* ✅ HobbySphere Navbar */}
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">⚙️ Settings</h1>
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 sm:py-10">
+        <motion.h1
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl font-bold text-gray-800 mb-6"
+        >
+          ⚙️ Settings
+        </motion.h1>
 
         <div className="space-y-6">
           {/* Account Section */}
-          <div className="bg-white rounded-2xl shadow-lg border border-sky-100 p-5">
+          <motion.div
+            custom={0}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+            className="bg-white rounded-2xl shadow-lg border border-sky-100 p-4 sm:p-5 hover:shadow-xl transition-shadow duration-300"
+          >
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Account</h2>
 
             {/* Profile */}
@@ -56,10 +79,16 @@ const Settings: React.FC = () => {
                 </div>
               </label>
             </div>
-          </div>
+          </motion.div>
 
           {/* Notifications Section */}
-          <div className="bg-white rounded-2xl shadow-lg border border-sky-100 p-5">
+          <motion.div
+            custom={1}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+            className="bg-white rounded-2xl shadow-lg border border-sky-100 p-4 sm:p-5 hover:shadow-xl transition-shadow duration-300"
+          >
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Notifications</h2>
 
             <div className="flex items-center justify-between py-3 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition">
@@ -88,10 +117,16 @@ const Settings: React.FC = () => {
                 </div>
               </label>
             </div>
-          </div>
+          </motion.div>
 
           {/* Appearance Section */}
-          <div className="bg-white rounded-2xl shadow-lg border border-sky-100 p-5">
+          <motion.div
+            custom={2}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+            className="bg-white rounded-2xl shadow-lg border border-sky-100 p-4 sm:p-5 hover:shadow-xl transition-shadow duration-300"
+          >
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Appearance</h2>
 
             <div className="flex items-center justify-between py-3 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition">
@@ -120,10 +155,16 @@ const Settings: React.FC = () => {
                 </div>
               </label>
             </div>
-          </div>
+          </motion.div>
 
           {/* Security Section */}
-          <div className="bg-white rounded-2xl shadow-lg border border-sky-100 p-5">
+          <motion.div
+            custom={3}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+            className="bg-white rounded-2xl shadow-lg border border-sky-100 p-4 sm:p-5 hover:shadow-xl transition-shadow duration-300"
+          >
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Security</h2>
 
             <div className="flex items-center justify-between py-3 border-b border-gray-100 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition">
@@ -134,22 +175,41 @@ const Settings: React.FC = () => {
               <button className="text-sky-600 hover:underline text-sm">Manage</button>
             </div>
 
-            <div className="flex items-center justify-between py-3 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition">
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition">
               <div className="flex items-center">
                 <HelpCircle className="text-sky-500 w-5 h-5 mr-3" />
                 <span className="text-gray-700">Help & Support</span>
               </div>
               <button className="text-sky-600 hover:underline text-sm">Visit</button>
             </div>
-          </div>
+
+            <Link
+              to="/privacy"
+              className="flex items-center justify-between py-3 hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50 rounded-xl px-2 transition"
+            >
+              <div className="flex items-center">
+                <FileText className="text-sky-500 w-5 h-5 mr-3" />
+                <span className="text-gray-700">Privacy Policy</span>
+              </div>
+              <span className="text-sky-600 hover:underline text-sm">View</span>
+            </Link>
+          </motion.div>
 
           {/* Logout */}
-          <div className="bg-white rounded-2xl shadow-lg border border-sky-100 p-5 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 transition">
+          <motion.div
+            custom={4}
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="bg-white rounded-2xl shadow-lg border border-sky-100 p-4 sm:p-5 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 transition"
+          >
             <button className="flex items-center text-red-500 font-semibold hover:text-red-600 transition w-full justify-center">
               <LogOut className="w-5 h-5 mr-2" />
               Logout
             </button>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

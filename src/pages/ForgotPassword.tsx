@@ -8,6 +8,7 @@ import Input from "../components/ui/Input";
 import logo_home from "../assets/logo_home.png";
 import axiosInstance from "../types/axiosInstance";
 import { useAuth } from "../context/AuthContext";
+import FloatingBlobs from "../components/ui/FloatingBlobs";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -39,12 +40,13 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <>
       <Navbar />
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-gradient-to-br from-sky-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-6">
+      <div className="relative overflow-hidden flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-gradient-to-br from-sky-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6">
+        <FloatingBlobs />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl shadow-xl max-w-md w-full p-8 border border-gray-200 dark:border-gray-700"
+          className="relative z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex flex-col items-center mb-6">
             <img src={logo_home} alt="Hobby Sphere" className="w-16 h-16 mb-3" />

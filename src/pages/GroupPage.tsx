@@ -39,17 +39,17 @@ const GroupPage: React.FC = () => {
       navigate("/GroupsPage");
       return;
     }
-    console.log("Fetching group with ID:", groupId);
     setLoading(true);
     setError(null);
     fetchGroupById(groupId)
       .then((data) => {
-        console.log("Group data fetched:", data);
-        // expected response: { group: {...}, role: 'admin' | 'member' | 'guest' }
-        if (data) setGroup(data);
-        if (data?.currentUserRole) setRole(data.currentUserRole);
-
-        console.log("User role in group:", role, group);
+        // Response shape isn't documented by the backend — handle both a
+        // wrapped { group, role } response and a flat group DTO with the
+        // role inlined on it.
+        const groupData = data?.group ?? data;
+        const roleData = data?.role ?? data?.currentUserRole ?? null;
+        if (groupData) setGroup(groupData);
+        setRole(roleData);
       })
       .catch((err) => {
         console.error("Failed to load group:", err);
@@ -62,7 +62,7 @@ const GroupPage: React.FC = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 p-4">
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 pt-20 md:pt-4 p-4">
           <div className="max-w-5xl mx-auto">
             {/* Loading skeletons */}
             <div className="animate-pulse bg-white rounded-2xl p-6 border border-sky-100">
@@ -80,7 +80,7 @@ const GroupPage: React.FC = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 pt-24 md:pt-6 p-6">
           <div className="max-w-3xl mx-auto bg-white rounded-lg p-6 shadow">
             <h3 className="text-lg font-semibold text-gray-800">Error</h3>
             <p className="text-gray-600 mt-2">{error}</p>
@@ -101,8 +101,8 @@ const GroupPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 pb-10">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-200 pb-24 md:pb-10">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-16 md:pt-0">
           {/* Hero */}
           <Hero group={group} role={role} />
 

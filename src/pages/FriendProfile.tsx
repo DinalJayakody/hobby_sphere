@@ -1,120 +1,32 @@
 // src/pages/FriendProfile.tsx
 import React, { useEffect, useState } from "react";
-// import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import Button from "../components/ui/Button";
 import { Grid, Bookmark, Tag, MessageCircle, Heart, UserPlus, Send } from "lucide-react";
-import { useData } from "../context/DataContext";
 import LoadingScreen from "../components/ui/LoadingScreen";
-import axiosInstance from "../types/axiosInstance";
-import Chanuka from "../assets/Chanuka.jpg";
-import Prashan from "../assets/Prashan.jpg";
-import Dinal from "../assets/Dinal.jpg";
-import Maniya from "../assets/Maniya.jpg";
-import Kavindu from "../assets/Kavindu.jpg";
-import Tharinda from "../assets/Tharinda.jpg";
-import Prabs from "../assets/Prabs.jpg";
+import * as usersApi from "../api/users";
+import * as postsApi from "../api/posts";
 
-type FriendUser = {
-    id: string | number;
-    fullName: string;
-    username: string;
-    bio?: string;
-    profilePicture?: string; // base64
-    imageUrl?: string;       // optional URL alternative
-    location?: string;
-    mainHobby?: string;
-    followersCount?: number;
-    followingCount?: number;
-    following?: boolean;
-    posts?: number;
-    postsNo?: number;
-};
+const toBase64Image = (raw?: string | null) =>
+  raw ? (raw.startsWith('data:') || raw.startsWith('http') ? raw : `data:image/png;base64,${raw}`) : '';
 
 const FriendProfile: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { posts } = useData();
 
-    // For Pop up for followers and following
-    const [showFollowers, setShowFollowers] = useState(false);
     const [showFollowing, setShowFollowing] = useState(false);
-    const [followersList, setFollowersList] = useState<any[]>([
-        {
-      id: 1,
-      fullName: "Tharinda Withanage",
-      username: "tharinda_withanage",
-      avatarUrl: Tharinda,
-    },
-    {
-      id: 2,
-      fullName: "Chanuka Nuwankalpa",
-      username: "chanuka_nuwankalpa",
-      avatarUrl: Chanuka,
-    },
-    {
-      id: 3,
-      fullName: "Prabuddha Rathnayaka",
-      username: "prabuddha_rathnayaka",
-      avatarUrl: Prabs,
-    },
-    {
-      id: 4,
-      fullName: "Prashan Thilakawardana",
-      username: "prashan_thilakawaradana",
-      avatarUrl: Prashan,
-    },
-    {
-      id: 5,
-      fullName: "Dinal Jayakody",
-      username: "dinal_jayakody",
-      avatarUrl: Dinal,
-    },
-    {
-      id: 6,
-      fullName: "Kavindu Rathnayaka",
-      username: "kavindu_rathnayaka",
-      avatarUrl: Kavindu,
-    },
-    ]);
-    const [followingList, setFollowingList] = useState<any[]>([
-        {
-            id: 1,
-            fullName: "John Doe",
-            username: "johndoe",
-            avatarUrl: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-        },
-        {
-            id: 2,
-            fullName: "Jane Smith",
-            username: "janesmith",
-            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
-        },
-        {
-            id: 3,
-            fullName: "Alex Johnson",
-            username: "alexj",
-            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
-        },
-         {
-            id: 2,
-            fullName: "Shane Smith",
-            username: "shanesmith",
-            avatarUrl: "https://images.pexels.com/photos/3775131/pexels-photo-3775131.jpeg",
-        },
-        {
-            id: 3,
-            fullName: "William Brown",
-            username: "williamb",
-            avatarUrl: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg",
-        },
-    ]);
+    const [followingList, setFollowingList] = useState<usersApi.UserDto[]>([]);
+    const [followingLoading, setFollowingLoading] = useState(false);
 
-    const [friend, setFriend] = useState<FriendUser | null>(null);
+    const [friend, setFriend] = useState<usersApi.UserDto | null>(null);
+    const [friendPosts, setFriendPosts] = useState<postsApi.PostDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [postsLoading, setPostsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"posts" | "saved" | "tagged">("posts");
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followBusy, setFollowBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Fetch friend profile by id
@@ -126,38 +38,10 @@ const FriendProfile: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await axiosInstance.get(`/api/users/${id}`
-                    //   `http://16.170.26.131:8080/api/users/${id}`,
-                );
-
-                const data = res.data?.data ?? res.data;
-
+                const res = await usersApi.getUserById(id!);
                 if (!cancelled) {
-                    setFriend({
-                        id: data.id,
-                        fullName: data.fullName,
-                        username: data.username,
-                        bio: data.bio,
-                        profilePicture: data.profilePicture, // base64 expected
-                        imageUrl: data.imageUrl,
-                        location: data.location,
-                        mainHobby: data.mainHobby,
-                        followersCount: data.followersCount,
-                        followingCount: data.followingCount,
-                        following: data.following,
-                        posts: data.posts,
-                        postsNo: data.totalElements,
-
-                    });
-                    console.log("Friend data:", data);
-
-                    if (data.following === true) {
-                        setIsFollowing(true);
-                    } else {
-                        setIsFollowing(false);
-                    }
-                    // setIsFollowing(true);
-                    // setFollowersList(data || []);
+                    setFriend(res.data);
+                    setIsFollowing(!!res.data.following);
                 }
             } catch (e: any) {
                 if (!cancelled) {
@@ -172,37 +56,65 @@ const FriendProfile: React.FC = () => {
         return () => { cancelled = true; };
     }, [id]);
 
-    const handleFollowToggle = async () => {
-        try {
-            // setLoading(true);
-            if (!isFollowing) {
-                // 👉 Follow API
-                await axiosInstance.post(`/api/users/${id}/follow`);
-                setIsFollowing(true);
-            } else {
-                // 👉 Unfollow API (assuming your backend has it)
-                await axiosInstance.post(`/api/users/${id}/unfollow`);
-                setIsFollowing(false);
+    // Fetch this user's real posts (not the viewer's own feed cache)
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadPosts() {
+            if (!id) return;
+            setPostsLoading(true);
+            try {
+                const res = await postsApi.getPostsByUser(id, 0, 30);
+                if (!cancelled) setFriendPosts(res.data.content);
+            } catch (e) {
+                console.error("Failed to load user posts:", e);
+            } finally {
+                if (!cancelled) setPostsLoading(false);
             }
+        }
 
+        loadPosts();
+        return () => { cancelled = true; };
+    }, [id]);
 
+    const handleFollowToggle = async () => {
+        if (!id || followBusy) return;
+        setFollowBusy(true);
+        try {
+            if (!isFollowing) {
+                await usersApi.followUser(id);
+                setIsFollowing(true);
+                setFriend((prev) => prev ? { ...prev, followersCount: prev.followersCount + 1 } : prev);
+            } else {
+                await usersApi.unfollowUser(id);
+                setIsFollowing(false);
+                setFriend((prev) => prev ? { ...prev, followersCount: Math.max(0, prev.followersCount - 1) } : prev);
+            }
         } catch (error) {
             console.error("Error updating follow status:", error);
         } finally {
-            setLoading(false);
+            setFollowBusy(false);
         }
     };
 
-    // Filter posts from your context (if you already have them client-side)
-    const friendPosts = posts.filter((p) => String(p.userId) === String(friend?.id));
+    const openFollowing = async () => {
+        setShowFollowing(true);
+        if (!id || followingList.length > 0) return;
+        setFollowingLoading(true);
+        try {
+            const res = await usersApi.getUserFollowing(id);
+            setFollowingList(res.data.data || []);
+        } catch (e) {
+            console.error("Failed to load following list:", e);
+        } finally {
+            setFollowingLoading(false);
+        }
+    };
 
-    const imageSrc =
-        friend?.profilePicture
-            ? `data:image/png;base64,${friend.profilePicture}`
-            : friend?.imageUrl || "/default-avatar.png";
+    const imageSrc = toBase64Image(friend?.profilePicture) || "/default-avatar.png";
 
     if (loading) {
-        return <LoadingScreen />;  // 👈 Show full loading screen
+        return <LoadingScreen />;
     }
 
     if (error || !friend) {
@@ -222,19 +134,24 @@ const FriendProfile: React.FC = () => {
         <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
             <Navbar />
 
-            <div className="max-w-4xl mx-auto px-4 pt-16 pb-20 md:pt-20 md:pb-6">
+            <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-16 pb-20 md:pt-20 md:pb-6">
                 {/* Header */}
-                <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="bg-white rounded-2xl shadow-md overflow-hidden mb-6"
+                >
                     {/* fun cover */}
-                    <div className="h-44 bg-gradient-to-r from-sky-400 via-pink-300 to-purple-400 animate-[pulse_6s_ease-in-out_infinite]" />
+                    <div className="h-28 sm:h-44 bg-gradient-to-r from-sky-400 via-pink-300 to-purple-400 animate-[pulse_6s_ease-in-out_infinite]" />
 
-                    <div className="px-6 py-4 flex flex-col md:flex-row">
+                    <div className="px-4 sm:px-6 py-4 flex flex-col md:flex-row">
                         {/* Avatar */}
-                        <div className="flex-shrink-0 -mt-16 md:-mt-20 mb-4 md:mb-0 relative z-10">
+                        <div className="flex-shrink-0 -mt-12 sm:-mt-16 md:-mt-20 mb-4 md:mb-0 relative z-10">
                             <img
                                 src={imageSrc}
                                 alt={friend.fullName}
-                                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover shadow-lg"
+                                className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full border-4 border-white object-cover shadow-lg"
                             />
                         </div>
 
@@ -251,7 +168,7 @@ const FriendProfile: React.FC = () => {
                                         variant={isFollowing ? "outline" : "primary"}
                                         size="sm"
                                         onClick={handleFollowToggle}
-                                        disabled={loading}
+                                        disabled={followBusy}
                                     >
                                         <UserPlus className="w-4 h-4 mr-1" />
                                         {isFollowing ? "Following" : "Follow"}
@@ -270,32 +187,28 @@ const FriendProfile: React.FC = () => {
                                 <span className="font-bold">Bio:</span> {friend.bio || "—"}
                             </p>
 
-                            <div className="flex gap-x-10 mb-4">
-                                <p className="text-gray-700">📍 {friend.location || "Panadura"}</p>
-                                <p className="text-gray-700">🎯 {friend.mainHobby || "Music"}</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4">
+                                {friend.location && <p className="text-gray-700">📍 {friend.location}</p>}
+                                {friend.mainHobby && <p className="text-gray-700">🎯 {friend.mainHobby}</p>}
                             </div>
 
                             {/* Stats */}
                             <div className="flex flex-wrap justify-between mb-2">
-                                {/* Posts */}
                                 <div className="mr-6 mb-2">
-                                    <span className="font-semibold text-gray-900">{friend.postsNo ?? 2}</span>{" "}
+                                    <span className="font-semibold text-gray-900">{friendPosts.length}</span>{" "}
                                     <span className="text-gray-600">Posts</span>
                                 </div>
 
-                                {/* Followers Button */}
-                                <button
-                                    className="mr-6 mb-2 text-left"
-                                    onClick={() => setShowFollowers(true)}
-                                >
+                                {/* Followers — the backend only exposes the current user's own follower
+                                    list, not another user's, so this is a plain count, not a clickable modal */}
+                                <div className="mr-6 mb-2">
                                     <span className="font-semibold text-gray-900">{friend.followersCount ?? 0}</span>{" "}
                                     <span className="text-gray-600">Followers</span>
-                                </button>
+                                </div>
 
-                                {/* Following Button */}
                                 <button
                                     className="mb-2 text-left"
-                                    onClick={() => setShowFollowing(true)}
+                                    onClick={openFollowing}
                                 >
                                     <span className="font-semibold text-gray-900">{friend.followingCount ?? 0}</span>{" "}
                                     <span className="text-gray-600">Following</span>
@@ -334,27 +247,33 @@ const FriendProfile: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Posts */}
                 {activeTab === "posts" && (
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {friendPosts.length === 0 ? (
-                            <div className="col-span-3 bg-white rounded-lg shadow-md p-8 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+                        {postsLoading ? (
+                            <div className="col-span-2 md:col-span-3 text-center text-gray-400 py-8 animate-pulse">Loading posts...</div>
+                        ) : friendPosts.length === 0 ? (
+                            <div className="col-span-2 md:col-span-3 bg-white rounded-lg shadow-md p-8 text-center">
                                 <span className="text-6xl">🤷‍♂️</span>
                                 <h3 className="text-lg font-semibold mt-4">No Posts Yet</h3>
                                 <p className="text-gray-500">This user hasn’t shared any posts yet.</p>
                             </div>
                         ) : (
-                            friendPosts.map((post) => (
-                                <div
+                            friendPosts.map((post, index) => (
+                                <motion.div
                                     key={post.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.04 }}
                                     className="aspect-square overflow-hidden bg-gray-100 relative group rounded-lg shadow hover:shadow-lg transition"
                                 >
-                                    {post.images && post.images.length > 0 ? (
+                                    {post.imageUrls && post.imageUrls.length > 0 ? (
                                         <img
-                                            src={`data:image/png;base64,${post.images}`}
+                                            src={toBase64Image(post.imageUrls[0])}
                                             alt="Post"
+                                            loading="lazy"
                                             className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                         />
                                     ) : (
@@ -367,15 +286,15 @@ const FriendProfile: React.FC = () => {
                                         <div className="flex space-x-4 text-white">
                                             <div className="flex items-center">
                                                 <Heart className="w-6 h-6 mr-2" />
-                                                <span>{post.likes}</span>
+                                                <span>{post.likesCount}</span>
                                             </div>
                                             <div className="flex items-center">
                                                 <MessageCircle className="w-6 h-6 mr-2" />
-                                                <span>{post.comments}</span>
+                                                <span>{post.commentsCount}</span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))
                         )}
                     </div>
@@ -394,76 +313,6 @@ const FriendProfile: React.FC = () => {
                         <Tag className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                         <h3 className="text-lg font-semibold mb-2">No Tagged Posts</h3>
                         <p className="text-gray-500">Tagged posts will appear here.</p>
-                    </div>
-                )}
-
-                {/* Followers Modal */}
-                {showFollowers && (
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-                        onClick={() => setShowFollowers(false)}
-                    >
-                        <div
-                            className="bg-white rounded-lg w-80 max-h-[80vh] overflow-y-auto p-4"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
-                                Followers
-                                <button
-                                    className="text-gray-500 text-xl font-bold"
-                                    onClick={() => setShowFollowers(false)}
-                                >
-                                    ×
-                                </button>
-                            </h3>
-                            {followersList.length === 0 ? (
-                                <p className="text-gray-500 text-center">No followers yet</p>
-                            ) : (
-                                followersList.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        className="flex items-center justify-between mb-3 hover:bg-sky-50 rounded-lg p-2"
-                                    >
-                                        {/* Left side: Clickable profile */}
-                                        <div
-                                            className="flex items-center space-x-3 cursor-pointer"
-                                            onClick={() => navigate(`/FriendProfile/${user.id}`)}
-                                        >
-                                            <img
-                                                src={
-                                                    user.profilePicture
-                                                        ? `data:image/png;base64,${user.profilePicture}`
-                                                        : user.avatarUrl || "/default-avatar.png"
-                                                }
-                                                alt={user.username}
-                                                className="w-10 h-10 rounded-full object-cover"
-                                            />
-                                            <div>
-                                                <div className="font-semibold text-gray-900">
-                                                    {user.fullName || "No Name"}
-                                                </div>
-                                                <div className="text-sm text-gray-500">@{user.username}</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Right side: Follow / Unfollow button */}
-                                        <button
-                                            onClick={() =>
-                                                user.isFollowing
-                                                    ? handleUnfollow(user.id)
-                                                    : handleFollow(user.id)
-                                            }
-                                            className={`px-3 py-1 rounded-lg text-sm ${user.isFollowing
-                                                    ? "bg-red-500 text-white hover:bg-red-600"
-                                                    : "bg-sky-500 text-white hover:bg-sky-600"
-                                                }`}
-                                        >
-                                            {user.isFollowing ? "Unfollow" : "Follow"}
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
                     </div>
                 )}
 
@@ -486,50 +335,35 @@ const FriendProfile: React.FC = () => {
                                     ×
                                 </button>
                             </h3>
-                            {followingList.length === 0 ? (
+                            {followingLoading ? (
+                                <p className="text-gray-400 text-center animate-pulse">Loading...</p>
+                            ) : followingList.length === 0 ? (
                                 <p className="text-gray-500 text-center">Not following anyone yet</p>
                             ) : (
-                                followingList.map((user) => (
+                                followingList.map((u) => (
                                     <div
-                                        key={user.id}
+                                        key={u.id}
                                         className="flex items-center justify-between mb-3 hover:bg-sky-50 rounded-lg p-2"
                                     >
-                                        {/* Left side: Clickable profile */}
                                         <div
                                             className="flex items-center space-x-3 cursor-pointer"
-                                            onClick={() => navigate(`/FriendProfile/${user.id}`)}
+                                            onClick={() => {
+                                                setShowFollowing(false);
+                                                navigate(`/FriendProfile/${u.id}`);
+                                            }}
                                         >
                                             <img
-                                                src={
-                                                    user.profilePicture
-                                                        ? `data:image/png;base64,${user.profilePicture}`
-                                                        : user.avatarUrl || "/default-avatar.png"
-                                                }
-                                                alt={user.username}
+                                                src={toBase64Image(u.profilePicture) || "/default-avatar.png"}
+                                                alt={u.username}
                                                 className="w-10 h-10 rounded-full object-cover"
                                             />
                                             <div>
                                                 <div className="font-semibold text-gray-900">
-                                                    {user.fullName || "No Name"}
+                                                    {u.fullName || "No Name"}
                                                 </div>
-                                                <div className="text-sm text-gray-500">@{user.username}</div>
+                                                <div className="text-sm text-gray-500">@{u.username}</div>
                                             </div>
                                         </div>
-
-                                        {/* Right side: Follow / Unfollow button */}
-                                        <button
-                                            onClick={() =>
-                                                user.isFollowing
-                                                    ? handleUnfollow(user.id)
-                                                    : handleFollow(user.id)
-                                            }
-                                            className={`px-3 py-1 rounded-lg text-sm ${user.isFollowing
-                                                    ? "bg-red-500 text-white hover:bg-red-600"
-                                                    : "bg-sky-500 text-white hover:bg-sky-600"
-                                                }`}
-                                        >
-                                            {user.isFollowing ? "Unfollow" : "Follow"}
-                                        </button>
                                     </div>
                                 ))
                             )}
@@ -539,12 +373,7 @@ const FriendProfile: React.FC = () => {
 
             </div>
         </div>
-
-
     );
 };
-
-
-
 
 export default FriendProfile;

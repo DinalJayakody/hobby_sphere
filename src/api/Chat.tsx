@@ -12,6 +12,12 @@ export const openDirectConversation = async (userId: number) => {
   return res.data;
 };
 
+// 2b. Create a group conversation
+export const createGroupConversation = async (payload: { groupName: string; participantIds: number[] }) => {
+  const res = await axiosInstance.post(`/api/conversations/group`, payload);
+  return res.data;
+};
+
 // 3. Get messages
 export const getMessages = async (convId: number, before?: number) => {
   const url = before

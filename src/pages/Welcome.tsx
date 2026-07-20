@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Button from '../components/ui/Button';
 import logo from '../assets/HS_logo.png';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import FloatingBlobs from '../components/ui/FloatingBlobs';
 
 const Welcome: React.FC = () => {
 
@@ -103,17 +105,17 @@ const Welcome: React.FC = () => {
       </div>
 
       {/* Right Grid - Auth Forms (1/3) */}
-      <div className="w-full lg:w-1/3 flex items-center justify-center p-8 bg-gradient-to-br from-navy-50 to-sky-400">
-        <div className="w-full max-w-md animate-fade-in" style={{ animationDelay: '0.7s' }}>
-          <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 space-y-8 transform hover:scale-[1.02] transition-transform duration-300 animate-pulse-glow">
-            {/* <div className="text-center">  Commented by DJ
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-600 to-sky-500 bg-clip-text text-transparent mb-3">
-                Welcome to Hobby Sphere
-              </h2>
-              <p className="text-gray-600 text-lg">Join our community of passionate hobbyists</p>
-            </div> */}
+      <div className="relative w-full lg:w-1/3 flex items-center justify-center px-4 py-10 sm:p-8 bg-gradient-to-br from-navy-50 to-sky-400 overflow-hidden">
+        <FloatingBlobs />
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div className="bg-sky-100/30 backdrop-blur-sm rounded-3xl shadow-2xl p-6 sm:p-8 space-y-8 transform hover:scale-[1.01] transition-transform duration-300 animate-pulse-glow">
             <div className="flex items-center justify-center mb-4">
-              <img src={logo} alt="Logo" className="center h-40 w-auto animate-bounce-slow" />
+              <img src={logo} alt="Logo" className="center h-28 sm:h-40 w-auto animate-bounce-slow" />
             </div>
 
 
@@ -189,7 +191,7 @@ const Welcome: React.FC = () => {
 
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

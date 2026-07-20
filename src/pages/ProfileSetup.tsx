@@ -141,11 +141,11 @@ const ProfileSetup: React.FC = () => {
         className="w-full max-w-4xl bg-white/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/30 relative"
       >
         {/* Animated character in top corner */}
-        <div className="absolute top-6 right-6 z-10">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 scale-75 sm:scale-100 origin-top-right">
           <AnimatedCharacter step={currentStep} />
         </div>
 
-        <div className="p-8 md:p-12">
+        <div className="p-5 sm:p-8 md:p-12">
           {/* Header with animated title */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -158,7 +158,7 @@ const ProfileSetup: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-4xl font-bold text-slate-800 mb-3 bg-gradient-to-r from-slate-800 to-blue-700 bg-clip-text text-transparent"
+              className="text-2xl sm:text-4xl font-bold text-slate-800 mb-3 bg-gradient-to-r from-slate-800 to-blue-700 bg-clip-text text-transparent"
             >
               {getStepTitle()}
             </motion.h1>
