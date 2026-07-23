@@ -36,6 +36,14 @@ const PrivacyPolicy: React.FC = () => {
               </div>
             ))}
           </div>
+
+          <p className="text-gray-500 text-xs mt-8 pt-6 border-t border-gray-200">
+            For information on how we protect minors on HobbySphere, see our{' '}
+            <Link to="/child-safety" className="text-sky-600 hover:underline">
+              Child Safety Standards
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </div>

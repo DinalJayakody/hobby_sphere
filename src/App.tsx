@@ -29,6 +29,7 @@ const RegisterSuccess = lazy(() => import('./pages/RegisterSuccess'));
 const GroupPage = lazy(() => import('./pages/GroupPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const ChildSafety = lazy(() => import('./pages/ChildSafety'));
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { isAuthenticated, loadingUser, user } = useAuth();
@@ -90,6 +91,8 @@ const AppRoutes: React.FC = () => {
       <Routes>
         {/* Apple/Google submissions require the exact URL hobbysphereai.com/privacy */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        {/* Apple/Google submissions require the exact URL hobbysphereai.com/child-safety */}
+        <Route path="/child-safety" element={<ChildSafety />} />
         <Route path="/welcome" element={<AuthRoute element={<Welcome />} />} />
         <Route path="/login" element={<AuthRoute element={<Login />} />} />
         <Route path="/register" element={<AuthRoute element={<Register />} />} />
