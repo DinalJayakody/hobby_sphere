@@ -154,8 +154,62 @@ export const createGroup = (
   return axiosInstance.post<any>('/api/groups/create', formData);
 };
 
+export interface JoinGroupResponseDto {
+  groupId: number;
+  /** "JOINED" — public group, membership granted immediately.
+   *  "PENDING_APPROVAL" — private group, awaiting admin review. */
+  status: 'JOINED' | 'PENDING_APPROVAL';
+}
+
 export const joinGroup = (groupId: number | string) =>
-  axiosInstance.post<any>(`/api/groups/joinGroup/${groupId}`);
+  axiosInstance.post<ApiResponse<JoinGroupResponseDto>>(`/api/groups/joinGroup/${groupId}`);
 
 export const leaveGroup = (groupId: number | string) =>
   axiosInstance.post<any>(`/api/groups/leaveGroup/${groupId}`);
+
+export interface JoinRequestDto {
+  requestId: number;
+  userId: number;
+  username: string;
+  fullName: string;
+  requestedAt: string;
+}
+
+// Admin-only. There is no "list all members" endpoint on the backend, so
+// this pending-requests view is the closest thing to member management the
+// API actually supports today.
+export const getPendingJoinRequests = (groupId: number | string, page = 0, size = 20) =>
+  axiosInstance.get<ApiResponse<JoinRequestDto[]>>(`/api/groups/${groupId}/join-requests`, {
+    params: { page, size },
+  });
+
+export const approveJoinRequest = (groupId: number | string, requestId: number | string) =>
+  axiosInstance.post<ApiResponse<void>>(`/api/groups/${groupId}/join-requests/${requestId}/approve`);
+
+export const rejectJoinRequest = (groupId: number | string, requestId: number | string) =>
+  axiosInstance.post<ApiResponse<void>>(`/api/groups/${groupId}/join-requests/${requestId}/reject`);
+
+export const getGroupsJoined = (page = 0, size = 20) =>
+  axiosInstance.get<ApiResponse<UserManagedGroupDto[]>>('/api/groups/joined', { params: { page, size } });
+
+export const deleteGroup = (groupId: number | string) =>
+  axiosInstance.delete<void>(`/api/groups/${groupId}`);
+
+// ---- Block / Unblock ----
+
+export interface BlockedUserDto {
+  id: number;
+  username: string;
+  fullName: string;
+  profilePicture: string | null;
+  blockedAt: string;
+}
+
+export const blockUser = (userId: number | string) =>
+  axiosInstance.post<ApiResponse<BlockedUserDto>>(`/api/users/${userId}/block`);
+
+export const unblockUser = (userId: number | string) =>
+  axiosInstance.delete<void>(`/api/users/${userId}/block`);
+
+export const getBlockedUsers = (page = 0, size = 20) =>
+  axiosInstance.get<ApiResponse<BlockedUserDto[]>>('/api/users/blocked', { params: { page, size } });

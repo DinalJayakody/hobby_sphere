@@ -3,6 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ModalProvider } from './context/ModalContext';
+import { ThemeProvider, useTheme, applyThemeClass } from './context/ThemeContext';
+import { PreferencesProvider } from './context/PreferencesContext';
+import { AccountSettingsProvider } from './context/AccountSettingsContext';
+import { ToastProvider } from './context/ToastContext';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 // Route-level code splitting — each page ships as its own chunk instead of
@@ -18,8 +22,10 @@ const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const FriendProfile = lazy(() => import('./pages/FriendProfile'));
 const FriendsPage = lazy(() => import('./pages/FriendsPage'));
-const Pages = lazy(() => import('./pages/Pages'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 const Settings = lazy(() => import('./pages/Settings'));
+const BlockedUsers = lazy(() => import('./pages/BlockedUsers'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const CreateGroup = lazy(() => import('./pages/CreateGroup'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -60,6 +66,34 @@ const AuthRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   return !isAuthenticated ? <>{element}</> : <Navigate to="/" />;
 };
 
+// Unknown URLs: logged-out users bounce to Welcome (unchanged); logged-in
+// users now see a real "not found" page instead of silently landing on Home.
+const RequireAuthOrRedirect: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loadingUser } = useAuth();
+
+  if (loadingUser) {
+    return <LoadingScreen />;
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/welcome" />;
+};
+
+// Keeps the <html class="dark"> toggle in sync with route changes — pages
+// shown before login (Welcome/Login/Register/etc.) always stay light, even
+// if the user left the app in dark mode last session, since React Router's
+// client-side navigation doesn't fire the popstate/storage events ThemeContext
+// alone can observe.
+const ThemeRouteSync: React.FC = () => {
+  const { theme } = useTheme();
+  const location = useLocation();
+
+  useEffect(() => {
+    applyThemeClass(theme, location.pathname);
+  }, [theme, location.pathname]);
+
+  return null;
+};
+
 const PageTransitionWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
 
@@ -87,6 +121,7 @@ const AppRoutes: React.FC = () => {
 
   return (
     <PageTransitionWrapper>
+      <ThemeRouteSync />
       <Suspense fallback={<LoadingScreen />}>
       <Routes>
         {/* Apple/Google submissions require the exact URL hobbysphereai.com/privacy */}
@@ -110,13 +145,21 @@ const AppRoutes: React.FC = () => {
         <Route path="/ProfileEdit" element={<ProtectedRoute element={<ProfileEdit />} />} />
         <Route path="/FriendProfile/:id" element={<ProtectedRoute element={<FriendProfile />} />} />
         <Route path="/FriendsPage" element={<ProtectedRoute element={<FriendsPage />} />} />
-        <Route path="/Pages" element={<ProtectedRoute element={<Pages />} />} />
+        <Route path="/post/:id" element={<ProtectedRoute element={<PostDetail />} />} />
         <Route path="/GroupsPage" element={<ProtectedRoute element={<GroupsPage />} />} />
         <Route path="/Group/:groupId" element={<ProtectedRoute element={<GroupPage />} />} />
         <Route path="/CreateGroup" element={<ProtectedRoute element={<CreateGroup />} />} />
         {/* <Route path="/ForgotPassword" element={<ProtectedRoute element={<ForgotPassword />} />} /> */}
         <Route path="/Settings" element={<ProtectedRoute element={<Settings />} />} />
-        <Route path="*" element={<Navigate to="/welcome" />} />
+        <Route path="/Settings/BlockedUsers" element={<ProtectedRoute element={<BlockedUsers />} />} />
+        <Route
+          path="*"
+          element={
+            <RequireAuthOrRedirect>
+              <NotFound />
+            </RequireAuthOrRedirect>
+          }
+        />
       </Routes>
       </Suspense>
     </PageTransitionWrapper>
@@ -125,15 +168,23 @@ const AppRoutes: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <ModalProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-        </ModalProvider>
-      </DataProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AccountSettingsProvider>
+            <PreferencesProvider>
+              <DataProvider>
+                <ModalProvider>
+                  <Router>
+                    <AppRoutes />
+                  </Router>
+                </ModalProvider>
+              </DataProvider>
+            </PreferencesProvider>
+          </AccountSettingsProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

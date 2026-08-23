@@ -42,3 +42,6 @@ export const markAllAsRead = (userId: number | string) =>
 
 export const deleteNotification = (notificationId: number | string) =>
   axiosInstance.delete(`/api/notifications/${notificationId}`);
+
+export const deleteAllNotifications = (userId: number | string) =>
+  axiosInstance.delete(`/api/notifications/user/${userId}/delete-all`);

@@ -62,6 +62,13 @@ export const createPost = (
 export const deletePost = (postId: number | string) =>
   axiosInstance.delete(`/api/post/${postId}`);
 
+// JSON body, not multipart — the backend endpoint can only update
+// content/privacy, not swap images.
+export const updatePost = (
+  postId: number | string,
+  payload: { userId: number; content: string; privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY' }
+) => axiosInstance.put<PostDto>(`/api/post/${postId}`, payload);
+
 export const likePost = (postId: number | string, userId: number | string) =>
   axiosInstance.post<PostDto>(`/api/post/${postId}/like`, null, { params: { userId } });
 

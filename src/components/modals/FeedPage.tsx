@@ -29,18 +29,18 @@ const FeedPage: React.FC<FeedPageProps> = ({
 
       <div className="w-full max-w-xl mt-6 mb-10 px-2">
 
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-surface/90 backdrop-blur-lg rounded-2xl shadow-soft-lg overflow-hidden">
 
 
           {/* Header */}
-          <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b p-3 flex items-center">
+          <div className="sticky top-0 bg-surface/80 backdrop-blur-md border-b border-border p-3 flex items-center">
             <button
               onClick={onClose}
-              className="mr-3 text-lg font-semibold hover:scale-110 transition"
+              className="mr-3 text-lg font-semibold text-ink hover:scale-110 transition"
             >
               ←
             </button>
-            <h2 className="font-semibold">{title}</h2>
+            <h2 className="font-semibold text-ink">{title}</h2>
           </div>
 
           {/* Feed */}

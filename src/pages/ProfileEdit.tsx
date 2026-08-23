@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { User, Mail, Save, Upload, Palette, UserCircle } from "lucide-react";
+import { User, Mail, Save, Lock, Palette, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +7,7 @@ import LocationPicker from "../components/modals/LocationPicker";
 import axiosInstance from "../types/axiosInstance";
 import HobbySelectEditProfileModal from "../components/modals/HobbySelectEditProfile";
 import { useModal } from "../context/ModalContext";
+import { resolveImageSrc } from "../utils/image";
 
 const ProfileEdit: React.FC = () => {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ const ProfileEdit: React.FC = () => {
     lon: "",
   });
 
-  const [previewImage, setPreviewImage] = useState("/default-avatar.png");
+  const [previewImage, setPreviewImage] = useState("/default-avatar.svg");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // initial username loaded from server when the form mounts
@@ -56,9 +57,7 @@ const ProfileEdit: React.FC = () => {
 
       setOriginalUsername(user.username || "");
 
-      const imageSrcedit = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "";
-
-      setPreviewImage(imageSrcedit || "/default-avatar.png");
+      setPreviewImage(resolveImageSrc(user?.profilePicture, "/default-avatar.svg"));
     }
   }, [user]);
 
@@ -137,14 +136,6 @@ const ProfileEdit: React.FC = () => {
     setProfileData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const fileUrl = URL.createObjectURL(e.target.files[0]);
-      setPreviewImage(fileUrl);
-      setProfileData((prev) => ({ ...prev, avatar: fileUrl }));
-    }
-  };
-
   const handleSave = async () => {
 
     if (usernameStatus === "taken") {
@@ -193,7 +184,7 @@ const ProfileEdit: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200 dark:from-navy-900 dark:to-surface">
       {/* Navbar */}
       <Navbar />
 
@@ -209,25 +200,19 @@ const ProfileEdit: React.FC = () => {
             <img
               src={previewImage}
               alt="Avatar"
-              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-white shadow-lg"
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-surface shadow-lg bg-surface-muted"
             />
-            <label
-              htmlFor="avatarUpload"
-              className="absolute bottom-0 right-0 bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-full shadow-md cursor-pointer transition hover:scale-110 active:scale-95"
+            <div
+              title="Photo updates are coming soon — this isn't wired up on the backend yet"
+              className="absolute bottom-0 right-0 bg-surface-muted text-ink-faint p-2 rounded-full shadow-md cursor-not-allowed border border-border"
             >
-              <Upload className="w-4 h-4" />
-              <input
-                id="avatarUpload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-            </label>
+              <Lock className="w-4 h-4" />
+            </div>
           </div>
-          <h2 className="mt-3 text-lg font-semibold text-gray-800">
+          <h2 className="mt-3 text-lg font-semibold text-ink">
             {profileData.fullName}
           </h2>
+          <p className="text-xs text-ink-faint mt-1">Photo updates are coming soon</p>
         </motion.div>
 
         {/* Form Fields */}
@@ -235,19 +220,19 @@ const ProfileEdit: React.FC = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg space-y-5 border border-sky-100"
+          className="bg-surface p-4 sm:p-6 rounded-2xl shadow-soft-lg space-y-5 border border-sky-100 dark:border-border"
         >
           {/* Full Name */}
           <div>
-            <label className="block text-gray-700 text-sm mb-1">Full Name</label>
-            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
+            <label className="block text-ink-muted text-sm mb-1">Full Name</label>
+            <div className="flex items-center border-2 border-sky-200 dark:border-border rounded-lg p-2 bg-sky-50 dark:bg-surface-muted shadow-sm">
               <User className="text-sky-500 w-5 h-5 mr-2" />
               <input
                 type="text"
                 name="fullName"
                 value={profileData.fullName}
                 onChange={handleInputChange}
-                className="w-full bg-transparent outline-none"
+                className="w-full bg-transparent text-ink placeholder:text-ink-faint outline-none"
                 placeholder="Enter your name"
               />
             </div>
@@ -255,19 +240,19 @@ const ProfileEdit: React.FC = () => {
 
           {/* User Name */}
           <div className="mb-4">
-            <label htmlFor="userName" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="userName" className="block text-sm font-medium text-ink-muted">
               Username
             </label>
-            <div className="flex items-center border-2 border-sky-200 rounded-lg p-2 bg-sky-50 shadow-sm">
+            <div className="flex items-center border-2 border-sky-200 dark:border-border rounded-lg p-2 bg-sky-50 dark:bg-surface-muted shadow-sm">
               <UserCircle className="text-sky-500 w-5 h-5 mr-2" />
-              <div className="mt-1 relative">
+              <div className="mt-1 relative flex-1">
                 <input
                   id="username"
                   name="userName"
                   type="text"
                   value={profileData.userName || ""}
-                  onChange={handleInputChange} // your existing handler
-                  className="w-full bg-transparent outline-none"
+                  onChange={handleInputChange}
+                  className="w-full bg-transparent text-ink placeholder:text-ink-faint outline-none"
                   aria-describedby="username-status"
                   aria-invalid={usernameStatus === "error" || usernameStatus === "taken"}
                 />
@@ -287,7 +272,7 @@ const ProfileEdit: React.FC = () => {
             {/* status message; aria-live so screen readers announce changes */}
             <p
               id="username-status"
-              className={`mt-2 text-[13px] ${usernameStatus === "available" ? "text-green-600" : usernameStatus === "taken" || usernameStatus === "error" ? "text-red-600" : "text-gray-500"}`}
+              className={`mt-2 text-[13px] ${usernameStatus === "available" ? "text-emerald-600 dark:text-emerald-400" : usernameStatus === "taken" || usernameStatus === "error" ? "text-coral-600 dark:text-coral-400" : "text-ink-faint"}`}
               aria-live="polite"
             >
               {usernameMessage}
@@ -297,28 +282,28 @@ const ProfileEdit: React.FC = () => {
 
           {/* Email (read-only — not editable via this endpoint) */}
           <div>
-            <label className="block text-gray-700 text-sm mb-1">Email</label>
-            <div className="flex items-center border-2 border-gray-200 rounded-lg p-2 bg-gray-100 shadow-sm">
-              <Mail className="text-gray-400 w-5 h-5 mr-2" />
+            <label className="block text-ink-muted text-sm mb-1">Email</label>
+            <div className="flex items-center border-2 border-border rounded-lg p-2 bg-surface-muted shadow-sm">
+              <Mail className="text-ink-faint w-5 h-5 mr-2" />
               <input
                 type="email"
                 name="email"
                 value={profileData.email}
                 disabled
-                className="w-full bg-transparent outline-none text-gray-500 cursor-not-allowed"
+                className="w-full bg-transparent outline-none text-ink-faint cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-gray-700 text-sm mb-1">Bio</label>
+            <label className="block text-ink-muted text-sm mb-1">Bio</label>
             <textarea
               name="bio"
               value={profileData.bio}
               onChange={handleInputChange}
               rows={4}
-              className="w-full border-2 border-sky-200 rounded-lg p-3 shadow-sm outline-none resize-none bg-sky-50"
+              className="w-full border-2 border-sky-200 dark:border-border rounded-lg p-3 shadow-sm outline-none resize-none bg-sky-50 dark:bg-surface-muted text-ink placeholder:text-ink-faint"
               placeholder="Tell something about yourself..."
             />
           </div>
@@ -326,15 +311,15 @@ const ProfileEdit: React.FC = () => {
           {/* Main Hobby */}
 
           <div className="w-full">
-            <label className="block text-gray-700 text-sm mb-1">Main Hobby</label>
+            <label className="block text-ink-muted text-sm mb-1">Main Hobby</label>
 
             <div
-              className="flex items-center justify-between border border-sky-300 rounded-lg px-3 py-2 bg-white shadow-sm cursor-pointer hover:shadow-md transition-all"
+              className="flex items-center justify-between border border-sky-300 dark:border-border rounded-lg px-3 py-2 bg-surface shadow-sm cursor-pointer hover:shadow-md transition-all"
               onClick={() => setIsModalOpen(true)}
             >
               <div className="flex items-center space-x-2">
                 <Palette className="text-sky-500 w-5 h-5" />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-ink">
                   {profileData.mainHobby || "Select your hobby"}
                 </span>
               </div>

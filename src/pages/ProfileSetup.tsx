@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 import BioSection from '../components/profile-setup/BioSection';
 import ProfilePictureUpload from '../components/profile-setup/ProfilePictureUpload';
@@ -15,7 +16,8 @@ import StepTransition from '../components/profile-setup/StepTransition';
 
 const ProfileSetup: React.FC = () => {
   const navigate = useNavigate();
-  const { register: registerUser, loading, pendingRegistration} = useAuth();
+  const { register: registerUser, loading, pendingRegistration, registerError } = useAuth();
+  const { toast } = useToast();
   const [profileData, setProfileData] = useState({
     bio: '',
     profilePicture: null as File | null,
@@ -29,6 +31,18 @@ const ProfileSetup: React.FC = () => {
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const totalSteps = 4; // Reduced to 4 steps
 
+  // Guard against reaching this screen without having completed the Register
+  // step first (e.g. a direct link, or a page refresh) — pendingRegistration
+  // only lives in React state, so it's gone in that case and the submit
+  // below would otherwise crash reading .name/.username/etc off null.
+  useEffect(() => {
+    if (!pendingRegistration) {
+      toast('Please complete the sign-up form first.', 'info');
+      navigate('/register', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingRegistration]);
+
   const updateProfileData = (field: string, value: any) => {
     setProfileData((prev) => ({
       ...prev,
@@ -37,11 +51,12 @@ const ProfileSetup: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (!pendingRegistration) return;
     const finalHobby = profileData.mainHobby === 'Custom' ? profileData.customHobby : profileData.mainHobby;
-    
+
     const success = await registerUser(
       pendingRegistration.name,
-      pendingRegistration.username,   
+      pendingRegistration.username,
       pendingRegistration.email,
       pendingRegistration.password,
       profileData.bio,
@@ -52,10 +67,10 @@ const ProfileSetup: React.FC = () => {
       profileData.location.city,
     );
 
-    console.log('Test Lat Lan:', profileData.location);
-
     if (success) {
       navigate('/RegisterSuccess');
+    } else {
+      toast(registerError || "We couldn't create your account. Please check your details and try again.", 'error', 6000);
     }
   };
 
@@ -125,6 +140,8 @@ const ProfileSetup: React.FC = () => {
     
     return Math.round((completed / totalSteps) * 100);
   };
+
+  if (!pendingRegistration) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-blue-300 to-sky-200 p-4 transition-all duration-500 relative overflow-hidden">

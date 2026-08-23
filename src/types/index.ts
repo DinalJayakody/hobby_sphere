@@ -27,6 +27,7 @@ export interface Post {
   images?: string[];
   likes: number;
   comments: number;
+  shares: number;
   timestamp: string;
   currentUserLikeStatus: boolean;
   privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';

@@ -1,39 +1,39 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Navbar from '../components/layout/Navbar';
-import PostCard from '../components/home/PostCard';
 import Button from '../components/ui/Button';
+import EmptyState from '../components/ui/EmptyState';
 import axiosInstance from "../types/axiosInstance";
 import * as usersApi from "../api/users";
+import { resolveImageSrc } from '../utils/image';
 
 import {
-  Grid, Bookmark, Settings, Image, Tag,
-  Heart, MessageCircle
+  Settings as SettingsIcon, Heart, MessageCircle, Tag as TagIcon,
 } from 'lucide-react';
 
 import { Post } from '../types';
-import SavedPostModal from '../components/modals/SavedPostModal';
-import SavedPostCard from '../components/profile/SavedPostCard';
 import FollowersModal from "../components/modals/FollowersModal";
 import FollowingModal from "../components/modals/FollowingModal";
-import PostFeedModal from "../components/modals/FeedPage";
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import FeedPage from '../components/modals/FeedPage';
 
+const TABS = ['posts', 'saved', 'tagged'] as const;
+type Tab = typeof TABS[number];
+
 const Profile: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const { showNewlyFollowedUserPosts } = useData();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Note: this page always shows the logged-in user's own data, regardless
   // of a :username route param — the backend has no "view another user's
   // followers" endpoint, so there's no other-profile mode to support here.
   // FriendProfile.tsx is the page for viewing someone else's profile.
-  const { fetchFollowers } = useData();
 
-  const [activeTab, setActiveTab] = useState('posts');
+  const [activeTab, setActiveTab] = useState<Tab>('posts');
   const [userPosts, setUserPosts] = useState<Post[]>([]);
 
   const [showFollowers, setShowFollowers] = useState(false);
@@ -41,28 +41,28 @@ const Profile: React.FC = () => {
 
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
-   const [followersCount, setFollowersCount] = useState<number>(currentUser?.followersCount ?? 0);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState<number>(currentUser?.followersCount ?? 0);
+  // Following-count display override: user.followingCount comes from
+  // AuthContext and isn't refetched on every unfollow, so track the delta
+  // locally to keep the badge live without needing to touch AuthContext's
+  // public API for something this small.
+  const [followingCountDelta, setFollowingCountDelta] = useState(0);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [showFeed, setShowFeed] = useState(false);
 
-  // Saved posts
-  const [selectedPost, setSelectedPost] = useState<any>(null);
-
-  // Saved Posts componenets
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [savedPage, setSavedPage] = useState(0);
   const [savedHasMore, setSavedHasMore] = useState(true);
   const [savedLoading, setSavedLoading] = useState(false);
-  const observerRef = useRef<HTMLDivElement | null>(null);
-
 
   if (!currentUser) return null;
   const user = currentUser;
-  const imageSrc = `data:image/png;base64,${user.profilePicture}`;
-
+  const imageSrc = resolveImageSrc(user.profilePicture);
 
   // ================= FETCH POSTS =================
   useEffect(() => {
@@ -89,8 +89,8 @@ const Profile: React.FC = () => {
       }
     };
     fetchUserPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   // ================= FETCH SAVED POSTS =================
   const fetchSavedPosts = async (page: number) => {
@@ -98,10 +98,7 @@ const Profile: React.FC = () => {
 
     try {
       setSavedLoading(true);
-
-      const res = await axiosInstance.get(
-        `/api/savePost/${user.id}?page=${page}&size=10`
-      );
+      const res = await axiosInstance.get(`/api/savePost/${user.id}?page=${page}&size=10`);
       const content = res.data.content.map((p: any) => ({
         id: p.id.toString(),
         userId: p.userId.toString(),
@@ -116,19 +113,13 @@ const Profile: React.FC = () => {
         comments: p.commentsCount,
         timestamp: p.createdAt,
       }));
-      // const content = res.data.content ?? [];
-
-      console.log("RAW API:", content);
 
       const posts: Post[] = content
-        .map((item: any) => item?.post ?? item) // fallback if no nested post
+        .map((item: any) => item?.post ?? item)
         .filter((post: any) => post && post.id);
 
       setSavedPosts((prev) => {
-        const newPosts = posts.filter(
-          (p) => !prev.some((existing) => existing.id === p.id)
-        );
-        console.log("Saved Posts:", savedPosts);
+        const newPosts = posts.filter((p) => !prev.some((existing) => existing.id === p.id));
         return [...prev, ...newPosts];
       });
 
@@ -142,7 +133,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Scroll to selected post in feed when feed opens
   useEffect(() => {
     if (showFeed) {
       setTimeout(() => {
@@ -150,27 +140,24 @@ const Profile: React.FC = () => {
         el?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     }
-  }, [showFeed]);
+  }, [showFeed, selectedIndex]);
 
-  // Refetch saved posts when page changes or tab changes
   useEffect(() => {
     if (activeTab === "saved") {
       fetchSavedPosts(savedPage);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedPage, activeTab]);
 
-  // Listen to URL changes to switch tabs
   useEffect(() => {
     const tab = searchParams.get("tab");
-
-    if (tab === "saved") {
-      setActiveTab("saved");
+    if (tab === "saved" || tab === "tagged") {
+      setActiveTab(tab);
     } else {
       setActiveTab("posts");
     }
   }, [searchParams]);
 
-  // Reset saved posts when leaving tab
   useEffect(() => {
     if (activeTab === "saved") {
       setSavedPosts([]);
@@ -179,167 +166,197 @@ const Profile: React.FC = () => {
     }
   }, [activeTab]);
 
-  // Infinite scroll handler for saved posts
   const loadMoreSaved = useCallback(() => {
     if (!savedLoading && savedHasMore) {
       setSavedPage((prev) => prev + 1);
     }
   }, [savedLoading, savedHasMore]);
 
-  // Attach infinite scroll observer to the bottom div
   const savedObserverRef = useInfiniteScroll({
     loading: savedLoading,
     hasMore: savedHasMore,
     onLoadMore: loadMoreSaved,
   });
 
-
-
   // ================= FETCH FOLLOWERS =================
   // Note: the backend only exposes the CURRENT user's own follower list —
   // there's no endpoint to view another user's followers.
   const loadFollowers = async () => {
+    setShowFollowers(true);
+    setFollowersLoading(true);
     try {
       const res = await usersApi.getMyFollowers();
       const normalized = (res.data.data || []).map((item) => ({
         id: item.userId,
-        avatarUrl: item.userProfilePic
-          ? (item.userProfilePic.startsWith('data:') ? item.userProfilePic : `data:image/png;base64,${item.userProfilePic}`)
-          : undefined,
+        avatarUrl: item.userProfilePic ? resolveImageSrc(item.userProfilePic) : undefined,
         fullName: item.name,
-        username: undefined,
+        followStatus: item.followStatus,
       }));
 
       setFollowersList(normalized);
       setFollowersCount(normalized.length);
-      setShowFollowers(true);
     } catch (err) {
       console.error("Failed to load followers:", err);
+    } finally {
+      setFollowersLoading(false);
     }
   };
 
-  // Unfollow handler passed to FollowersModal
-  const handleUnfollow = async (follower: any) => {
-    try {
-      await usersApi.unfollowUser(follower.id);
-      setFollowersList((prev) => prev.filter((f) => f.id !== follower.id));
-      setFollowersCount((c) => Math.max(0, c - 1));
-    } catch (err) {
-      console.error("Failed to unfollow:", err);
-      throw err; // rethrow so modal's optimistic rollback works if implemented
-    }
+  // A follower is someone who follows ME — following/unfollowing them here
+  // changes MY following relationship to them, not my follower count, so
+  // these only ever flip that follower's `followStatus` flag in place.
+  const handleFollowBack = async (userId: string | number) => {
+    await usersApi.followUser(userId);
+    setFollowersList((prev) => prev.map((f) => (f.id === userId ? { ...f, followStatus: true } : f)));
+    setFollowingCountDelta((d) => d + 1);
+    showNewlyFollowedUserPosts(userId);
+  };
+
+  const handleUnfollowFromFollowers = async (userId: string | number) => {
+    await usersApi.unfollowUser(userId);
+    setFollowersList((prev) => prev.map((f) => (f.id === userId ? { ...f, followStatus: false } : f)));
+    setFollowingCountDelta((d) => d - 1);
   };
 
   const loadFollowing = async () => {
+    setShowFollowing(true);
+    setFollowingLoading(true);
     try {
       const res = await usersApi.getUserFollowing(user.id);
       const normalized = (res.data.data || []).map((u) => ({
         id: u.id,
         fullName: u.fullName,
         username: u.username,
-        avatarUrl: u.profilePicture
-          ? (u.profilePicture.startsWith('data:') ? u.profilePicture : `data:image/png;base64,${u.profilePicture}`)
-          : undefined,
+        avatarUrl: u.profilePicture ? resolveImageSrc(u.profilePicture) : undefined,
       }));
       setFollowingList(normalized);
-      setShowFollowing(true);
     } catch (e) {
       console.error("Failed to load following:", e);
+    } finally {
+      setFollowingLoading(false);
     }
   };
 
+  const handleUnfollowFromFollowing = async (userId: string | number) => {
+    await usersApi.unfollowUser(userId);
+    setFollowingList((prev) => prev.filter((u) => u.id !== userId));
+    setFollowingCountDelta((d) => d - 1);
+    // If this person also follows the viewer, reflect the changed
+    // relationship if their row happens to be visible in Followers too.
+    setFollowersList((prev) => prev.map((f) => (f.id === userId ? { ...f, followStatus: false } : f)));
+  };
+
+  const renderGrid = (posts: Post[]) => (
+    <div className="grid grid-cols-3 gap-1 sm:gap-2">
+      {posts.map((post, index) => (
+        <div
+          key={post.id}
+          onClick={() => {
+            setFeedPosts(posts);
+            setSelectedIndex(index);
+            setShowFeed(true);
+          }}
+          className="aspect-square bg-surface-muted relative cursor-pointer group overflow-hidden rounded-sm sm:rounded-lg animate-fade-in"
+        >
+          <img
+            src={resolveImageSrc(post.images?.[0], "/no-image.svg")}
+            loading="lazy"
+            alt=""
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white transition-opacity">
+            <div className="flex items-center">
+              <Heart className="w-5 mr-1" />
+              {post.likes}
+            </div>
+            <div className="flex items-center">
+              <MessageCircle className="w-5 mr-1" />
+              {post.comments}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white dark:from-navy-900 dark:to-surface">
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-16 pb-20">
-
         {/* ================= HEADER ================= */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-white rounded-2xl shadow-md overflow-hidden mb-6"
+          className="bg-surface rounded-2xl shadow-soft border border-border overflow-hidden mb-6"
         >
-
           <div className="h-28 sm:h-40 bg-gradient-to-r from-indigo-500 to-sky-400" />
 
           <div className="px-4 sm:px-6 py-4 flex flex-col md:flex-row">
-
             <img
-              src={imageSrc}
+              src={imageSrc || '/default-avatar.svg'}
               alt={user.fullName}
-              className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full border-4 border-white -mt-12 sm:-mt-16 object-cover shadow-lg"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/default-avatar.svg';
+              }}
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full border-4 border-surface -mt-12 sm:-mt-16 object-cover shadow-lg bg-surface-muted flex-shrink-0"
             />
 
             <div className="flex-1 md:ml-6">
-
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                 <div>
-                  <h1 className="text-xl font-bold">{user.fullName}</h1>
-                  <p className="text-gray-400">@{user.username}</p>
+                  <h1 className="text-xl font-bold text-ink">{user.fullName}</h1>
+                  <p className="text-ink-faint">@{user.username}</p>
                 </div>
 
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => navigate("/ProfileEdit")}>
                     Edit Profile
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="w-4 h-4" />
+                  <Button size="sm" variant="outline" onClick={() => navigate("/Settings")} aria-label="Settings">
+                    <SettingsIcon className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-4 mt-3 sm:mt-0">
-                <span className="font-bold">Bio:</span> {user.bio}
+              <p className="text-ink-muted mb-4 mt-3 sm:mt-0">
+                <span className="font-bold text-ink">Bio:</span> {user.bio}
               </p>
 
-
               <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4">
-                <p className="text-gray-700">📍 {user.location || ""}</p>
-                <p className="text-gray-700">🎯 {user.mainHobby || ""}</p>
+                <p className="text-ink-muted">📍 {user.location || ""}</p>
+                <p className="text-ink-muted">🎯 {user.mainHobby || ""}</p>
               </div>
-
 
               {/* COUNTS */}
               <div className="flex gap-6 mt-3 text-sm">
-
-                <div>
-                  <b>{userPosts.length}</b> Posts
+                <div className="text-ink-muted">
+                  <b className="text-ink">{userPosts.length}</b> Posts
                 </div>
 
-                {/* Followers Button */}
-                <button
-                  className="mr-6 mb-2 text-left hover:text-sky-600 transition-colors"
-                  onClick={loadFollowers}
-                >
-                  <span className="font-semibold text-gray-900">{followersCount}</span>{" "}
-                  <span className="text-gray-600">Followers</span>
+                <button className="mr-6 mb-2 text-left hover:text-sky-600 dark:hover:text-sky-400 transition-colors" onClick={loadFollowers}>
+                  <span className="font-semibold text-ink">{followersCount}</span>{" "}
+                  <span className="text-ink-muted">Followers</span>
                 </button>
-                {/* Following Button */}
-                <button
-                  className="mb-2 text-left hover:text-sky-600 transition-colors"
-                  onClick={loadFollowing}
-                >
-                  <span className="font-semibold text-gray-900">{user.followingCount ?? 0}</span>{" "}
-                  <span className="text-gray-600">Following</span>
+                <button className="mb-2 text-left hover:text-sky-600 dark:hover:text-sky-400 transition-colors" onClick={loadFollowing}>
+                  <span className="font-semibold text-ink">{Math.max(0, (user.followingCount ?? 0) + followingCountDelta)}</span>{" "}
+                  <span className="text-ink-muted">Following</span>
                 </button>
-
-
               </div>
-
             </div>
           </div>
 
           {/* ================= TABS ================= */}
-          <div className="border-t flex">
-            {['posts', 'saved', 'tagged'].map(tab => (
+          <div className="border-t border-border flex">
+            {TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-3 text-sm font-medium ${activeTab === tab
-                  ? 'border-b-2 border-indigo-500 text-indigo-600'
-                  : 'text-gray-400'
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === tab
+                  ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-sky-400'
+                  : 'text-ink-faint hover:text-ink-muted'
                   }`}
               >
                 {tab.toUpperCase()}
@@ -350,136 +367,55 @@ const Profile: React.FC = () => {
 
         {/* ================= POSTS GRID ================= */}
         {activeTab === 'posts' && (
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
-            {userPosts.map((post, index) => (
-              <div
-                key={post.id}
-                onClick={() => {
-                  setFeedPosts(userPosts);
-                  setSelectedIndex(index);
-                  setShowFeed(true);
-                }}
-                className="aspect-square bg-gray-100 relative cursor-pointer group overflow-hidden rounded-sm sm:rounded-lg animate-fade-in"
-              >
-                <img
-                  src={
-                    post.images?.[0]
-                      ? `data:image/png;base64,${post.images[0]}`
-                      : "/no-image.png"
-                  }
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
-                  <div className="flex items-center">
-                    <Heart className="w-5 mr-1" />
-                    {post.likes}
-                  </div>
-                  <div className="flex items-center">
-                    <MessageCircle className="w-5 mr-1" />
-                    {post.comments}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          userPosts.length > 0 ? renderGrid(userPosts) : (
+            <EmptyState icon={MessageCircle} title="No posts yet" subtitle="Share your first post to see it here." />
+          )
         )}
 
         {/* ================= SAVED ================= */}
         {activeTab === 'saved' && (
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
-            {savedPosts.map((post, index) => (
-              <div
-                key={post.id}
-                onClick={() => {
-                  setFeedPosts(savedPosts);
-                  setSelectedIndex(index);
-                  setShowFeed(true);
-                }}
-                className="aspect-square bg-gray-100 relative cursor-pointer group overflow-hidden rounded-sm sm:rounded-lg animate-fade-in"
-              >
-                <img
-                  src={`data:image/png;base64,${post.images?.[0]}`}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+          <>
+            {savedPosts.length > 0 ? renderGrid(savedPosts) : !savedLoading && (
+              <EmptyState icon={Heart} title="No saved posts" subtitle="Posts you save will show up here." />
+            )}
+            <div ref={savedObserverRef} className="h-4" />
+          </>
+        )}
 
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-4 text-white">
-                  <div className="flex items-center">
-                    <Heart className="w-5 mr-1" />
-                    {post.likes}
-                  </div>
-                  <div className="flex items-center">
-                    <MessageCircle className="w-5 mr-1" />
-                    {post.comments}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* ================= TAGGED ================= */}
+        {activeTab === 'tagged' && (
+          <EmptyState icon={TagIcon} title="No Tagged Posts" subtitle="Posts you're tagged in will show up here." />
         )}
 
         {/* ================= MODALS ================= */}
-
-        {/* Saved post modal */}
-        {/* {selectedPost && (
-  <SavedPostModal
-    post={selectedPost}
-    onClose={() => setSelectedPost(null)}
-  />
-)} */}
-
-
-
         {showFollowers && (
           <FollowersModal
             followers={followersList}
+            loading={followersLoading}
             onClose={() => setShowFollowers(false)}
-            onUnfollow={handleUnfollow}
+            onFollowBack={handleFollowBack}
+            onUnfollow={handleUnfollowFromFollowers}
           />
         )}
 
         {showFollowing && (
           <FollowingModal
             users={followingList}
+            loading={followingLoading}
             onClose={() => setShowFollowing(false)}
             open={showFollowing}
+            onUnfollow={handleUnfollowFromFollowing}
           />
         )}
 
         {showFeed && (
-  <FeedPage
-    posts={feedPosts}
-    startIndex={selectedIndex}
-    onClose={() => setShowFeed(false)}
-    title={activeTab === "saved" ? "Saved Posts" : "Posts"}
-  />
-)}
-
-        {/* {showPostFeed && (
-          <PostFeedModal
-            posts={userPosts}
+          <FeedPage
+            posts={feedPosts}
             startIndex={selectedIndex}
-            onClose={() => setShowPostFeed(false)}
+            onClose={() => setShowFeed(false)}
+            title={activeTab === "saved" ? "Saved Posts" : "Posts"}
           />
         )}
-
-          {showSavedPostFeed && (
-          <PostFeedModal
-            posts={savedPosts}
-            startIndex={selectedIndex}
-            onClose={() => setShowSavedPostFeed(false)}
-          />
-        )}
-
-        {selectedPost && (
-          <SavedPostModal
-            post={selectedPost}
-            onClose={() => setSelectedPost(null)}
-          />
-        )} */}
-
       </div>
     </div>
   );

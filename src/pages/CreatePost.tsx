@@ -3,27 +3,39 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useAccountSettings } from '../context/AccountSettingsContext';
 import Navbar from '../components/layout/Navbar';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
-import { X, Image, MapPin, Tag, ChevronDown, Loader2 } from 'lucide-react';
+import { X, Image, ChevronDown } from 'lucide-react';
 
 type Privacy = 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
 
 const privacyOptions: { label: string; value: Privacy; icon: string; color: string }[] = [
-  { label: 'Public', value: 'PUBLIC', icon: '🌍', color: 'text-green-600' },
-  { label: 'Friends Only', value: 'FRIENDS_ONLY', icon: '👥', color: 'text-blue-600' },
-  { label: 'Private', value: 'PRIVATE', icon: '🔒', color: 'text-gray-600' },
+  { label: 'Public', value: 'PUBLIC', icon: '🌍', color: 'text-emerald-600 dark:text-emerald-400' },
+  { label: 'Friends Only', value: 'FRIENDS_ONLY', icon: '👥', color: 'text-sky-600 dark:text-sky-400' },
+  { label: 'Private', value: 'PRIVATE', icon: '🔒', color: 'text-ink-muted' },
 ];
 
 const CreatePost: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addPost } = useData();
+  const { settings } = useAccountSettings();
 
   const [content, setContent] = useState('');
   const [privacy, setPrivacy] = useState<Privacy>('PUBLIC');
+  const [privacyTouched, setPrivacyTouched] = useState(false);
   const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
+
+  // Seed from the user's default post privacy once settings load — but only
+  // if they haven't already picked something for this post.
+  React.useEffect(() => {
+    if (!privacyTouched && settings?.defaultPostPrivacy) {
+      setPrivacy(settings.defaultPostPrivacy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.defaultPostPrivacy]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [posting, setPosting] = useState(false);
@@ -56,16 +68,7 @@ const CreatePost: React.FC = () => {
     setError('');
     setPosting(true);
 
-    const success = await addPost({
-      userId: String(user.id),
-      content,
-      images,
-      ...(imagePreviews.length > 0 && { image: imagePreviews }),
-      likes: 0,
-      comments: 0,
-      liked: false,
-      privacy,
-    } as any);
+    const success = await addPost({ content, images, privacy });
 
     setPosting(false);
 
@@ -79,7 +82,7 @@ const CreatePost: React.FC = () => {
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
 
   return (
-    <div className="min-h-screen bg-sky-50">
+    <div className="min-h-screen bg-sky-50 dark:bg-navy-900">
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:pt-20 md:pb-6">
@@ -87,13 +90,13 @@ const CreatePost: React.FC = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="bg-white rounded-2xl shadow-md overflow-hidden"
+          className="bg-surface rounded-2xl shadow-soft border border-border overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold">Create Post</h1>
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h1 className="text-xl font-bold text-ink">Create Post</h1>
             <button
-              className="text-gray-500 hover:text-gray-700 hover:rotate-90 transition-transform duration-200"
+              className="text-ink-muted hover:text-ink hover:rotate-90 transition-transform duration-200"
               onClick={() => navigate('/')}
             >
               <X className="w-6 h-6" />
@@ -101,17 +104,17 @@ const CreatePost: React.FC = () => {
           </div>
 
           {/* Author info + privacy */}
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center space-x-3">
               <Avatar src={imageSrc} alt={user.fullName} size="md" />
               <div>
-                <h3 className="font-semibold">{user.fullName}</h3>
+                <h3 className="font-semibold text-ink">{user.fullName}</h3>
 
                 <div className="relative inline-block text-left mt-1">
                   <button
                     type="button"
                     onClick={() => setShowPrivacyMenu((prev) => !prev)}
-                    className="inline-flex items-center gap-1 bg-sky-50 text-sky-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm hover:bg-sky-100 transition"
+                    className="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm hover:bg-sky-100 dark:hover:bg-sky-500/20 transition"
                   >
                     <span>{privacyOptions.find((o) => o.value === privacy)?.icon}</span>
                     <span>{privacyOptions.find((o) => o.value === privacy)?.label}</span>
@@ -120,27 +123,31 @@ const CreatePost: React.FC = () => {
 
                   <AnimatePresence>
                     {showPrivacyMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute z-10 mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg ring-1 ring-black/5 overflow-hidden"
-                      >
-                        {privacyOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setPrivacy(option.value);
-                              setShowPrivacyMenu(false);
-                            }}
-                            className={`flex items-center w-full px-3 py-2 text-xs hover:bg-sky-50 transition ${option.color}`}
-                          >
-                            <span className="mr-1.5">{option.icon}</span>
-                            <span className="text-gray-700">{option.label}</span>
-                          </button>
-                        ))}
-                      </motion.div>
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowPrivacyMenu(false)} />
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute z-20 mt-1 w-36 bg-surface-raised border border-border rounded-lg shadow-soft-lg overflow-hidden"
+                        >
+                          {privacyOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setPrivacy(option.value);
+                                setPrivacyTouched(true);
+                                setShowPrivacyMenu(false);
+                              }}
+                              className={`flex items-center w-full px-3 py-2 text-xs hover:bg-surface-muted transition ${option.color}`}
+                            >
+                              <span className="mr-1.5">{option.icon}</span>
+                              <span>{option.label}</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      </>
                     )}
                   </AnimatePresence>
                 </div>
@@ -154,7 +161,7 @@ const CreatePost: React.FC = () => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`What's on your mind, ${user.fullName.split(' ')[0]}?`}
-              className="w-full min-h-[120px] border-0 focus:outline-none resize-none text-lg"
+              className="w-full min-h-[120px] border-0 bg-transparent text-ink placeholder:text-ink-faint focus:outline-none resize-none text-lg"
               autoFocus
             />
 
@@ -185,15 +192,15 @@ const CreatePost: React.FC = () => {
             )}
 
             {error && (
-              <p className="text-sm text-red-500 mb-2">{error}</p>
+              <p className="text-sm text-coral-500 mb-2">{error}</p>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-border">
             <div className="flex justify-between items-center">
               <div className="flex space-x-1 sm:space-x-2">
-                <button className="relative flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-transform hover:scale-110">
+                <button className="relative flex items-center space-x-1 p-2 rounded-full text-ink-muted hover:bg-surface-muted transition-transform hover:scale-110">
                   <input
                     type="file"
                     accept="image/*"
@@ -203,28 +210,16 @@ const CreatePost: React.FC = () => {
                   />
                   <Image className="w-6 h-6" />
                 </button>
-                <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-transform hover:scale-110">
-                  <Tag className="w-6 h-6" />
-                </button>
-                <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-transform hover:scale-110">
-                  <MapPin className="w-6 h-6" />
-                </button>
               </div>
 
               <Button
                 variant="primary"
                 disabled={!canPost}
+                loading={posting}
                 onClick={handleSubmit}
                 className={canPost ? 'animate-pulse-glow' : ''}
               >
-                {posting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Posting...
-                  </span>
-                ) : (
-                  'Post'
-                )}
+                {posting ? 'Posting...' : 'Post'}
               </Button>
             </div>
           </div>

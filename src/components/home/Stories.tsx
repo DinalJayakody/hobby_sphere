@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import StoryCircle from './StoryCircle';
+import StoryViewer, { StoryGroup } from './StoryViewer';
 
 const Stories: React.FC = () => {
   const { stories, addStory } = useData();
@@ -14,6 +15,29 @@ const Stories: React.FC = () => {
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [posting, setPosting] = useState(false);
+  const [viewerGroupIndex, setViewerGroupIndex] = useState<number | null>(null);
+
+  // Group the flat feed into one circle per author, preserving feed order —
+  // tapping a circle opens the viewer starting at that author's first story
+  // and lets the viewer step through the rest of their stories, then the
+  // next author's, like a standard stories UI.
+  const storyGroups: StoryGroup[] = useMemo(() => {
+    const byUser = new Map<string, StoryGroup>();
+    for (const story of stories) {
+      const existing = byUser.get(story.userId);
+      if (existing) {
+        existing.stories.push(story);
+      } else {
+        byUser.set(story.userId, {
+          userId: story.userId,
+          username: story.username,
+          profilePictureUrl: story.profilePictureUrl,
+          stories: [story],
+        });
+      }
+    }
+    return Array.from(byUser.values());
+  }, [stories]);
 
   if (!user) return null;
 
@@ -41,7 +65,7 @@ const Stories: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+    <div className="bg-surface rounded-2xl shadow-soft border border-border p-4 mb-4">
       <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
         <StoryCircle isCreateStory onClick={() => fileInputRef.current?.click()} />
         <input
@@ -52,10 +76,18 @@ const Stories: React.FC = () => {
           onChange={handleFileChange}
         />
 
-        {stories.map(story => (
-          <StoryCircle key={story.id} story={story} />
+        {storyGroups.map((group, index) => (
+          <StoryCircle key={group.userId} story={group.stories[0]} onClick={() => setViewerGroupIndex(index)} />
         ))}
       </div>
+
+      {viewerGroupIndex !== null && (
+        <StoryViewer
+          groups={storyGroups}
+          startGroupIndex={viewerGroupIndex}
+          onClose={() => setViewerGroupIndex(null)}
+        />
+      )}
 
       <AnimatePresence>
         {pendingFile && (
@@ -70,12 +102,12 @@ const Stories: React.FC = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl overflow-hidden max-w-sm w-full"
+              className="bg-surface-raised rounded-2xl overflow-hidden max-w-sm w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-3 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-800">New Story</h3>
-                <button onClick={closeComposer} className="text-gray-500 hover:text-gray-700">
+              <div className="flex items-center justify-between p-3 border-b border-border">
+                <h3 className="font-semibold text-ink">New Story</h3>
+                <button onClick={closeComposer} className="text-ink-faint hover:text-ink">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -89,12 +121,12 @@ const Stories: React.FC = () => {
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Add a caption (optional)"
-                  className="w-full bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none"
+                  className="w-full bg-surface-muted text-ink placeholder:text-ink-faint rounded-full px-4 py-2 text-sm focus:outline-none"
                 />
                 <button
                   onClick={handlePost}
                   disabled={posting}
-                  className="w-full bg-navy-600 hover:bg-navy-700 text-white rounded-xl py-2.5 font-medium transition disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full bg-navy-600 dark:bg-sky-600 hover:bg-navy-700 dark:hover:bg-sky-500 text-white rounded-xl py-2.5 font-medium transition disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {posting ? 'Sharing...' : 'Share to Story'}

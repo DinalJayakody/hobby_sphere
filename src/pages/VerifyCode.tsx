@@ -23,7 +23,7 @@ const VerifyCode: React.FC = () => {
   /* 🔒 Route guard */
   useEffect(() => {
     if (!forgotEmail) {
-      navigate("/forgot-password");
+      navigate("/ForgotPassword");
     }
   }, [forgotEmail, navigate]);
 
@@ -121,12 +121,12 @@ const VerifyCode: React.FC = () => {
   };
 
   return (
-    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-4 sm:px-6">
+    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 dark:from-navy-900 dark:to-surface px-4 sm:px-6">
       <FloatingBlobs />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative z-10 bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8"
+        className="relative z-10 bg-surface rounded-2xl shadow-soft-lg max-w-md w-full p-6 sm:p-8"
       >
         {/* Header */}
         <div className="flex flex-col items-center mb-6">
@@ -136,13 +136,13 @@ const VerifyCode: React.FC = () => {
           >
             <ShieldCheck className="w-12 h-12 text-sky-500 mb-3" />
           </motion.div>
-          <h2 className="text-2xl font-semibold text-gray-800">
+          <h2 className="text-2xl font-semibold text-ink">
             Verify your email
           </h2>
-          <p className="text-sm text-gray-500 text-center mt-2">
+          <p className="text-sm text-ink-muted text-center mt-2">
             Enter the 6-digit code sent to
             <br />
-            <b className="text-gray-700">{forgotEmail}</b>
+            <b className="text-ink">{forgotEmail}</b>
           </p>
         </div>
 
@@ -161,13 +161,13 @@ const VerifyCode: React.FC = () => {
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 maxLength={1}
                 inputMode="numeric"
-                className="w-full max-w-[3rem] aspect-square text-center text-xl font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
+                className="w-full max-w-[3rem] aspect-square text-center text-xl font-semibold bg-surface text-ink border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow"
               />
             ))}
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
+            <p className="text-coral-500 text-sm text-center">{error}</p>
           )}
 
           <Button type="submit" disabled={loading} className="w-full">
@@ -178,14 +178,14 @@ const VerifyCode: React.FC = () => {
         {/* Footer */}
         <div className="mt-6 text-center space-y-2">
           {timer > 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-ink-muted">
               Code expires in{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-ink">
                 {formatTime(timer)}
               </span>
             </p>
           ) : (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-coral-500">
               Code expired. Please resend.
             </p>
           )}
@@ -193,7 +193,7 @@ const VerifyCode: React.FC = () => {
           <button
             onClick={handleResend}
             disabled={timer > 0 || resending}
-            className="flex items-center justify-center gap-2 mx-auto text-sm font-medium text-sky-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 mx-auto text-sm font-medium text-sky-600 dark:text-sky-400 disabled:text-ink-faint disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4" />
             {resending ? "Resending..." : "Resend code"}

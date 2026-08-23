@@ -13,10 +13,9 @@ import {
   Users,
   Bookmark,
   Sparkles,
-  ChevronDown,
-  Filter,
+  UsersRound,
+  Settings as SettingsIcon,
 } from "lucide-react";
-// import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import logo_home from "../../assets/logo_home.png";
@@ -25,33 +24,30 @@ import axiosInstance from "../../types/axiosInstance";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { unreadNotificationsCount } = useData();
+  const { unreadNotificationsCount, clearData } = useData();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { clearData } = useData();
 
-  // 🔍 Search state
+  // 🔍 Search state — single source of truth, single debounced fetch effect.
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
   const [hobbyFilter, setHobbyFilter] = useState(false);
   const [nearbyFilter, setNearbyFilter] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [hobbySelected, setHobbySelected] = useState(false);
-  const [nearbySelected, setNearbySelected] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => location.pathname === path;
-
 
   const navItems = [
     { path: "/", icon: Home, label: "Home" },
@@ -66,10 +62,11 @@ const Navbar: React.FC = () => {
   ];
 
   const menuItems = [
-    { path: "/friends", icon: Users, label: "Friends" },
+    { path: "/FriendsPage", icon: Users, label: "Friends" },
     { path: "/profile?tab=saved", icon: Bookmark, label: "Saved" },
     { path: "/create", icon: PlusSquare, label: "Create Post" },
-    { path: "/GroupsPage", icon: PlusSquare, label: "Groups" },
+    { path: "/GroupsPage", icon: UsersRound, label: "Groups" },
+    { path: "/Settings", icon: SettingsIcon, label: "Settings" },
   ];
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
@@ -81,27 +78,21 @@ const Navbar: React.FC = () => {
     navigate("/login");
   };
 
-
-  // 🔍 Fetch results
+  // 🔍 Fetch results for a given page (page 0 replaces, page > 0 appends).
   const fetchResults = async (query: string, hobby: boolean, nearby: boolean, pageNum: number) => {
-    // ✅ API call only if something is to search or filter
-    if (!query.trim() && !hobby && !nearby) return;
+    if (!query.trim() && !hobby && !nearby) {
+      setResults([]);
+      setHasMore(true);
+      return;
+    }
 
     setLoading(true);
-
     try {
       const res = await axiosInstance.get(
         `/api/users/search?query=${encodeURIComponent(query)}&hobby=${hobby}&nearby=${nearby}&page=${pageNum}&size=5`
       );
-
-      // Normalize response to an array (backend should return { data: [] } or [] - adapt if different)
       const newResults = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-
-      if (pageNum === 0) {
-        setResults(newResults);
-      } else {
-        setResults((prev) => [...prev, ...newResults]);
-      }
+      setResults((prev) => (pageNum === 0 ? newResults : [...prev, ...newResults]));
       setHasMore(newResults.length > 0);
     } catch (err) {
       console.error("Search error:", err);
@@ -110,26 +101,18 @@ const Navbar: React.FC = () => {
     }
   };
 
-
-  // Reset & fetch when query changes
+  // Single debounced trigger for query/filter changes — replaces the
+  // previous 2-3 overlapping effects that each independently re-fetched the
+  // same query on every keystroke.
   useEffect(() => {
-    if (searchQuery) {
+    setShowDropdown(!!searchQuery.trim() || hobbyFilter || nearbyFilter);
+    const timer = setTimeout(() => {
       setPage(0);
-      fetchResults(searchQuery, hobbySelected, nearbySelected, 0);
-    } else {
-      setResults([]);
-    }
-  }, [searchQuery]);
-
-  // NEW: when mobile filter toggles change (and query is empty), fetch results too
-  useEffect(() => {
-    // Only trigger when user has no text query but selected at least one mobile filter
-    if (searchQuery.trim() === "" && (hobbyFilter || nearbyFilter)) {
-      setPage(0);
-      // fetch using the mobile filter state variables
       fetchResults(searchQuery, hobbyFilter, nearbyFilter, 0);
-    }
-  }, [hobbyFilter, nearbyFilter]);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, hobbyFilter, nearbyFilter]);
 
   // 🧠 Close dropdown on outside click
   useEffect(() => {
@@ -142,39 +125,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
-  // ✅ Handle search + params
-  useEffect(() => {
-    if (searchQuery.trim() !== "") {
-      handleSearch({
-        query: searchQuery,
-        hobby: hobbySelected,
-        nearby: nearbySelected,
-      });
-      setShowDropdown(true); // only show if typing
-    } else {
-      setShowDropdown(false); // hide if empty
-    }
-  }, [searchQuery, hobbySelected, nearbySelected]);
-
-  // 🎯 API search logic (runs when searchQuery or toggles change)
-  const handleSearch = ({
-    query,
-    hobby,
-    nearby,
-  }: {
-    query: string;
-    hobby: boolean;
-    nearby: boolean;
-  }) => {
-    // You can update this logic to call a filtered API endpoint if available
-    // For now, just call fetchResults as before
-    fetchResults(query, hobby, nearby, 0);
-  };
-
-
   // Infinite scroll inside dropdown
-  // Accept the scroll event and compute from event.currentTarget
   const handleScroll = (e?: React.UIEvent<HTMLDivElement>) => {
     const target = e?.currentTarget;
     if (!target || loading || !hasMore) return;
@@ -182,54 +133,37 @@ const Navbar: React.FC = () => {
     if (scrollTop + clientHeight >= scrollHeight - 20) {
       const nextPage = page + 1;
       setPage(nextPage);
-      fetchResults(searchQuery, hobbySelected, nearbySelected, nextPage);
+      fetchResults(searchQuery, hobbyFilter, nearbyFilter, nextPage);
     }
   };
-
-
-  // ✅ Trigger search as user types (debounced or word-by-word)
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    fetchResults(value, hobbyFilter, nearbyFilter, 0);
-  };
-
 
   if (!user) return null;
   const imageSrc = `data:image/png;base64,${user.profilePicture}`;
 
-  // const imagefriend = `data:image/png;base64,${res.profilePicture}`;
-
   return (
     <>
       {/* Top navbar - desktop */}
-      <div className="sticky top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 shadow-sm z-20 hidden md:block">
+      <div className="sticky top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 dark:from-navy-900 dark:to-navy-800 shadow-soft z-20 hidden md:block">
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <img src={logo_home} alt="Logo" className="h-10 w-auto" />
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-navy-600">Hobby Sphere</h1>
+              <h1 className="text-2xl font-bold text-navy-700 dark:text-sky-200">Hobby Sphere</h1>
 
               {/* 🔍 Desktop Search */}
-              {/* ---------- SEARCH AREA (fixed outside-click + conditional rendering) ---------- */}
               <div className="relative w-72" ref={wrapperRef}>
-                {/* Search bar */}
-                <div className="relative flex items-center bg-sky-50/80 dark:bg-gray-800 rounded-full shadow-sm focus-within:ring-2 focus-within:ring-sky-400 transition-all">
-                  <Search className="absolute left-3 text-gray-500 w-5 h-5" />
-
-                  {/* attach the inputRef so outside-click detection works */}
+                <div className="relative flex items-center bg-surface/90 rounded-full shadow-sm focus-within:ring-2 focus-within:ring-sky-400 transition-all">
+                  <Search className="absolute left-3 text-ink-faint w-5 h-5" />
                   <input
-                    ref={inputRef}
                     type="text"
                     value={searchQuery}
-                    onFocus={() => setShowDropdown(true)} // open when focused
+                    onFocus={() => setShowDropdown(!!searchQuery.trim() || hobbyFilter || nearbyFilter)}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search users..."
-                    className="pl-10 pr-4 py-2 w-full bg-transparent rounded-full text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none"
+                    className="pl-10 pr-4 py-2 w-full bg-transparent rounded-full text-sm text-ink placeholder-ink-faint focus:outline-none"
                   />
                 </div>
 
-                {/* render dropdown only when showDropdown is true */}
                 <AnimatePresence>
                   {showDropdown && (
                     <motion.div
@@ -237,22 +171,16 @@ const Navbar: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.18 }}
-                      // pass the scroll event to handler (use event.currentTarget inside handler)
                       onScroll={(e) => handleScroll(e)}
-                      className="absolute left-0 mt-3 w-full max-h-72 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 p-3"
+                      className="absolute left-0 mt-3 w-full max-h-72 overflow-y-auto bg-surface-raised border border-border rounded-2xl shadow-soft-lg z-50 p-3"
                     >
-                      {/* compact toggle chips (top-left) */}
                       <div className="absolute top-[6px] left-2 flex gap-[2px] z-10">
                         <motion.button
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setHobbyFilter((prev) => !prev);
-                            // re-run search (page 0)
-                            fetchResults(searchQuery, !hobbyFilter, nearbyFilter, 0);
-                          }}
+                          onClick={() => setHobbyFilter((prev) => !prev)}
                           className={`flex items-center gap-1 px-2 py-[2px] text-[10px] rounded-full border transition-all duration-150 shadow-sm ${hobbyFilter
                             ? "bg-sky-500 text-white border-sky-500 shadow-md"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-sky-50"
+                            : "bg-surface text-ink-muted border-border-strong hover:bg-sky-50 dark:hover:bg-sky-500/10"
                             }`}
                         >
                           <Sparkles className={`w-3 h-3 ${hobbyFilter ? "text-yellow-200 animate-spin-slow" : "text-sky-500"}`} />
@@ -261,54 +189,50 @@ const Navbar: React.FC = () => {
 
                         <motion.button
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setNearbyFilter((prev) => !prev);
-                            fetchResults(searchQuery, hobbyFilter, !nearbyFilter, 0);
-                          }}
+                          onClick={() => setNearbyFilter((prev) => !prev)}
                           className={`flex items-center gap-1 px-2 py-[2px] text-[10px] rounded-full border transition-all duration-150 shadow-sm ${nearbyFilter
-                            ? "bg-green-500 text-white border-green-500 shadow-md"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-green-50"
+                            ? "bg-emerald-500 text-white border-emerald-500 shadow-md"
+                            : "bg-surface text-ink-muted border-border-strong hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                             }`}
                         >
                           📍 Nearby
                         </motion.button>
                       </div>
 
-                      {/* Search results / empty / loading */}
                       {loading && page === 0 ? (
-                        <div className="p-3 text-center text-sm text-gray-500 animate-pulse">Searching...</div>
+                        <div className="p-3 pt-6 text-center text-sm text-ink-muted animate-pulse">Searching...</div>
                       ) : results.length > 0 ? (
-                        results.map((friend: any, idx: number) => {
-                          const image = friend.profilePicture ? `data:image/png;base64,${friend.profilePicture}` : "/default-avatar.png";
-                          return (
-                            <motion.div
-                              key={idx}
-                              whileHover={{ scale: 1.02 }}
-                              onClick={() => {
-                                navigate(`/FriendProfile/${friend.id}`);
-                                setSearchQuery("");
-                                setShowDropdown(false); // close on selection
-                              }}
-                              className="px-4 py-2 hover:bg-sky-50 dark:hover:bg-gray-800 cursor-pointer flex items-center gap-3 rounded-lg"
-                            >
-                              <img src={image} alt={friend.username} className="w-9 h-9 rounded-full object-cover" />
-                              <div>
-                                <div className="font-semibold text-gray-800 dark:text-gray-200">{friend.fullName || "No Name"}</div>
-                                <div className="text-sm text-gray-500">@{friend.username}</div>
-                                <div className="text-xs text-gray-400">🎯 {friend.mainHobby || "No hobby"} · 📍 {friend.location || "Unknown"}</div>
-                              </div>
-                            </motion.div>
-                          );
-                        })
+                        <div className="pt-5">
+                          {results.map((friend: any, idx: number) => {
+                            const image = friend.profilePicture ? `data:image/png;base64,${friend.profilePicture}` : "/default-avatar.svg";
+                            return (
+                              <motion.div
+                                key={idx}
+                                whileHover={{ scale: 1.02 }}
+                                onClick={() => {
+                                  navigate(`/FriendProfile/${friend.id}`);
+                                  setSearchQuery("");
+                                  setShowDropdown(false);
+                                }}
+                                className="px-3 py-2 hover:bg-sky-50 dark:hover:bg-sky-500/10 cursor-pointer flex items-center gap-3 rounded-lg"
+                              >
+                                <img src={image} alt={friend.username} className="w-9 h-9 rounded-full object-cover bg-surface-muted" />
+                                <div>
+                                  <div className="font-semibold text-ink">{friend.fullName || "No Name"}</div>
+                                  <div className="text-sm text-ink-muted">@{friend.username}</div>
+                                  <div className="text-xs text-ink-faint">🎯 {friend.mainHobby || "No hobby"} · 📍 {friend.location || "Unknown"}</div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
                       ) : (
-                        <div className="p-4 text-center text-sm text-gray-400">No users found 😕</div>
+                        <div className="p-4 pt-6 text-center text-sm text-ink-faint">No users found 😕</div>
                       )}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-              {/* ---------- END SEARCH AREA ---------- */}
-
             </div>
           </div>
 
@@ -317,15 +241,15 @@ const Navbar: React.FC = () => {
               <div
                 key={item.path}
                 className={`relative cursor-pointer ${isActive(item.path)
-                  ? "text-navy-600"
-                  : "text-gray-600 hover:text-navy-600"
+                  ? "text-navy-700 dark:text-sky-300"
+                  : "text-ink-muted hover:text-navy-700 dark:hover:text-sky-300"
                   }`}
                 onClick={() => navigate(item.path)}
               >
                 <item.icon className="w-6 h-6" />
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {item.badge > 9 ? "9+" : item.badge}
+                {(item.badge ?? 0) > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-coral-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow-sm ring-2 ring-surface">
+                    {item.badge! > 9 ? "9+" : item.badge}
                   </span>
                 )}
               </div>
@@ -340,7 +264,7 @@ const Navbar: React.FC = () => {
       {/* Bottom navbar - mobile */}
       {typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 border-t border-gray-200 z-50 md:hidden">
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 dark:from-navy-900 dark:to-navy-800 border-t border-border z-50 md:hidden">
             <div className="grid grid-cols-5 px-2 py-2">
               {navItems.map((item) => (
                 <motion.button
@@ -348,14 +272,14 @@ const Navbar: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate(item.path)}
-                  className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg focus:outline-none ${isActive(item.path) ? "text-navy-600" : "text-gray-600"
+                  className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg focus:outline-none ${isActive(item.path) ? "text-navy-700 dark:text-sky-300" : "text-ink-muted"
                     }`}
                 >
                   <div className="relative">
                     <item.icon className="w-6 h-6" />
-                    {item.badge && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                        {item.badge > 9 ? "9+" : item.badge}
+                    {(item.badge ?? 0) > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-coral-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow-sm ring-2 ring-surface">
+                        {item.badge! > 9 ? "9+" : item.badge}
                       </span>
                     )}
                   </div>
@@ -367,13 +291,12 @@ const Navbar: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleMenu}
-                className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg focus:outline-none ${menuOpen ? "text-navy-600" : "text-gray-600"
+                className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg focus:outline-none ${menuOpen ? "text-navy-700 dark:text-sky-300" : "text-ink-muted"
                   }`}
               >
                 <Menu className="w-6 h-6" />
                 <span className="text-xs mt-1">Menu</span>
               </motion.button>
-
             </div>
           </div>,
           document.body
@@ -383,18 +306,17 @@ const Navbar: React.FC = () => {
         createPortal(
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={toggleMenu}>
             <div
-              className="absolute bottom-16 right-4 md:top-14 md:bottom-auto md:right-4 bg-white rounded-lg shadow-xl w-64 p-4"
+              className="absolute bottom-16 right-4 md:top-14 md:bottom-auto md:right-4 bg-surface-raised rounded-2xl shadow-soft-lg w-64 p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center space-x-3 border-b border-gray-100 pb-4 mb-2">
-                <Avatar src={imageSrc} alt={user.username} size="md" />
-                <div>
-                  <h3 className="font-semibold">{user.fullName}</h3>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
+              <div className="flex items-center space-x-3 border-b border-border pb-4 mb-2">
+                <Avatar src={imageSrc} alt={user.username} size="md" className="flex-shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-ink truncate">{user.fullName}</h3>
+                  <p className="text-sm text-ink-muted truncate">@{user.username}</p>
                 </div>
               </div>
               <div className="pt-3">
-                {/* 🔹 Tile Grid Menu */}
                 <div className="grid [grid-template-columns:repeat(auto-fit,minmax(70px,1fr))] gap-3">
                   {menuItems.map((item) => (
                     <div
@@ -403,19 +325,16 @@ const Navbar: React.FC = () => {
                         navigate(item.path);
                         setMenuOpen(false);
                       }}
-                      className="flex flex-col items-center justify-center bg-sky-50 hover:bg-sky-100 rounded-xl p-3 cursor-pointer transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
+                      className="flex flex-col items-center justify-center bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 rounded-xl p-3 cursor-pointer transition-all duration-200 transform hover:scale-105 active:scale-95"
                     >
-                      <item.icon className="w-6 h-6 text-sky-600 mb-1 transition-transform duration-200 group-hover:scale-110" />
-                      <span className="text-xs font-medium text-gray-700 text-center">
-                        {item.label}
-                      </span>
+                      <item.icon className="w-6 h-6 text-sky-600 dark:text-sky-400 mb-1" />
+                      <span className="text-xs font-medium text-ink-muted text-center">{item.label}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* 🔹 Logout Button */}
                 <div
-                  className="mt-5 flex items-center justify-center py-2 text-red-500 font-medium cursor-pointer hover:text-red-600 transition"
+                  className="mt-5 flex items-center justify-center py-2 text-coral-500 font-medium cursor-pointer hover:text-coral-600 transition"
                   onClick={handleLogout}
                 >
                   <LogOut className="w-5 h-5 mr-2" />
@@ -428,50 +347,37 @@ const Navbar: React.FC = () => {
         )}
 
       {/* Mobile search header */}
-      <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 z-20 md:hidden">
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-br from-navy-50 to-sky-300 dark:from-navy-900 dark:to-navy-800 z-20 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <img src={logo_home} alt="Logo" className="h-10 w-auto" />
-          <h1 className="text-xl font-bold text-navy-600 px-4 flex-grow">
-            Hobby Sphere
-          </h1>
+          <h1 className="text-xl font-bold text-navy-700 dark:text-sky-200 px-4 flex-grow">Hobby Sphere</h1>
           <div className="flex items-center space-x-4">
             <div onClick={toggleSearch} className="cursor-pointer">
-              <Search className="w-6 h-6 text-gray-600" />
+              <Search className="w-6 h-6 text-ink-muted" />
             </div>
-            <div
-              onClick={() => navigate("/create")}
-              className="cursor-pointer"
-            >
-              <PlusSquare className="w-6 h-6 text-gray-600" />
+            <div onClick={() => navigate("/create")} className="cursor-pointer">
+              <PlusSquare className="w-6 h-6 text-ink-muted" />
             </div>
           </div>
         </div>
         {searchOpen && (
-          <div className="px-4 py-2 bg-sky-50">
+          <div className="px-4 py-2 bg-sky-50 dark:bg-navy-800">
             <div className="flex gap-2 mb-2">
               <button
-                onClick={() => {
-                  const newVal = !hobbyFilter;
-                  setHobbyFilter(newVal);
-                  fetchResults(searchQuery, newVal, nearbyFilter, 0);
-                }}
+                onClick={() => setHobbyFilter((prev) => !prev)}
                 className={`px-3 py-1 text-xs rounded-full border ${hobbyFilter
-                  ? "bg-sky-500 text-white"
-                  : "bg-white text-gray-600"
+                  ? "bg-sky-500 text-white border-sky-500"
+                  : "bg-surface text-ink-muted border-border-strong"
                   }`}
               >
                 ✨ Hobby
               </button>
 
               <button
-                onClick={() => {
-                  const newVal = !nearbyFilter;
-                  setNearbyFilter(newVal);
-                  fetchResults(searchQuery, hobbyFilter, newVal, 0);
-                }}
+                onClick={() => setNearbyFilter((prev) => !prev)}
                 className={`px-3 py-1 text-xs rounded-full border ${nearbyFilter
-                  ? "bg-green-500 text-white"
-                  : "bg-white text-gray-600"
+                  ? "bg-emerald-500 text-white border-emerald-500"
+                  : "bg-surface text-ink-muted border-border-strong"
                   }`}
               >
                 📍 Nearby
@@ -482,59 +388,50 @@ const Navbar: React.FC = () => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchQuery(value);
-                  fetchResults(value, hobbyFilter, nearbyFilter, 0);
-                }}
-                placeholder="Search users, posts, tags..."
-                className="bg-white px-4 py-2 rounded-lg w-full focus:outline-none border border-gray-200"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search users..."
+                className="bg-surface text-ink px-4 py-2 rounded-lg w-full focus:outline-none border border-border-strong"
                 autoFocus
               />
               <X
-                className="absolute right-3 top-2.5 text-gray-500 w-5 h-5 cursor-pointer"
+                className="absolute right-3 top-2.5 text-ink-faint w-5 h-5 cursor-pointer"
                 onClick={toggleSearch}
               />
 
-              {/* 🔽 Mobile Search Dropdown */}
-              {((searchQuery.trim() !== "") || hobbyFilter || nearbyFilter) && (loading || results.length > 0) && (
+              {showDropdown && (loading || results.length > 0) && (
                 <div
                   ref={dropdownRef}
                   onScroll={handleScroll}
-                  className="absolute left-0 mt-3 w-full max-h-60 overflow-y-auto bg-white border rounded-lg shadow-xl z-50"
+                  className="absolute left-0 mt-3 w-full max-h-60 overflow-y-auto bg-surface-raised border border-border rounded-lg shadow-soft-lg z-50"
                 >
                   {loading && page === 0 ? (
-                    <div className="p-3 text-center text-sm">Searching...</div>
+                    <div className="p-3 text-center text-sm text-ink-muted">Searching...</div>
                   ) : (
                     <>
                       {results.map((resultUser: any, idx) => (
                         <div
                           key={idx}
-                          className="px-4 py-2 hover:bg-sky-100 cursor-pointer"
+                          className="px-4 py-2 hover:bg-sky-50 dark:hover:bg-sky-500/10 cursor-pointer"
                           onClick={() => {
                             navigate(`/FriendProfile/${resultUser.id}`);
                             setSearchQuery("");
                             setSearchOpen(false);
                           }}
                         >
-
-                          {/* Profile picture */}
                           <div className="flex items-center space-x-3">
                             <img
                               src={
                                 resultUser.profilePicture
                                   ? `data:image/png;base64,${resultUser.profilePicture}`
-                                  : "/default-avatar.png"
+                                  : "/default-avatar.svg"
                               }
                               alt={resultUser.username}
-                              className="w-8 h-8 rounded-full object-cover"
+                              className="w-8 h-8 rounded-full object-cover bg-surface-muted"
                             />
-
                             <div className="flex flex-col">
-                              <div className="font-semibold text-gray-900">{resultUser.fullName || "No Name"}</div>
-
-                              <div className="text-sm text-gray-500">{resultUser.username}</div>
-                              <div className="text-sm text-gray-500">
+                              <div className="font-semibold text-ink">{resultUser.fullName || "No Name"}</div>
+                              <div className="text-sm text-ink-muted">{resultUser.username}</div>
+                              <div className="text-sm text-ink-muted">
                                 🎯 {resultUser.mainHobby || "No hobby"} · 📍 {resultUser.location || "Unknown"}
                               </div>
                             </div>
@@ -543,9 +440,7 @@ const Navbar: React.FC = () => {
                       ))}
 
                       {loading && page > 0 && (
-                        <div className="p-3 text-center text-sm">
-                          Loading more...
-                        </div>
+                        <div className="p-3 text-center text-sm text-ink-muted">Loading more...</div>
                       )}
                     </>
                   )}

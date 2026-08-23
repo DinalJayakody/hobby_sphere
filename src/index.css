@@ -16,7 +16,7 @@
 
     --color-navy: #0a2463;
   --color-sky-blue: #3e92cc;
-  
+
   --color-sky-50: #f0f7ff;
   --color-sky-100: #e0f1fe;
   --color-sky-200: #bae3fd;
@@ -28,9 +28,31 @@
   --color-sky-800: #0d4674;
   --color-sky-900: #0c345a;
 
+  /* ---- Semantic surface/text/border tokens (light) ----
+     Consumed via Tailwind's rgb(var(--x) / <alpha-value>) pattern, so these
+     must stay as space-separated "R G B" triples, not hex/rgb() strings. */
+  --surface: 255 255 255;         /* page/card background */
+  --surface-muted: 241 245 249;   /* subtle recessed panels */
+  --surface-raised: 255 255 255;  /* modals/popovers */
+  --border: 226 232 240;
+  --border-strong: 203 213 225;
+  --text-primary: 15 23 42;
+  --text-secondary: 71 85 105;
+  --text-faint: 148 163 184;
 }
 
+.dark {
+  --surface: 15 23 36;
+  --surface-muted: 23 32 49;
+  --surface-raised: 27 37 56;
+  --border: 45 58 82;
+  --border-strong: 63 79 107;
+  --text-primary: 236 242 250;
+  --text-secondary: 165 180 204;
+  --text-faint: 110 126 153;
 
+  color-scheme: dark;
+}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -38,7 +60,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply text-gray-800;
+  @apply bg-surface text-ink transition-colors duration-200;
 }
 
 

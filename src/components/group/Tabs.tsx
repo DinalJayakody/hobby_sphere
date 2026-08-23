@@ -1,36 +1,57 @@
 // src/components/group/Tabs.tsx
-import React, { useState, Suspense } from "react";
+import React, { Suspense } from "react";
 import { motion } from "framer-motion";
 import Feed from "./Feed";
 import Members from "./Members";
 import Analytics from "./Analytics";
 import Settings from "./Settings";
+import { GroupTab } from "./AdminPanel";
 
-const Tabs: React.FC<{ group: any; role: any }> = ({ group, role }) => {
-  const [tab, setTab] = useState<"feed" | "members" | "analytics" | "settings">("feed");
+interface TabsProps {
+  group: any;
+  role: any;
+  activeTab: GroupTab;
+  onTabChange: (tab: GroupTab) => void;
+}
 
-  const isAdmin = role === "admin";
+const Tabs: React.FC<TabsProps> = ({ group, role, activeTab, onTabChange }) => {
+  // Roles come back from the backend as uppercase ("SUPER_ADMIN" / "ADMIN" /
+  // "MEMBER") — comparing against lowercase "admin" here meant these tabs
+  // never showed for real admins even though AdminPanel (checked correctly
+  // elsewhere) did.
+  const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+
+  const tabBtn = (key: GroupTab, label: string) => (
+    <button
+      className={`px-3 py-2 rounded-lg transition-colors ${
+        activeTab === key ? "bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300" : "text-ink-muted hover:text-ink"
+      }`}
+      onClick={() => onTabChange(key)}
+    >
+      {label}
+    </button>
+  );
 
   return (
-    <section className="mt-6">
-      <div className="bg-white/80 border border-sky-100 rounded-2xl p-3 flex items-center justify-between">
+    <section className="mt-6" id="group-tabs">
+      <div className="bg-surface/80 border border-sky-100 dark:border-border rounded-2xl p-3 flex items-center justify-between">
         <div className="flex gap-2 overflow-x-auto">
-          <button className={`px-3 py-2 rounded-lg ${tab === "feed" ? "bg-sky-100 text-sky-700" : "text-gray-600"}`} onClick={() => setTab("feed")}>Feed</button>
-          <button className={`px-3 py-2 rounded-lg ${tab === "members" ? "bg-sky-100 text-sky-700" : "text-gray-600"}`} onClick={() => setTab("members")}>Members</button>
-          {isAdmin && <button className={`px-3 py-2 rounded-lg ${tab === "analytics" ? "bg-sky-100 text-sky-700" : "text-gray-600"}`} onClick={() => setTab("analytics")}>Analytics</button>}
-          {isAdmin && <button className={`px-3 py-2 rounded-lg ${tab === "settings" ? "bg-sky-100 text-sky-700" : "text-gray-600"}`} onClick={() => setTab("settings")}>Settings</button>}
+          {tabBtn("feed", "Feed")}
+          {tabBtn("members", "Members")}
+          {isAdmin && tabBtn("analytics", "Analytics")}
+          {isAdmin && tabBtn("settings", "Settings")}
         </div>
 
-        <div className="text-sm text-gray-500">{group.membersCount ?? 0} members</div>
+        <div className="text-sm text-ink-muted shrink-0 ml-2">{group.groupMemberCount ?? group.membersCount ?? 0} members</div>
       </div>
 
       <div className="mt-4">
-        <Suspense fallback={<div className="p-6 bg-white rounded-xl animate-pulse h-40" />}>
-          <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
-            {tab === "feed" && <Feed groupId={group.id} />}
-            {tab === "members" && <Members groupId={group.id} isAdmin={role === "admin"} />}
-            {tab === "analytics" && role === "admin" && <Analytics groupId={group.id} />}
-            {tab === "settings" && role === "admin" && <Settings group={group} />}
+        <Suspense fallback={<div className="p-6 bg-surface rounded-xl animate-pulse h-40" />}>
+          <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+            {activeTab === "feed" && <Feed groupId={group.id} isMember={role != null} />}
+            {activeTab === "members" && <Members groupId={group.id} isAdmin={isAdmin} />}
+            {activeTab === "analytics" && isAdmin && <Analytics groupId={group.id} />}
+            {activeTab === "settings" && isAdmin && <Settings group={group} />}
           </motion.div>
         </Suspense>
       </div>

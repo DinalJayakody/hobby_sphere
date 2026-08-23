@@ -26,6 +26,13 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loginWithGoogleToken: (token: string) => Promise<boolean>;
+  loginWithApple: (payload: {
+    identityToken: string;
+    authorizationCode?: string;
+    givenName?: string;
+    familyName?: string;
+    email?: string;
+  }) => Promise<boolean>;
   login: (username: string, password: string) => Promise<boolean>;
   pendingRegistration: any; // For partial registration data
   savePartialRegistration: (regdata: any) => void;
@@ -50,6 +57,7 @@ interface AuthContextType {
 
   loading: boolean;        // loading for login/register calls
   loadingUser: boolean;    // loading for initial user fetch
+  registerError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,21 +74,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [forgotEmail, setForgotEmail] = useState<string | null>(null);
 
   const [pendingRegistration, setPendingRegistration] = useState<any>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
 
   const savePartialRegistration = (regdata: any) => {
     setPendingRegistration(regdata);
   };
-
-
-  useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 3000); // 3 seconds
-
-    return () => clearTimeout(timer);
-  }, []);
-
 
   // Fetch user details function
   const fetchUserDetails = async () => {
@@ -141,6 +139,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
 
+  const loginWithApple = async (payload: {
+    identityToken: string;
+    authorizationCode?: string;
+    givenName?: string;
+    familyName?: string;
+    email?: string;
+  }): Promise<boolean> => {
+    try {
+      const response = await axios.post('/api/auth/apple', {
+        identity_token: payload.identityToken,
+        authorization_code: payload.authorizationCode,
+        given_name: payload.givenName,
+        family_name: payload.familyName,
+        email: payload.email,
+      });
+      const { token, type } = response.data;
+      const fullToken = `${type} ${token}`;
+
+      localStorage.setItem('token', fullToken);
+      axios.defaults.headers.common['Authorization'] = fullToken;
+
+      await fetchUserDetails();
+      return true;
+    } catch (err) {
+      console.error('Apple login failed:', err);
+      return false;
+    }
+  };
+
   const login = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
@@ -175,6 +202,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     location: string
   ): Promise<boolean> => {
     setLoading(true);
+    setRegisterError(null);
     try {
       const formData = new FormData();
       formData.append("registerRequest", new Blob([JSON.stringify({
@@ -185,25 +213,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         formData.append("profilePicture", profilePicture);
       }
 
-      console.log('Form data Auth Context:', formData);
-
       const response = await axios.post('/api/auth/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       const { token, type } = response.data;
-      const fullToken = `${type} ${token}`;
 
+      // Known backend quirk: on a duplicate username/email, this endpoint
+      // responds 200 OK with the human-readable error message sitting in
+      // the `token` field (e.g. {"token":"Username is already taken!",
+      // "type":"Bearer"}) instead of a 4xx. Detect that by checking `token`
+      // actually looks like a JWT (three dot-separated segments) before
+      // treating this as a success.
+      const looksLikeJwt = typeof token === 'string' && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(token);
+      if (!looksLikeJwt) {
+        setRegisterError(token || 'Registration failed. Please try again.');
+        return false;
+      }
+
+      const fullToken = `${type} ${token}`;
       localStorage.setItem('token', fullToken);
       axios.defaults.headers.common['Authorization'] = fullToken;
-
-      console.log('User registered successfully:', response.data);
 
       await fetchUserDetails();
       return true;
     } catch (error) {
       console.error('Registration failed:', error);
+
+      // The backend has a separate known quirk: it can save the new account
+      // to the database successfully and still respond with a 500 if a
+      // non-critical side effect (welcome email / message-queue publish)
+      // throws after the save. From the user's point of view registration
+      // then looks like it failed even though the account is fully usable.
+      // As a safety net, try logging in with the same credentials before
+      // giving up — if that succeeds, the account really was created and we
+      // can proceed as if registration had succeeded outright.
+      try {
+        const loggedIn = await login(username, password);
+        if (loggedIn) return true;
+      } catch {
+        // fall through to the real failure below
+      }
+
+      setRegisterError('Registration failed. Please check your details and try again.');
       return false;
     } finally {
       setLoading(false);
@@ -284,6 +337,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         isAuthenticated: !!user,
         loginWithGoogleToken,
+        loginWithApple,
         login,
         savePartialRegistration,
         register,
@@ -295,6 +349,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,
         loadingUser,
         pendingRegistration,
+        registerError,
 
       }}
     >

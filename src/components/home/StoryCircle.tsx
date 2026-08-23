@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Story } from '../../types';
 import Avatar from '../ui/Avatar';
 import { PlusCircle } from 'lucide-react';
@@ -15,30 +14,18 @@ const StoryCircle: React.FC<StoryCircleProps> = ({
   isCreateStory = false,
   onClick
 }) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else if (story) {
-      navigate(`/stories/${story.id}`);
-    } else if (isCreateStory) {
-      navigate('/create-story');
-    }
-  };
-
   if (isCreateStory) {
     return (
       <div
         className="flex flex-col items-center cursor-pointer group"
-        onClick={handleClick}
+        onClick={onClick}
       >
         <div className="relative mb-1">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center transition-transform group-hover:scale-105">
-            <PlusCircle className="w-8 h-8 text-navy-600" />
+          <div className="w-16 h-16 rounded-full bg-surface-muted flex items-center justify-center transition-transform group-hover:scale-105">
+            <PlusCircle className="w-8 h-8 text-navy-600 dark:text-sky-400" />
           </div>
         </div>
-        <span className="text-xs text-gray-600 font-medium">New</span>
+        <span className="text-xs text-ink-muted font-medium">New</span>
       </div>
     );
   }
@@ -46,10 +33,7 @@ const StoryCircle: React.FC<StoryCircleProps> = ({
   if (!story) return null;
 
   return (
-    <div
-      className="flex flex-col items-center cursor-pointer group"
-      onClick={handleClick}
-    >
+    <div className="flex flex-col items-center cursor-pointer group" onClick={onClick}>
       <div className="relative mb-1 p-0.5 rounded-full bg-gradient-to-tr from-navy-500 to-sky-400 transition-transform group-hover:scale-105">
         <Avatar
           src={story.profilePictureUrl || ''}
@@ -58,7 +42,7 @@ const StoryCircle: React.FC<StoryCircleProps> = ({
           border
         />
       </div>
-      <span className="text-xs text-gray-600 font-medium truncate w-16 text-center">
+      <span className="text-xs text-ink-muted font-medium truncate w-16 text-center">
         {story.username}
       </span>
     </div>

@@ -41,18 +41,21 @@ const Avatar: React.FC<AvatarProps> = ({
     xl: 'w-4 h-4',
   };
 
-  const borderClass = border ? 'border-2 border-white' : '';
+  const borderClass = border ? 'border-2 border-surface' : '';
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative inline-block shrink-0 ${className}`}>
       <img
-        src={src}
+        src={src || '/default-avatar.svg'}
         alt={alt}
-        className={`${sizeClasses[size]} ${borderClass} rounded-full object-cover`}
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = '/default-avatar.svg';
+        }}
+        className={`${sizeClasses[size]} ${borderClass} rounded-full object-cover bg-surface-muted`}
       />
       {status !== 'none' && (
         <div
-          className={`absolute bottom-0 right-0 ${statusClasses[status]} ${statusSizes[size]} rounded-full ring-2 ring-white`}
+          className={`absolute bottom-0 right-0 ${statusClasses[status]} ${statusSizes[size]} rounded-full ring-2 ring-surface`}
         />
       )}
     </div>

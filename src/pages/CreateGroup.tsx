@@ -67,24 +67,24 @@ const CreateGroup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-100">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-100 dark:from-navy-900 dark:to-surface">
       <Navbar />
       <div className="max-w-xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:pt-20 md:pb-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="bg-white rounded-2xl shadow-lg p-4 sm:p-5 border border-sky-100"
+          className="bg-surface rounded-2xl shadow-soft-lg p-4 sm:p-5 border border-sky-100 dark:border-border"
         >
         <div className="flex items-center gap-3 mb-4">
           <motion.div
             initial={{ scale: 0.96 }}
             animate={{ scale: 1 }}
-            className="bg-sky-50 p-2 rounded-md"
+            className="bg-sky-50 dark:bg-sky-500/10 p-2 rounded-md"
           >
             <PlusCircle className="w-6 h-6 text-sky-600" />
           </motion.div>
-          <h2 className="text-lg font-semibold text-sky-700">Create Group</h2>
+          <h2 className="text-lg font-semibold text-sky-700 dark:text-sky-400">Create Group</h2>
         </div>
 
         {/* Image picker */}
@@ -97,35 +97,35 @@ const CreateGroup: React.FC = () => {
         <form onSubmit={onSubmit} className="space-y-4">
           {/* Group Name */}
           <div>
-            <label className="block text-gray-700 text-sm mb-1">Group Name</label>
+            <label className="block text-ink-muted text-sm mb-1">Group Name</label>
             <input
               type="text"
               name="name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Enter group name"
-              className="w-full px-3 py-2 rounded-lg border border-sky-100 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-200 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-sky-100 dark:border-border bg-sky-50 dark:bg-surface-muted text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/40 text-sm"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-gray-700 text-sm mb-1">Description</label>
+            <label className="block text-ink-muted text-sm mb-1">Description</label>
             <textarea
               name="description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Tell people what this group is about"
               rows={4}
-              className="w-full px-3 py-2 rounded-lg border border-sky-100 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-200 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-sky-100 dark:border-border bg-sky-50 dark:bg-surface-muted text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/40 text-sm"
             />
           </div>
 
           {/* Privacy */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Privacy</p>
+            <p className="text-sm font-medium text-ink-muted mb-2">Privacy</p>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 bg-white hover:bg-sky-50 cursor-pointer">
+              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 dark:border-border bg-surface hover:bg-sky-50 dark:hover:bg-sky-500/10 cursor-pointer transition-colors">
                 <input
                   type="radio"
                   name="privacy"
@@ -134,14 +134,14 @@ const CreateGroup: React.FC = () => {
                   onChange={() => setForm({ ...form, privacy: "PUBLIC" })}
                 />
                 <div className="ml-2">
-                  <div className="text-sm font-medium">Public</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm font-medium text-ink">Public</div>
+                  <div className="text-xs text-ink-faint">
                     Anybody can see the group, its members and their posts.
                   </div>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 bg-white hover:bg-sky-50 cursor-pointer">
+              <label className="flex items-center gap-3 p-2 rounded-lg border border-sky-100 dark:border-border bg-surface hover:bg-sky-50 dark:hover:bg-sky-500/10 cursor-pointer transition-colors">
                 <input
                   type="radio"
                   name="privacy"
@@ -150,8 +150,8 @@ const CreateGroup: React.FC = () => {
                   onChange={() => setForm({ ...form, privacy: "PRIVATE" })}
                 />
                 <div className="ml-2">
-                  <div className="text-sm font-medium">Private</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm font-medium text-ink">Private</div>
+                  <div className="text-xs text-ink-faint">
                     Only members can see who's in the group and what they post.
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -12,7 +12,11 @@ import FloatingBlobs from "../components/ui/FloatingBlobs";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const location = useLocation() as { state?: { email?: string } };
+  // Settings > Password & Security links here with the current user's email
+  // pre-filled, since there's no separate "change password while logged in"
+  // endpoint — this OTP flow is the real, working path to change it.
+  const [email, setEmail] = useState(location.state?.email || "");
   // const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { forgotPassword, loading } = useAuth();

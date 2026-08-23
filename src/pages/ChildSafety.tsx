@@ -9,7 +9,7 @@ import { effectiveDate, publishedBy, childSafetySections } from '../content/chil
 // (required for app store review / CSAE standards disclosure).
 const ChildSafety: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200 dark:from-navy-900 dark:to-surface">
       <div className="max-w-3xl mx-auto px-4 py-10">
         <Link
           to="/"
@@ -19,11 +19,11 @@ const ChildSafety: React.FC = () => {
           Back to Hobby Sphere
         </Link>
 
-        <div className="bg-white/90 rounded-2xl shadow-xl p-8">
+        <div className="bg-surface/90 rounded-2xl shadow-soft-lg p-8">
           <div className="text-center mb-8">
             <img src={logo} alt="Hobby Sphere Logo" className="w-16 h-16 mx-auto mb-3" />
-            <h1 className="text-3xl font-bold text-gray-800">Child Safety Standards</h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <h1 className="text-3xl font-bold text-ink">Child Safety Standards</h1>
+            <p className="text-ink-faint text-sm mt-1">
               Effective: {effectiveDate} · Published by: {publishedBy}
             </p>
           </div>
@@ -35,10 +35,10 @@ const ChildSafety: React.FC = () => {
             endangers the safety of minors.
           </p>
 
-          <div className="space-y-6 text-gray-700 text-sm leading-relaxed">
+          <div className="space-y-6 text-ink-muted text-sm leading-relaxed">
             {childSafetySections.map((section) => (
               <div key={section.heading}>
-                <h2 className="font-semibold text-gray-800 mb-1">{section.heading}</h2>
+                <h2 className="font-semibold text-ink mb-1">{section.heading}</h2>
                 <p>{section.body}</p>
               </div>
             ))}

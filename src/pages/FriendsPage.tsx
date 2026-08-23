@@ -7,14 +7,14 @@ import { useData } from "../context/DataContext";
 import * as usersApi from "../api/users";
 
 const toBase64Image = (raw?: string | null) =>
-  raw ? (raw.startsWith('data:') || raw.startsWith('http') ? raw : `data:image/png;base64,${raw}`) : '/default-avatar.png';
+  raw ? (raw.startsWith('data:') || raw.startsWith('http') ? raw : `data:image/png;base64,${raw}`) : '/default-avatar.svg';
 
 const panels = ["Followers", "Following", "Communities"];
 
 const FriendsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { followers, fetchFollowers, followersLoading, suggestedGroups, searchGroups, joinGroup } = useData();
+  const { followers, fetchFollowers, followersLoading, suggestedGroups, searchGroups, joinGroup, showNewlyFollowedUserPosts } = useData();
 
   const [activePanel, setActivePanel] = useState<string>("Followers");
   const [search, setSearch] = useState<string>("");
@@ -24,6 +24,7 @@ const FriendsPage: React.FC = () => {
   const [followedBack, setFollowedBack] = useState<Set<number>>(new Set());
   const [unfollowed, setUnfollowed] = useState<Set<number>>(new Set());
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
+  const [pendingJoinIds, setPendingJoinIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchFollowers();
@@ -47,6 +48,7 @@ const FriendsPage: React.FC = () => {
     try {
       await usersApi.followUser(followerId);
       setFollowedBack((prev) => new Set(prev).add(followerId));
+      showNewlyFollowedUserPosts(followerId);
     } catch (err) {
       console.error("Follow back failed:", err);
     } finally {
@@ -68,8 +70,9 @@ const FriendsPage: React.FC = () => {
 
   const handleJoinGroup = async (groupId: string) => {
     setBusyId(groupId);
-    const success = await joinGroup(groupId);
-    if (success) setJoinedIds((prev) => new Set(prev).add(groupId));
+    const status = await joinGroup(groupId);
+    if (status === 'PENDING_APPROVAL') setPendingJoinIds((prev) => new Set(prev).add(groupId));
+    else if (status === 'JOINED') setJoinedIds((prev) => new Set(prev).add(groupId));
     setBusyId(null);
   };
 
@@ -84,7 +87,7 @@ const FriendsPage: React.FC = () => {
         .filter((u) => !unfollowed.has(u.id))
         .map((u) => ({ id: String(u.id), name: u.fullName, img: toBase64Image(u.profilePicture), raw: u }));
     } else {
-      data = suggestedGroups.map((g) => ({ id: g.id, name: g.name, img: g.groupImage ? toBase64Image(g.groupImage) : '/group-placeholder.png', raw: g }));
+      data = suggestedGroups.map((g) => ({ id: g.id, name: g.name, img: g.groupImage ? toBase64Image(g.groupImage) : '/group-placeholder.svg', raw: g }));
     }
     return data.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
   };
@@ -94,7 +97,7 @@ const FriendsPage: React.FC = () => {
     (activePanel === "Following" && followingLoading);
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-sky-100 to-sky-200">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-sky-100 to-sky-200 dark:from-navy-900 dark:to-surface">
       <Navbar />
 
       {/* Mobile tab bar */}
@@ -109,7 +112,7 @@ const FriendsPage: React.FC = () => {
             className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm transition ${
               activePanel === panel
                 ? "bg-sky-500 text-white font-semibold shadow"
-                : "bg-white/70 text-gray-700 hover:bg-sky-100"
+                : "bg-surface/70 text-ink-muted hover:bg-sky-100 dark:hover:bg-sky-500/10"
             }`}
           >
             {panel === "Followers" ? "👥" : panel === "Following" ? "🤝" : "🏘️"}
@@ -120,7 +123,7 @@ const FriendsPage: React.FC = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar (desktop only) */}
-        <aside className="hidden md:flex w-64 bg-white/60 shadow-md p-4 flex-col gap-4">
+        <aside className="hidden md:flex w-64 bg-surface/60 shadow-soft p-4 flex-col gap-4">
           <nav className="flex flex-col gap-3">
             {panels.map((panel) => (
               <button
@@ -131,8 +134,8 @@ const FriendsPage: React.FC = () => {
                 }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition ${
                   activePanel === panel
-                    ? "bg-sky-200 text-sky-900 font-semibold"
-                    : "hover:bg-sky-100 text-gray-700"
+                    ? "bg-sky-200 dark:bg-sky-500/20 text-sky-900 dark:text-sky-300 font-semibold"
+                    : "hover:bg-sky-100 dark:hover:bg-sky-500/10 text-ink-muted"
                 }`}
               >
                 {panel === "Followers" ? "👥" : panel === "Following" ? "🤝" : "🏘️"}
@@ -146,13 +149,13 @@ const FriendsPage: React.FC = () => {
           <div className="w-full max-w-2xl">
             {/* Search bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-              <h2 className="text-xl font-bold text-sky-800 hidden md:block">{activePanel}</h2>
+              <h2 className="text-xl font-bold text-sky-800 dark:text-sky-300 hidden md:block">{activePanel}</h2>
               <input
                 type="text"
                 placeholder={`Search ${activePanel.toLowerCase()}...`}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full sm:w-auto border border-sky-300 rounded-lg px-3 py-2 sm:py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-full sm:w-auto border border-sky-300 dark:border-border bg-surface text-ink placeholder:text-ink-faint rounded-lg px-3 py-2 sm:py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 dark:focus:ring-sky-500/40"
               />
             </div>
 
@@ -166,9 +169,9 @@ const FriendsPage: React.FC = () => {
                 className="flex flex-col gap-3"
               >
                 {isLoading ? (
-                  <div className="text-center text-gray-400 py-8 animate-pulse">Loading...</div>
+                  <div className="text-center text-ink-faint py-8 animate-pulse">Loading...</div>
                 ) : getPanelData().length === 0 ? (
-                  <div className="text-center text-gray-400 py-8">
+                  <div className="text-center text-ink-faint py-8">
                     {activePanel === "Followers" && "No followers yet."}
                     {activePanel === "Following" && "Not following anyone yet."}
                     {activePanel === "Communities" && "No groups to discover yet."}
@@ -180,7 +183,7 @@ const FriendsPage: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.04 }}
-                      className="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-lg shadow hover:shadow-md transition"
+                      className="flex items-center justify-between gap-3 bg-surface/80 p-3 rounded-lg shadow-soft hover:shadow-soft-lg transition"
                     >
                       <div
                         className="flex items-center gap-3 min-w-0 cursor-pointer"
@@ -194,9 +197,9 @@ const FriendsPage: React.FC = () => {
                           src={item.img}
                           alt={item.name}
                           loading="lazy"
-                          className="w-10 h-10 rounded-full border shrink-0 object-cover"
+                          className="w-10 h-10 rounded-full border border-border shrink-0 object-cover bg-surface-muted"
                         />
-                        <span className="font-medium text-gray-800 truncate">{item.name}</span>
+                        <span className="font-medium text-ink truncate">{item.name}</span>
                       </div>
 
                       {activePanel === "Followers" && (
@@ -222,11 +225,24 @@ const FriendsPage: React.FC = () => {
                       {activePanel === "Communities" && (
                         <div className="flex gap-2 shrink-0">
                           <button
-                            disabled={joinedIds.has(item.id) || item.raw.currentUserRole != null || busyId === item.id}
+                            disabled={
+                              joinedIds.has(item.id) ||
+                              pendingJoinIds.has(item.id) ||
+                              item.raw.currentUserRole != null ||
+                              busyId === item.id
+                            }
                             onClick={() => handleJoinGroup(item.id)}
-                            className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm transition-transform hover:scale-105 disabled:opacity-60"
+                            className={`px-3 py-1 rounded-lg text-sm transition-transform hover:scale-105 disabled:opacity-60 text-white ${
+                              pendingJoinIds.has(item.id) ? "bg-amber-500 hover:bg-amber-500" : "bg-green-500 hover:bg-green-600"
+                            }`}
                           >
-                            {joinedIds.has(item.id) || item.raw.currentUserRole != null ? 'Joined' : busyId === item.id ? '...' : 'Join'}
+                            {pendingJoinIds.has(item.id)
+                              ? "Pending"
+                              : joinedIds.has(item.id) || item.raw.currentUserRole != null
+                              ? "Joined"
+                              : busyId === item.id
+                              ? "..."
+                              : "Join"}
                           </button>
                           <button
                             onClick={() => navigate(`/Group/${item.id}`)}

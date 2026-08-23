@@ -37,11 +37,11 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   }, [open, autoCloseMs, onClose]);
 
   const bg =
-    status === "success" ? "bg-green-50" : "bg-red-50";
+    status === "success" ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-coral-50 dark:bg-coral-500/10";
   const ring =
-    status === "success" ? "ring-green-400" : "ring-red-400";
+    status === "success" ? "ring-emerald-400 dark:ring-emerald-500/40" : "ring-coral-400 dark:ring-coral-500/40";
   const Icon = status === "success" ? CheckCircle : XCircle;
-  const iconColor = status === "success" ? "text-green-600" : "text-red-600";
+  const iconColor = status === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-coral-600 dark:text-coral-400";
 
   return (
     <AnimatePresence>
@@ -75,23 +75,23 @@ export const StatusModal: React.FC<StatusModalProps> = ({
             {/* close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 p-1 rounded-full text-gray-600 hover:text-gray-800"
+              className="absolute top-3 right-3 p-1 rounded-full text-ink-muted hover:text-ink"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="flex items-start space-x-3">
-              <div className={`flex-shrink-0 rounded-full p-2 ${status === "success" ? "bg-green-100" : "bg-red-100"}`}>
+              <div className={`flex-shrink-0 rounded-full p-2 ${status === "success" ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-coral-100 dark:bg-coral-500/20"}`}>
                 <Icon className={`w-6 h-6 ${iconColor}`} />
               </div>
 
               <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                <h3 className="text-sm sm:text-base font-semibold text-ink">
                   {title || (status === "success" ? "Success" : "Error")}
                 </h3>
                 {message && (
-                  <p className="mt-1 text-xs sm:text-sm text-slate-600">{message}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-ink-muted">{message}</p>
                 )}
                 {/* optional actions area (for future) */}
               </div>

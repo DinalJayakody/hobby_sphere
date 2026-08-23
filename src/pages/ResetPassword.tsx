@@ -86,27 +86,27 @@ const ResetPassword: React.FC = () => {
 
 
   const Rule = ({ ok, text }: { ok: boolean; text: string }) => (
-    <li className={`flex items-center gap-2 text-sm ${ok ? "text-green-600" : "text-gray-400"}`}>
+    <li className={`flex items-center gap-2 text-sm ${ok ? "text-emerald-600 dark:text-emerald-400" : "text-ink-faint"}`}>
       <span>{ok ? "✓" : "✕"}</span>
       {text}
     </li>
   );
 
   return (
-    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-4 sm:px-6">
+    <div className="relative overflow-hidden flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 dark:from-navy-900 dark:to-surface px-4 sm:px-6">
       <FloatingBlobs />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8"
+        className="relative z-10 bg-surface rounded-2xl shadow-soft-lg max-w-md w-full p-6 sm:p-8"
       >
         {/* Header */}
         <div className="flex flex-col items-center mb-6">
           <Lock className="w-12 h-12 text-sky-500 mb-3" />
-          <h2 className="text-2xl font-semibold text-gray-800">
+          <h2 className="text-2xl font-semibold text-ink">
             Create New Password
           </h2>
-          <p className="text-sm text-gray-500 text-center mt-2">
+          <p className="text-sm text-ink-muted text-center mt-2">
             Choose a strong password to secure your account
           </p>
         </div>
@@ -124,7 +124,7 @@ const ResetPassword: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -157,7 +157,7 @@ const ResetPassword: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint"
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
