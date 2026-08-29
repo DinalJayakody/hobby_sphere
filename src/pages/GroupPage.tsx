@@ -151,13 +151,7 @@ const GroupPage: React.FC = () => {
 
           {/* Tabs (Feed / Members / Analytics / Settings) */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            <Tabs
-              group={group}
-              role={role}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              onGroupUpdated={(updated) => setGroup((prev) => (prev ? { ...prev, ...updated } : prev))}
-            />
+            <Tabs group={group} role={role} activeTab={activeTab} onTabChange={setActiveTab} />
           </motion.div>
         </div>
       </div>

@@ -13,9 +13,6 @@ interface Group {
   groupImage: string;
   memberCount: number;
   currentUserRole?: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER' | null;
-  // PENDING = join request sent, awaiting admin decision. Persisted from the
-  // backend (not just local component state) so it survives navigation/reload.
-  joinRequestStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 }
 
 interface DataContextType {
@@ -549,7 +546,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           memberCount: g.memberCount,
           groupImage: g.groupImage || '',
           currentUserRole: g.currentUserRole,
-          joinRequestStatus: g.joinRequestStatus,
         }))
       );
     } catch (err) {
@@ -599,20 +595,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const res = await usersApi.joinGroup(groupId);
       const status = res.data?.data?.status ?? 'JOINED';
-      // Optimistic: reflect membership (or pending status) immediately rather
+      // Optimistic: reflect membership immediately for public groups rather
       // than waiting on a manual refetch of the discover list. A pending
       // private-group request is NOT membership, so currentUserRole is left
-      // alone, but joinRequestStatus IS persisted here so it survives a
-      // remount/reload until the backend confirms an admin decision.
-      setSuggestedGroups((prev) =>
-        prev.map((g) =>
-          g.id === groupId
-            ? status === 'JOINED'
-              ? { ...g, currentUserRole: g.currentUserRole ?? 'MEMBER', joinRequestStatus: null }
-              : { ...g, joinRequestStatus: 'PENDING' }
-            : g
-        )
-      );
+      // alone — the caller tracks "pending" separately.
+      if (status === 'JOINED') {
+        setSuggestedGroups((prev) =>
+          prev.map((g) => (g.id === groupId ? { ...g, currentUserRole: g.currentUserRole ?? 'MEMBER' } : g))
+        );
+      }
       return status;
     } catch (err) {
       console.error('Join group failed:', err);

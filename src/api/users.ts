@@ -136,9 +136,6 @@ export interface GroupSearchDto {
   memberCount: number;
   groupImage: string | null;
   currentUserRole: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER' | null;
-  /** PENDING when the current user has an open join request on this group;
-   *  null otherwise (no request, approved into membership, or rejected). */
-  joinRequestStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 }
 
 export const searchGroups = (name: string, page = 0, size = 20) =>
@@ -200,32 +197,6 @@ export const getGroupsJoined = (page = 0, size = 20) =>
 
 export const deleteGroup = (groupId: number | string) =>
   axiosInstance.delete<void>(`/api/groups/${groupId}`);
-
-export interface GroupMemberDto {
-  userId: number;
-  username: string;
-  fullName: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER';
-  joinedAt: string;
-}
-
-// Public groups: any authenticated user can view. Private groups: members only.
-export const getGroupMembers = (groupId: number | string) =>
-  axiosInstance.get<ApiResponse<GroupMemberDto[]>>(`/api/groups/${groupId}/members`);
-
-// Admin/super-admin only; an admin cannot remove another admin or the owner.
-export const removeMember = (groupId: number | string, userId: number | string) =>
-  axiosInstance.delete<ApiResponse<void>>(`/api/groups/${groupId}/members/${userId}`);
-
-// Owner (super-admin) only — promote a member to admin or demote an admin back to member.
-export const updateMemberRole = (groupId: number | string, userId: number | string, role: 'ADMIN' | 'MEMBER') =>
-  axiosInstance.put<ApiResponse<void>>(`/api/groups/${groupId}/members/${userId}/role`, { role });
-
-// Admin/super-admin only — rename, redescribe, or change privacy.
-export const updateGroup = (
-  groupId: number | string,
-  request: { name: string; description?: string; privacy: 'PUBLIC' | 'PRIVATE' }
-) => axiosInstance.put<ApiResponse<any>>(`/api/groups/${groupId}`, request);
 
 // ---- Block / Unblock ----
 

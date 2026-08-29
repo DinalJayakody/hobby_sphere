@@ -13,6 +13,7 @@ const GroupsPage: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [pendingJoinIds, setPendingJoinIds] = useState<Set<string>>(new Set());
 
   const { managedGroups, suggestedGroups, searchGroups, joinGroup } = useData();
 
@@ -29,12 +30,12 @@ const GroupsPage: React.FC = () => {
   const handleJoin = async (e: React.MouseEvent, groupId: string) => {
     e.stopPropagation();
     setJoiningId(groupId);
-    // joinGroup() itself optimistically marks the group's joinRequestStatus
-    // as PENDING (or currentUserRole as MEMBER for public groups) on
-    // suggestedGroups, so that state survives independently of this refetch.
-    await joinGroup(groupId);
+    const status = await joinGroup(groupId);
+    if (status === "PENDING_APPROVAL") setPendingJoinIds((prev) => new Set(prev).add(groupId));
     setJoiningId(null);
-    // Refresh so a publicly-joined group moves from "Discover" into "Your Groups".
+    // Refresh both lists so a publicly-joined group moves from "Discover"
+    // into "Your Groups" — a pending private request isn't membership yet,
+    // so it stays in Discover, tracked as pending via pendingJoinIds instead.
     await Promise.all([searchGroups(search)]);
   };
 
@@ -122,7 +123,7 @@ const GroupsPage: React.FC = () => {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                 {suggestedGroups.map((group, index) => {
                   const alreadyIn = group.currentUserRole != null;
-                  const isPending = group.joinRequestStatus === "PENDING";
+                  const isPending = pendingJoinIds.has(group.id);
                   return (
                     <motion.div
                       key={group.id}
