@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
+import { useNotifications } from '../context/NotificationsContext';
 import { useAuth } from '../context/AuthContext';
 import * as usersApi from '../api/users';
 import Navbar from '../components/layout/Navbar';
@@ -14,16 +15,29 @@ import { timeAgo as formatTimestamp } from '../utils/time';
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { notifications, notificationsLoading, markAllNotificationsAsRead, markNotificationAsRead, removeNotification, clearAllNotifications, showNewlyFollowedUserPosts } = useData();
+  const { showNewlyFollowedUserPosts } = useData();
+  const { notifications, notificationsLoading, fetchNotifications, markAllNotificationsAsRead, markNotificationAsRead, removeNotification, clearAllNotifications } = useNotifications();
   const [followedBack, setFollowedBack] = useState<Set<string>>(new Set());
+  const hasMarkedReadRef = useRef(false);
 
+  // The background poll only refreshes the cheap unread-count endpoint (see
+  // NotificationsContext), so the full list needs an explicit fetch whenever
+  // this screen — the only place it's actually displayed — is opened.
   useEffect(() => {
-    // Mark all as read when the notifications screen is opened
-    if (notifications.some((n) => !n.read)) {
-      markAllNotificationsAsRead();
-    }
+    fetchNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Mark all as read once the freshly-fetched list confirms there's
+  // something unread — guarded so it only fires once per visit even under
+  // StrictMode's double-invoked effects.
+  useEffect(() => {
+    if (hasMarkedReadRef.current || notificationsLoading) return;
+    if (notifications.some((n) => !n.read)) {
+      hasMarkedReadRef.current = true;
+      markAllNotificationsAsRead();
+    }
+  }, [notifications, notificationsLoading, markAllNotificationsAsRead]);
 
   if (!user) return null;
 

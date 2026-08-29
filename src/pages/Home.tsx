@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 import Navbar from "../components/layout/Navbar";
@@ -8,7 +8,8 @@ import CreatePostCard from "../components/home/CreatePostCard";
 import PostCard from "../components/home/PostCard";
 import Avatar from "../components/ui/Avatar";
 import EmptyState from "../components/ui/EmptyState";
-import { PostCardSkeleton } from "../components/ui/Skeleton";
+import { PostCardSkeleton, Skeleton } from "../components/ui/Skeleton";
+import { resolveImageSrc } from "../utils/image";
 import * as usersApi from "../api/users";
 import { getTrendingPosts, PostDto } from "../api/posts";
 import {
@@ -28,21 +29,23 @@ const Home: React.FC = () => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const [suggestions, setSuggestions] = useState<usersApi.UserSuggestionDto[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [trendingPosts, setTrendingPosts] = useState<PostDto[]>([]);
   const [followedIds, setFollowedIds] = useState<Set<number>>(new Set());
 
   const imageSrc = user?.profilePicture ? `data:image/png;base64,${user.profilePicture}` : "/default-avatar.svg";
 
-  // Friend suggestions — this endpoint is known to fail server-side
-  // (missing Redis cache config), so a failure here is expected and just
-  // means the panel stays empty rather than showing a broken error state.
+  // A compact preview (first page only) — the full, paginated browsing
+  // experience lives on the dedicated /Suggestions screen.
   useEffect(() => {
     usersApi
-      .getUserSuggestions()
-      .then((res) => {
-        if (res.data.success) setSuggestions(res.data.data || []);
+      .getUserSuggestions(0, 5)
+      .then((res) => setSuggestions(res.data.data || []))
+      .catch((err) => {
+        console.error("Failed to fetch suggestions:", err);
+        setSuggestions([]);
       })
-      .catch(() => setSuggestions([]));
+      .finally(() => setSuggestionsLoading(false));
   }, []);
 
   // The Trending widget only renders in the right sidebar, which is
@@ -76,6 +79,11 @@ const Home: React.FC = () => {
       await usersApi.followUser(userId);
       setFollowedIds((prev) => new Set(prev).add(userId));
       showNewlyFollowedUserPosts(userId);
+      // Briefly show "Following" before the card leaves the compact list,
+      // matching the full /Suggestions page's behavior.
+      setTimeout(() => {
+        setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
+      }, 700);
     } catch (err) {
       console.error("Follow suggestion failed:", err);
     }
@@ -200,42 +208,68 @@ const Home: React.FC = () => {
             </div>
 
             {/* SUGGESTIONS */}
-            {suggestions.length > 0 && (
+            {(suggestionsLoading || suggestions.length > 0) && (
               <div className="bg-surface rounded-2xl shadow-soft border border-border p-4 hover:shadow-soft-lg transition-shadow duration-300">
-                <h3 className="font-semibold mb-3 text-sky-700 dark:text-sky-400">Suggestions For You</h3>
-
-                <div className="space-y-3">
-                  {suggestions.map((s) => (
-                    <motion.div
-                      key={s.userId}
-                      whileHover={{ scale: 1.02 }}
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() => navigate(`/FriendProfile/${s.userId}`)}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sky-700 dark:text-sky-400">Suggestions For You</h3>
+                  {!suggestionsLoading && (
+                    <button
+                      onClick={() => navigate("/Suggestions")}
+                      className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline"
                     >
-                      <div className="flex items-center space-x-2">
-                        <Avatar
-                          src={s.profilePicture ? `data:image/png;base64,${s.profilePicture}` : ''}
-                          alt={s.username}
-                          size="sm"
-                        />
-                        <div className="text-sm">
-                          <p className="font-medium text-ink">{s.username}</p>
-                          {s.hobby && <p className="text-xs text-ink-muted">{s.hobby}</p>}
+                      See all
+                    </button>
+                  )}
+                </div>
+
+                {suggestionsLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <Skeleton className="h-3 w-20" />
+                          <Skeleton className="h-2.5 w-14" />
                         </div>
                       </div>
-                      <button
-                        disabled={followedIds.has(s.userId)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleFollowSuggestion(s.userId);
-                        }}
-                        className="text-sky-600 dark:text-sky-400 text-sm font-medium hover:underline disabled:text-ink-faint"
-                      >
-                        {followedIds.has(s.userId) ? 'Following' : 'Follow'}
-                      </button>
-                    </motion.div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {suggestions.map((s) => (
+                        <motion.div
+                          key={s.userId}
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          whileHover={{ scale: 1.02 }}
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => navigate(`/FriendProfile/${s.userId}`)}
+                        >
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <Avatar src={resolveImageSrc(s.profilePicture)} alt={s.username} size="sm" />
+                            <div className="text-sm min-w-0">
+                              <p className="font-medium text-ink truncate">{s.username}</p>
+                              {s.hobby && <p className="text-xs text-ink-muted truncate">{s.hobby}</p>}
+                            </div>
+                          </div>
+                          <button
+                            disabled={followedIds.has(s.userId)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFollowSuggestion(s.userId);
+                            }}
+                            className="shrink-0 text-sky-600 dark:text-sky-400 text-sm font-medium hover:underline disabled:text-ink-faint disabled:no-underline"
+                          >
+                            {followedIds.has(s.userId) ? 'Following' : 'Follow'}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
             )}
 

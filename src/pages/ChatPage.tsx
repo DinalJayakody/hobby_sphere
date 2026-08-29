@@ -43,7 +43,7 @@ const ChatPageContent: React.FC = () => {
     <div className="min-h-screen bg-sky-50 dark:bg-navy-900">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto h-screen pt-16 pb-20 md:pt-20 md:pb-6 px-0 md:px-4">
+      <div className="max-w-6xl mx-auto h-screen pt-16 pb-24 md:pt-20 md:pb-6 px-0 md:px-4">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

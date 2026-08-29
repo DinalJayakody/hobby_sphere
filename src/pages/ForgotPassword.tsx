@@ -13,9 +13,10 @@ import FloatingBlobs from "../components/ui/FloatingBlobs";
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { email?: string } };
-  // Settings > Password & Security links here with the current user's email
-  // pre-filled, since there's no separate "change password while logged in"
-  // endpoint — this OTP flow is the real, working path to change it.
+  // Signed-in users change their password via Settings > Password &
+  // Security (ChangePasswordModal, POST /api/settings/change-password)
+  // instead of this page — this OTP flow exists for the signed-out case,
+  // where there's no current password to verify identity with.
   const [email, setEmail] = useState(location.state?.email || "");
   // const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

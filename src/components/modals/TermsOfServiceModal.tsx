@@ -22,7 +22,7 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({
         <>
           {/* 🔹 Background Overlay */}
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -31,7 +31,7 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({
 
           {/* 🔹 Modal Container */}
           <motion.div
-            className="fixed z-50 inset-0 flex items-center justify-center px-4"
+            className="fixed z-[60] inset-0 flex items-center justify-center px-4"
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}

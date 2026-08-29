@@ -25,7 +25,7 @@ const FeedPage: React.FC<FeedPageProps> = ({
   }, [startIndex]);
 
   return (
-    <div className="fixed inset-0 z-50 backdrop-blur-md bg-black/20 flex justify-center overflow-y-auto">
+    <div className="fixed inset-0 z-[60] backdrop-blur-md bg-black/20 flex justify-center overflow-y-auto">
 
       <div className="w-full max-w-xl mt-6 mb-10 px-2">
 

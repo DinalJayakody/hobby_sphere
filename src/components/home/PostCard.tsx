@@ -55,6 +55,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
   const [imageIndex, setImageIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
+  // Local optimistic mirrors of the post's mutable counters. The main feed's
+  // `post` prop comes from DataContext's shared `posts` array, which the
+  // like/comment/share functions below already keep in sync — but this same
+  // component also renders posts from Profile's "My Posts"/"Saved Posts"
+  // tabs and the standalone permalink view, which hold their own separate
+  // copies of the post that those shared functions never touch. Mirroring
+  // the counters locally means every surface updates immediately regardless
+  // of which list supplied the prop, while still resyncing if the prop
+  // itself is ever updated by its parent (e.g. a real feed refresh).
+  const [localLiked, setLocalLiked] = useState(post.currentUserLikeStatus);
+  const [localLikes, setLocalLikes] = useState(post.likes);
+  const [localShares, setLocalShares] = useState(post.shares);
+  const [localComments, setLocalComments] = useState(post.comments);
+
+  React.useEffect(() => setLocalLiked(post.currentUserLikeStatus), [post.currentUserLikeStatus]);
+  React.useEffect(() => setLocalLikes(post.likes), [post.likes]);
+  React.useEffect(() => setLocalShares(post.shares), [post.shares]);
+  React.useEffect(() => setLocalComments(post.comments), [post.comments]);
+
   const isOwnPost = user?.id?.toString() === post.userId?.toString();
   const saved = savedPostIds.has(post.id);
   const imageSrc = resolveImageSrc(user?.profilePicture ?? undefined);
@@ -82,8 +101,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
-    await addComment(post.id, commentText);
+    const text = commentText;
     setCommentText("");
+    const ok = await addComment(post.id, text);
+    if (ok) {
+      setLocalComments((n) => n + 1);
+    } else {
+      setCommentText(text);
+      toast("Couldn't post that comment. Please try again.", 'error');
+    }
   };
 
   const toggleSaved = async () => {
@@ -102,7 +128,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
   const handleLike = async () => {
     if (liking) return;
     setLiking(true);
-    await likePost(post.id);
+    const wasLiked = localLiked;
+    setLocalLiked(!wasLiked);
+    setLocalLikes((n) => (wasLiked ? Math.max(0, n - 1) : n + 1));
+    const ok = await likePost(post.id, wasLiked);
+    if (!ok) {
+      setLocalLiked(wasLiked);
+      setLocalLikes((n) => (wasLiked ? n + 1 : Math.max(0, n - 1)));
+      toast("Couldn't update like. Please try again.", 'error');
+    }
     setLiking(false);
   };
 
@@ -117,7 +151,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
       // Clipboard API can be unavailable (older browsers, insecure context) —
       // sharing still counts even if we couldn't copy the link for the user.
     }
-    await sharePost(post.id);
+    const ok = await sharePost(post.id);
+    if (ok) {
+      setLocalShares((n) => n + 1);
+    } else {
+      toast("Couldn't share this post. Please try again.", 'error');
+    }
     setSharing(false);
   };
 
@@ -167,7 +206,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
 
   const handleDeleteComment = async (commentId: string) => {
     if (!window.confirm('Delete this comment?')) return;
-    await deleteComment(commentId, post.id);
+    const ok = await deleteComment(commentId, post.id);
+    if (ok) {
+      setLocalComments((n) => Math.max(0, n - 1));
+    } else {
+      toast("Couldn't delete that comment. Please try again.", 'error');
+    }
   };
 
   return (
@@ -287,18 +331,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
       {/* Post stats */}
       <div className="px-4 py-2 flex justify-between text-sm text-ink-muted">
         <div>
-          {post.likes > 0 && (
-            <span>{post.likes} {post.likes === 1 ? "like" : "likes"}</span>
+          {localLikes > 0 && (
+            <span>{localLikes} {localLikes === 1 ? "like" : "likes"}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          {post.comments > 0 && (
+          {localComments > 0 && (
             <button onClick={toggleComments} className="focus:outline-none hover:underline">
-              {post.comments} {post.comments === 1 ? 'comment' : 'comments'}
+              {localComments} {localComments === 1 ? 'comment' : 'comments'}
             </button>
           )}
-          {post.shares > 0 && (
-            <span>{post.shares} {post.shares === 1 ? 'share' : 'shares'}</span>
+          {localShares > 0 && (
+            <span>{localShares} {localShares === 1 ? 'share' : 'shares'}</span>
           )}
         </div>
       </div>
@@ -306,11 +350,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
       {/* Post actions */}
       <div className="flex border-t border-border">
         <button
-          className={`flex-1 py-2 flex items-center justify-center space-x-1 transition ${post.currentUserLikeStatus ? 'text-coral-500' : 'text-ink-muted hover:text-ink'
+          className={`flex-1 py-2 flex items-center justify-center space-x-1 transition ${localLiked ? 'text-coral-500' : 'text-ink-muted hover:text-ink'
             }`}
           onClick={handleLike}
         >
-          <Heart className={`w-5 h-5 ${post.currentUserLikeStatus ? 'fill-current' : ''}`} />
+          <Heart className={`w-5 h-5 ${localLiked ? 'fill-current' : ''}`} />
           <span>Like</span>
         </button>
 
@@ -386,10 +430,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
 
               const submitReply = async () => {
                 if (!replyText.trim()) return;
-                await addReply(post.id, c.id, replyText);
-                setReplyText('');
-                setOpenReplyFor(null);
-                if (!expandedReplies.has(c.id)) toggleReplies();
+                const text = replyText;
+                const ok = await addReply(post.id, c.id, text);
+                if (ok) {
+                  setLocalComments((n) => n + 1);
+                  setReplyText('');
+                  setOpenReplyFor(null);
+                  if (!expandedReplies.has(c.id)) toggleReplies();
+                } else {
+                  toast("Couldn't post that reply. Please try again.", 'error');
+                }
               };
 
               const isOwnComment = user?.id?.toString() === c.userId?.toString();
@@ -524,12 +574,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, autoExpandComments = false })
               );
             })}
 
-            {!autoExpandComments && post.comments > 3 && (
+            {!autoExpandComments && localComments > 3 && (
               <button
                 className="text-sky-600 dark:text-sky-400 font-medium text-sm ml-10 hover:underline"
                 onClick={() => navigate(`/post/${post.id}`)}
               >
-                View all {post.comments} comments
+                View all {localComments} comments
               </button>
             )}
           </div>

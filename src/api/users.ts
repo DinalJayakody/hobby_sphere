@@ -38,10 +38,13 @@ export interface UserSuggestionDto {
   hobby: string | null;
 }
 
-// NOTE: this endpoint is currently broken server-side (missing Redis cache
-// config — "Cannot find cache named 'friendSuggestions'"), confirmed live.
-// Callers must handle the rejection gracefully rather than surfacing it as a
-// user-facing error.
+// Ranked by the current user's hobby/location against candidates who aren't
+// already followed and don't have a block relationship (both filtered
+// server-side). No total-count field comes back — same "fewer than `size`
+// means last page" convention used by every other paginated endpoint here.
+// `profilePicture` is currently always null server-side regardless of the
+// target user's real picture — callers should fall back to a default avatar
+// rather than treating that as a broken image load.
 export const getUserSuggestions = (page = 0, size = 20) =>
   axiosInstance.get<ApiResponse<UserSuggestionDto[]>>('/api/users/suggestion', {
     params: { page, size },
@@ -133,6 +136,9 @@ export interface GroupSearchDto {
   memberCount: number;
   groupImage: string | null;
   currentUserRole: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER' | null;
+  /** PENDING when the current user has an open join request on this group;
+   *  null otherwise (no request, approved into membership, or rejected). */
+  joinRequestStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 }
 
 export const searchGroups = (name: string, page = 0, size = 20) =>
@@ -194,6 +200,32 @@ export const getGroupsJoined = (page = 0, size = 20) =>
 
 export const deleteGroup = (groupId: number | string) =>
   axiosInstance.delete<void>(`/api/groups/${groupId}`);
+
+export interface GroupMemberDto {
+  userId: number;
+  username: string;
+  fullName: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER';
+  joinedAt: string;
+}
+
+// Public groups: any authenticated user can view. Private groups: members only.
+export const getGroupMembers = (groupId: number | string) =>
+  axiosInstance.get<ApiResponse<GroupMemberDto[]>>(`/api/groups/${groupId}/members`);
+
+// Admin/super-admin only; an admin cannot remove another admin or the owner.
+export const removeMember = (groupId: number | string, userId: number | string) =>
+  axiosInstance.delete<ApiResponse<void>>(`/api/groups/${groupId}/members/${userId}`);
+
+// Owner (super-admin) only — promote a member to admin or demote an admin back to member.
+export const updateMemberRole = (groupId: number | string, userId: number | string, role: 'ADMIN' | 'MEMBER') =>
+  axiosInstance.put<ApiResponse<void>>(`/api/groups/${groupId}/members/${userId}/role`, { role });
+
+// Admin/super-admin only — rename, redescribe, or change privacy.
+export const updateGroup = (
+  groupId: number | string,
+  request: { name: string; description?: string; privacy: 'PUBLIC' | 'PRIVATE' }
+) => axiosInstance.put<ApiResponse<any>>(`/api/groups/${groupId}`, request);
 
 // ---- Block / Unblock ----
 

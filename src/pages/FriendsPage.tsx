@@ -23,8 +23,6 @@ const FriendsPage: React.FC = () => {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [followedBack, setFollowedBack] = useState<Set<number>>(new Set());
   const [unfollowed, setUnfollowed] = useState<Set<number>>(new Set());
-  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
-  const [pendingJoinIds, setPendingJoinIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchFollowers();
@@ -70,9 +68,9 @@ const FriendsPage: React.FC = () => {
 
   const handleJoinGroup = async (groupId: string) => {
     setBusyId(groupId);
-    const status = await joinGroup(groupId);
-    if (status === 'PENDING_APPROVAL') setPendingJoinIds((prev) => new Set(prev).add(groupId));
-    else if (status === 'JOINED') setJoinedIds((prev) => new Set(prev).add(groupId));
+    // joinGroup() persists PENDING/joined status onto suggestedGroups itself,
+    // so no local tracking is needed here — item.raw reflects it directly.
+    await joinGroup(groupId);
     setBusyId(null);
   };
 
@@ -145,7 +143,7 @@ const FriendsPage: React.FC = () => {
           </nav>
         </aside>
 
-        <main className="flex-1 p-4 sm:p-6 flex justify-center overflow-y-auto pb-20 md:pb-6">
+        <main className="flex-1 p-4 sm:p-6 flex justify-center overflow-y-auto pb-24 md:pb-6">
           <div className="w-full max-w-2xl">
             {/* Search bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
@@ -226,19 +224,18 @@ const FriendsPage: React.FC = () => {
                         <div className="flex gap-2 shrink-0">
                           <button
                             disabled={
-                              joinedIds.has(item.id) ||
-                              pendingJoinIds.has(item.id) ||
                               item.raw.currentUserRole != null ||
+                              item.raw.joinRequestStatus === "PENDING" ||
                               busyId === item.id
                             }
                             onClick={() => handleJoinGroup(item.id)}
                             className={`px-3 py-1 rounded-lg text-sm transition-transform hover:scale-105 disabled:opacity-60 text-white ${
-                              pendingJoinIds.has(item.id) ? "bg-amber-500 hover:bg-amber-500" : "bg-green-500 hover:bg-green-600"
+                              item.raw.joinRequestStatus === "PENDING" ? "bg-amber-500 hover:bg-amber-500" : "bg-green-500 hover:bg-green-600"
                             }`}
                           >
-                            {pendingJoinIds.has(item.id)
+                            {item.raw.joinRequestStatus === "PENDING"
                               ? "Pending"
-                              : joinedIds.has(item.id) || item.raw.currentUserRole != null
+                              : item.raw.currentUserRole != null
                               ? "Joined"
                               : busyId === item.id
                               ? "..."

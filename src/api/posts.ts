@@ -69,6 +69,9 @@ export const updatePost = (
   payload: { userId: number; content: string; privacy: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY' }
 ) => axiosInstance.put<PostDto>(`/api/post/${postId}`, payload);
 
+export const isPostLikedByUser = (postId: number | string, userId: number | string) =>
+  axiosInstance.get<boolean>(`/api/post/${postId}/liked`, { params: { userId } });
+
 export const likePost = (postId: number | string, userId: number | string) =>
   axiosInstance.post<PostDto>(`/api/post/${postId}/like`, null, { params: { userId } });
 

@@ -188,7 +188,7 @@ const ProfileEdit: React.FC = () => {
       {/* Navbar */}
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 sm:py-12">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:py-12">
         {/* Avatar Upload */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}

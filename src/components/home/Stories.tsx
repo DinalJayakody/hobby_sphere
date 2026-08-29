@@ -1,21 +1,78 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2 } from 'lucide-react';
+import { Camera, ImagePlus } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import StoryCircle from './StoryCircle';
 import StoryViewer, { StoryGroup } from './StoryViewer';
+import StoryComposer from './StoryComposer';
 
 const Stories: React.FC = () => {
   const { stories, addStory } = useData();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  // The create-menu button lives inside the stories row's `overflow-x-auto`
+  // strip. Per the CSS overflow spec, setting overflow-x to anything but
+  // `visible` forces the browser to also clip overflow-y (there's no way to
+  // scroll one axis and not the other) — so an absolutely-positioned dropdown
+  // anchored inside that strip gets silently clipped, invisible despite being
+  // in the DOM. Portaling it to `document.body` (same pattern Navbar.tsx uses
+  // for its own dropdown) sidesteps the clipping entirely.
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
 
+  // Touch-primary devices (phones/tablets) get a real native camera via the
+  // file input's `capture` attribute — no getUserMedia, no custom camera UI,
+  // zero added cost. Laptops/desktops don't have a reliable equivalent (most
+  // desktop browsers just ignore `capture` and open a plain file dialog), so
+  // rather than ship a half-working "camera" button there, it points people
+  // to their phone instead. Computed once — pointer capability doesn't
+  // change mid-session.
+  const isTouchDevice = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+    []
+  );
+
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [posting, setPosting] = useState(false);
   const [viewerGroupIndex, setViewerGroupIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!showCreateMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (anchorRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setShowCreateMenu(false);
+    };
+    // A page/list scroll would leave a fixed-position menu pointing at the
+    // wrong spot — closing it is simpler and more correct than tracking
+    // position on every scroll frame for a popover this short-lived.
+    const handleScroll = () => setShowCreateMenu(false);
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [showCreateMenu]);
+
+  const toggleCreateMenu = () => {
+    if (showCreateMenu) {
+      setShowCreateMenu(false);
+      return;
+    }
+    const rect = anchorRef.current?.getBoundingClientRect();
+    if (rect) setMenuPos({ top: rect.bottom + 8, left: rect.left });
+    setShowCreateMenu(true);
+  };
 
   // Group the flat feed into one circle per author, preserving feed order —
   // tapping a circle opens the viewer starting at that author's first story
@@ -49,7 +106,25 @@ const Stories: React.FC = () => {
     setPendingPreview(URL.createObjectURL(file));
   };
 
+  const handleTakePhoto = () => {
+    setShowCreateMenu(false);
+    if (!isTouchDevice) {
+      toast(
+        "Camera capture works best on a phone. Open HobbySphere on your mobile device to take a photo, or upload one from this computer instead.",
+        'info'
+      );
+      return;
+    }
+    cameraInputRef.current?.click();
+  };
+
+  const handleUploadPhoto = () => {
+    setShowCreateMenu(false);
+    galleryInputRef.current?.click();
+  };
+
   const closeComposer = () => {
+    if (posting) return;
     if (pendingPreview) URL.revokeObjectURL(pendingPreview);
     setPendingFile(null);
     setPendingPreview(null);
@@ -61,15 +136,75 @@ const Stories: React.FC = () => {
     setPosting(true);
     const success = await addStory(caption, 'IMAGE', pendingFile);
     setPosting(false);
-    if (success) closeComposer();
+    if (success) {
+      if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+      setPendingFile(null);
+      setPendingPreview(null);
+      setCaption('');
+      toast('Your story is live!', 'success');
+    } else {
+      toast("Couldn't share that story. Please try again.", 'error');
+    }
   };
 
   return (
     <div className="bg-surface rounded-2xl shadow-soft border border-border p-4 mb-4">
       <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
-        <StoryCircle isCreateStory onClick={() => fileInputRef.current?.click()} />
+        <div ref={anchorRef}>
+          <StoryCircle isCreateStory onClick={toggleCreateMenu} />
+        </div>
+
+        {typeof document !== 'undefined' &&
+          createPortal(
+            <AnimatePresence>
+              {showCreateMenu && menuPos && (
+                <motion.div
+                  ref={menuRef}
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+                  className="w-52 bg-surface-raised border border-border rounded-2xl shadow-soft-lg z-[1000] overflow-hidden py-1.5"
+                >
+                  <button
+                    onClick={handleTakePhoto}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-ink hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center shrink-0">
+                      <Camera className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                    </span>
+                    Take Photo
+                  </button>
+                  <button
+                    onClick={handleUploadPhoto}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-ink hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-navy-100 dark:bg-navy-500/15 flex items-center justify-center shrink-0">
+                      <ImagePlus className="w-4 h-4 text-navy-600 dark:text-navy-300" />
+                    </span>
+                    Upload Photo
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
+
+        {/* Hidden inputs: `capture="environment"` opens the phone's rear
+            camera directly on touch devices; the plain input opens the
+            normal file/gallery picker everywhere. Both feed the same
+            handler — the composer below doesn't care which one was used. */}
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <input
+          ref={galleryInputRef}
           type="file"
           accept="image/*"
           className="hidden"
@@ -89,53 +224,16 @@ const Stories: React.FC = () => {
         />
       )}
 
-      <AnimatePresence>
-        {pendingFile && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-            onClick={closeComposer}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-raised rounded-2xl overflow-hidden max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-3 border-b border-border">
-                <h3 className="font-semibold text-ink">New Story</h3>
-                <button onClick={closeComposer} className="text-ink-faint hover:text-ink">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {pendingPreview && (
-                <img src={pendingPreview} alt="Story preview" className="w-full max-h-80 object-cover" />
-              )}
-
-              <div className="p-3 space-y-3">
-                <input
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Add a caption (optional)"
-                  className="w-full bg-surface-muted text-ink placeholder:text-ink-faint rounded-full px-4 py-2 text-sm focus:outline-none"
-                />
-                <button
-                  onClick={handlePost}
-                  disabled={posting}
-                  className="w-full bg-navy-600 dark:bg-sky-600 hover:bg-navy-700 dark:hover:bg-sky-500 text-white rounded-xl py-2.5 font-medium transition disabled:opacity-60 flex items-center justify-center gap-2"
-                >
-                  {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  {posting ? 'Sharing...' : 'Share to Story'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {pendingPreview && (
+        <StoryComposer
+          previewUrl={pendingPreview}
+          caption={caption}
+          onCaptionChange={setCaption}
+          posting={posting}
+          onDiscard={closeComposer}
+          onShare={handlePost}
+        />
+      )}
     </div>
   );
 };

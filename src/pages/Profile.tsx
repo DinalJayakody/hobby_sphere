@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -6,8 +6,9 @@ import { useData } from '../context/DataContext';
 import Navbar from '../components/layout/Navbar';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
-import axiosInstance from "../types/axiosInstance";
 import * as usersApi from "../api/users";
+import * as postsApi from "../api/posts";
+import { mapPost } from '../context/DataContext';
 import { resolveImageSrc } from '../utils/image';
 
 import {
@@ -60,63 +61,102 @@ const Profile: React.FC = () => {
   const [savedHasMore, setSavedHasMore] = useState(true);
   const [savedLoading, setSavedLoading] = useState(false);
 
-  if (!currentUser) return null;
-  const user = currentUser;
-  const imageSrc = resolveImageSrc(user.profilePicture);
-
   // ================= FETCH POSTS =================
+  // These hooks must run unconditionally on every render (React's rules of
+  // hooks) — `currentUser` can turn null after this page has already
+  // mounted (e.g. a 401 triggers AuthContext's logout() while the user is
+  // sitting on their own profile), and bailing out with an early `return`
+  // before hooks would change how many hooks run between renders, which
+  // React surfaces as a hard crash ("rendered fewer hooks than expected")
+  // rather than a graceful redirect. The actual guard is deferred to the
+  // JSX return at the bottom, after every hook below has run.
   useEffect(() => {
-    const fetchUserPosts = async () => {
-      try {
-        const res = await axiosInstance.get(`/api/post/user/${user.id}`);
-        const formatted = res.data.content.map((p: any) => ({
+    if (!currentUser?.id) return;
+    // Reuses DataContext's own PostDto -> Post mapping instead of a
+    // hand-rolled copy — the previous inline version silently dropped
+    // `shares`, `currentUserLikeStatus`, and `privacy` (this endpoint
+    // returns the same complete PostDto as the main feed, so there was no
+    // reason those fields were ever missing here), which meant the Like
+    // button never reflected a post's real liked state and the share count
+    // never rendered when viewed from this tab.
+    postsApi
+      .getPostsByUser(currentUser.id)
+      .then((res) => setUserPosts(res.data.content.map(mapPost)))
+      .catch((err) => console.error('Failed to fetch user posts:', err));
+  }, [currentUser?.id]);
+
+  // Author display info (name/avatar) resolved for saved posts — see note
+  // below. Keyed by userId and kept for the component's lifetime so the same
+  // author is never re-fetched across pages of saved posts.
+  const savedAuthorCacheRef = useRef<Map<number, { fullName: string; profilePicture: string | null }>>(
+    new Map()
+  );
+
+  // ================= FETCH SAVED POSTS =================
+  const fetchSavedPosts = async (page: number) => {
+    const userId = currentUser?.id;
+    if (!userId || savedLoading || !savedHasMore) return;
+
+    try {
+      setSavedLoading(true);
+      const res = await postsApi.getSavedPosts(userId, page, 10);
+      const validItems = (res.data.content || []).filter((p) => p && p.id);
+
+      // Unlike the main feed / own-posts endpoints, /api/savePost/{userId}
+      // doesn't enrich its response with the author's name/avatar — it only
+      // returns their raw userId, which is why this screen was showing
+      // "Unknown User" and a placeholder image for every saved post. Resolve
+      // each *distinct* author once (most pages reuse the same few authors),
+      // fetched in parallel and cached for the rest of this screen's life —
+      // never one request per post, and never re-fetched for an author
+      // already resolved on an earlier page.
+      const uncachedIds = Array.from(new Set<number>(validItems.map((p) => p.userId))).filter(
+        (id) => id != null && !savedAuthorCacheRef.current.has(id)
+      );
+
+      if (uncachedIds.length > 0) {
+        const results = await Promise.allSettled(uncachedIds.map((id) => usersApi.getUserById(id)));
+        results.forEach((result, i) => {
+          if (result.status === 'fulfilled') {
+            const u = result.value.data;
+            savedAuthorCacheRef.current.set(uncachedIds[i], {
+              fullName: u.fullName,
+              profilePicture: u.profilePicture,
+            });
+          }
+        });
+      }
+
+      // This endpoint also doesn't say whether the current user has liked
+      // each post (unlike the feed / own-posts endpoints, which do) — ask
+      // the small dedicated per-post endpoint for just this page's posts,
+      // in parallel, so the Like button starts in the right state instead
+      // of always defaulting to "not liked".
+      const likeResults = await Promise.allSettled(
+        validItems.map((p) => postsApi.isPostLikedByUser(p.id, userId))
+      );
+
+      const posts: Post[] = validItems.map((p, i) => {
+        const author = savedAuthorCacheRef.current.get(p.userId);
+        const likeResult = likeResults[i];
+        return {
           id: p.id.toString(),
           userId: p.userId.toString(),
           user: {
-            id: p.userId,
-            fullName: p.fullName,
-            profilePicture: p.profilePictureUrl,
+            id: p.userId.toString(),
+            fullName: author?.fullName || 'Unknown User',
+            profilePicture: resolveImageSrc(author?.profilePicture),
           },
           content: p.content,
           images: p.imageUrls || [],
           likes: p.likesCount,
           comments: p.commentsCount,
+          shares: p.sharesCount || 0,
+          currentUserLikeStatus: likeResult.status === 'fulfilled' ? likeResult.value.data : false,
+          privacy: (p.privacy as 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY') || 'PUBLIC',
           timestamp: p.createdAt,
-        }));
-        setUserPosts(formatted);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchUserPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ================= FETCH SAVED POSTS =================
-  const fetchSavedPosts = async (page: number) => {
-    if (!user?.id || savedLoading || !savedHasMore) return;
-
-    try {
-      setSavedLoading(true);
-      const res = await axiosInstance.get(`/api/savePost/${user.id}?page=${page}&size=10`);
-      const content = res.data.content.map((p: any) => ({
-        id: p.id.toString(),
-        userId: p.userId.toString(),
-        user: {
-          id: p.userId,
-          fullName: p.fullName,
-          profilePicture: p.profilePictureUrl,
-        },
-        content: p.content,
-        images: p.imageUrls || [],
-        likes: p.likesCount,
-        comments: p.commentsCount,
-        timestamp: p.createdAt,
-      }));
-
-      const posts: Post[] = content
-        .map((item: any) => item?.post ?? item)
-        .filter((post: any) => post && post.id);
+        };
+      });
 
       setSavedPosts((prev) => {
         const newPosts = posts.filter((p) => !prev.some((existing) => existing.id === p.id));
@@ -219,10 +259,11 @@ const Profile: React.FC = () => {
   };
 
   const loadFollowing = async () => {
+    if (!currentUser?.id) return;
     setShowFollowing(true);
     setFollowingLoading(true);
     try {
-      const res = await usersApi.getUserFollowing(user.id);
+      const res = await usersApi.getUserFollowing(currentUser.id);
       const normalized = (res.data.data || []).map((u) => ({
         id: u.id,
         fullName: u.fullName,
@@ -245,6 +286,12 @@ const Profile: React.FC = () => {
     // relationship if their row happens to be visible in Followers too.
     setFollowersList((prev) => prev.map((f) => (f.id === userId ? { ...f, followStatus: false } : f)));
   };
+
+  // Safe to bail out here — every hook above has already run this render,
+  // so an early return from this point on can't desync hook call order.
+  if (!currentUser) return null;
+  const user = currentUser;
+  const imageSrc = resolveImageSrc(user.profilePicture);
 
   const renderGrid = (posts: Post[]) => (
     <div className="grid grid-cols-3 gap-1 sm:gap-2">
@@ -284,7 +331,7 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white dark:from-navy-900 dark:to-surface">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-16 pb-20">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:pb-10">
         {/* ================= HEADER ================= */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

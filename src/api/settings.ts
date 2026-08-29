@@ -23,3 +23,16 @@ export const getSettings = () =>
 
 export const updateSettings = (payload: UpdateSettingsRequest) =>
   axiosInstance.patch<ApiResponse<UserSettingsDto>>('/api/settings', payload);
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// Requires the caller's own current password — this is the real, direct
+// "change my password while logged in" endpoint, distinct from the
+// email-OTP forgot-password flow used when the user is signed out and can't
+// prove identity that way. Rejects Google/Apple-authenticated accounts
+// server-side (they have no password the user actually knows).
+export const changePassword = (payload: ChangePasswordRequest) =>
+  axiosInstance.post<ApiResponse<null>>('/api/settings/change-password', payload);

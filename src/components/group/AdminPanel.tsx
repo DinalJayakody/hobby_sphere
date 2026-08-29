@@ -1,18 +1,19 @@
 // src/components/group/AdminPanel.tsx
 import React from "react";
-import { UserPlus, PenTool } from "lucide-react";
+import { UserPlus, PenTool, Settings as SettingsIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 export type GroupTab = "feed" | "members" | "analytics" | "settings";
 
 const cards: { key: GroupTab; title: string; subtitle: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "feed", title: "Create Post", subtitle: "Share with the group", icon: PenTool },
-  { key: "members", title: "Manage Members", subtitle: "Review join requests", icon: UserPlus },
+  { key: "members", title: "Manage Members", subtitle: "Review requests & roles", icon: UserPlus },
+  { key: "settings", title: "Edit Group", subtitle: "Name, description, privacy", icon: SettingsIcon },
 ];
 
-// "View Insights" and "Edit Group" were removed — no backend endpoint exists
-// for group analytics or editing a group's settings after creation, so
-// those cards were dead anchors that went nowhere. These two are real.
+// "View Insights" stays out — no backend endpoint exists for group
+// analytics, so that card would be a dead anchor. "Edit Group" now has a
+// real endpoint (PUT /api/groups/{id}) so it's back.
 const AdminPanel: React.FC<{ onNavigateTab: (tab: GroupTab) => void }> = ({ onNavigateTab }) => {
   return (
     <section className="mt-6">
@@ -21,7 +22,7 @@ const AdminPanel: React.FC<{ onNavigateTab: (tab: GroupTab) => void }> = ({ onNa
       </div>
 
       <div className="overflow-x-auto">
-        <div className="flex md:grid md:grid-cols-2 lg:w-1/2 gap-4 md:gap-6">
+        <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6">
           {cards.map((c) => {
             const Icon = c.icon;
             return (

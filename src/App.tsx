@@ -2,6 +2,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 import { ModalProvider } from './context/ModalContext';
 import { ThemeProvider, useTheme, applyThemeClass } from './context/ThemeContext';
 import { PreferencesProvider } from './context/PreferencesContext';
@@ -22,6 +23,7 @@ const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const FriendProfile = lazy(() => import('./pages/FriendProfile'));
 const FriendsPage = lazy(() => import('./pages/FriendsPage'));
+const Suggestions = lazy(() => import('./pages/Suggestions'));
 const PostDetail = lazy(() => import('./pages/PostDetail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -99,13 +101,28 @@ const PageTransitionWrapper: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const page = document.getElementById('page-content');
-    if (page) {
-      page.className = 'page-enter';
-    }
+    if (!page) return;
+    page.className = 'page-enter';
+
+    // A `forwards`-filled CSS animation stays "active" indefinitely even once
+    // its resolved value is the identity transform — and browsers treat any
+    // element with an active animation on `transform` as establishing a
+    // containing block + stacking context for fixed-position descendants,
+    // regardless of the resolved value. Left as `.page-enter` forever, that
+    // silently trapped every full-screen `fixed inset-0` overlay rendered
+    // anywhere on the page (modals, story viewer/composer) inside this div's
+    // box instead of the real viewport, clipping them behind anything
+    // portaled straight to document.body (e.g. the mobile bottom nav).
+    // Dropping the class once the 0.6s transition finishes removes the
+    // animation entirely, returning the page to a plain, non-transformed
+    // element with no such side effect.
+    const settle = window.setTimeout(() => {
+      if (document.getElementById('page-content')) page.className = '';
+    }, 600);
+
     return () => {
-      if (page) {
-        page.className = 'page-exit';
-      }
+      window.clearTimeout(settle);
+      page.className = 'page-exit';
     };
   }, [location]);
 
@@ -145,6 +162,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/ProfileEdit" element={<ProtectedRoute element={<ProfileEdit />} />} />
         <Route path="/FriendProfile/:id" element={<ProtectedRoute element={<FriendProfile />} />} />
         <Route path="/FriendsPage" element={<ProtectedRoute element={<FriendsPage />} />} />
+        <Route path="/Suggestions" element={<ProtectedRoute element={<Suggestions />} />} />
         <Route path="/post/:id" element={<ProtectedRoute element={<PostDetail />} />} />
         <Route path="/GroupsPage" element={<ProtectedRoute element={<GroupsPage />} />} />
         <Route path="/Group/:groupId" element={<ProtectedRoute element={<GroupPage />} />} />
@@ -173,13 +191,15 @@ function App() {
         <AuthProvider>
           <AccountSettingsProvider>
             <PreferencesProvider>
-              <DataProvider>
-                <ModalProvider>
-                  <Router>
-                    <AppRoutes />
-                  </Router>
-                </ModalProvider>
-              </DataProvider>
+              <NotificationsProvider>
+                <DataProvider>
+                  <ModalProvider>
+                    <Router>
+                      <AppRoutes />
+                    </Router>
+                  </ModalProvider>
+                </DataProvider>
+              </NotificationsProvider>
             </PreferencesProvider>
           </AccountSettingsProvider>
         </AuthProvider>

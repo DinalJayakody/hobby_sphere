@@ -75,7 +75,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -86,12 +86,12 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative"
+            className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative"
           >
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors"
+              className="absolute top-3 right-3 text-ink-faint hover:text-ink transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -102,12 +102,12 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4"
+                className="w-16 h-16 bg-sky-500/15 rounded-full flex items-center justify-center mx-auto mb-4"
               >
-                <Palette className="w-8 h-8 text-blue-700" />
+                <Palette className="w-8 h-8 text-sky-600 dark:text-sky-400" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Select Your Hobby</h2>
-              <p className="text-slate-600 text-sm sm:text-base">
+              <h2 className="text-2xl font-bold text-ink mb-2">Select Your Hobby</h2>
+              <p className="text-ink-muted text-sm sm:text-base">
                 Choose your favorite hobby or add your own custom one
               </p>
             </div>
@@ -128,8 +128,8 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                     onClick={() => handleSelect(item.name)}
                     className={`relative p-4 rounded-xl transition-all duration-300 ${
                       isSelected
-                        ? "bg-white/60 border-2 border-blue-500 shadow-lg"
-                        : "bg-white/30 border border-slate-300/50 hover:bg-white/40"
+                        ? "bg-sky-50 dark:bg-sky-500/10 border-2 border-sky-500 shadow-lg"
+                        : "bg-surface-muted border border-border hover:bg-surface"
                     }`}
                   >
                     <div
@@ -137,7 +137,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                     >
                       <IconComponent className="w-6 h-6 text-white" />
                     </div>
-                    <p className="text-slate-800 font-medium text-sm">{item.name}</p>
+                    <p className="text-ink font-medium text-sm">{item.name}</p>
 
                     {isSelected && (
                       <motion.div
@@ -163,14 +163,14 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                 onClick={() => setShowCustomInput(true)}
                 className={`p-4 rounded-xl border border-dashed transition-all duration-300 flex flex-col items-center justify-center min-h-[100px] ${
                   hobby === "Custom"
-                    ? "bg-white/60 border-blue-500 shadow-lg"
-                    : "bg-white/30 border-slate-400 hover:bg-white/40"
+                    ? "bg-sky-50 dark:bg-sky-500/10 border-sky-500 shadow-lg"
+                    : "bg-surface-muted border-border-strong hover:bg-surface"
                 }`}
               >
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-navy-400 to-navy-600 flex items-center justify-center mx-auto mb-3">
                   <Plus className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-slate-800 font-medium text-sm">Add Custom</p>
+                <p className="text-ink font-medium text-sm">Add Custom</p>
               </motion.button>
             </div>
 
@@ -181,13 +181,13 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="bg-white/40 rounded-xl p-5 border border-slate-300/50 mb-6"
+                  className="bg-surface-muted rounded-xl p-5 border border-border mb-6"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-slate-800 font-medium text-base">Add Custom Hobby</h3>
+                    <h3 className="text-ink font-medium text-base">Add Custom Hobby</h3>
                     <button
                       onClick={() => setShowCustomInput(false)}
-                      className="text-slate-500 hover:text-slate-700"
+                      className="text-ink-faint hover:text-ink"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -200,7 +200,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                       value={customHobbyInput}
                       onChange={(e) => setCustomHobbyInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddCustom()}
-                      className="w-full p-3 bg-white/60 border border-slate-300/50 rounded-lg text-slate-800 placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                      className="w-full p-3 bg-surface border border-border-strong rounded-lg text-ink placeholder-ink-faint focus:border-sky-400 focus:outline-none"
                     />
                     <div className="flex space-x-3">
                       <motion.button
@@ -208,7 +208,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                         whileTap={{ scale: 0.98 }}
                         onClick={handleAddCustom}
                         disabled={!customHobbyInput.trim()}
-                        className="flex-1 p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200"
+                        className="flex-1 p-3 bg-navy-600 dark:bg-sky-600 hover:bg-navy-700 dark:hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200"
                       >
                         Add Hobby
                       </motion.button>
@@ -216,7 +216,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setShowCustomInput(false)}
-                        className="flex-1 p-3 bg-slate-300 hover:bg-slate-400 text-slate-700 rounded-lg font-medium transition-all duration-200"
+                        className="flex-1 p-3 bg-surface-muted hover:bg-border-strong/40 text-ink rounded-lg font-medium transition-all duration-200"
                       >
                         Cancel
                       </motion.button>
@@ -232,7 +232,7 @@ const HobbySelectEditProfileModal: React.FC<HobbySelectEditProfileModalProps> = 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onClose}
-                className="mt-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center"
+                className="mt-2 px-6 py-3 bg-navy-600 dark:bg-sky-600 hover:bg-navy-700 dark:hover:bg-sky-500 text-white rounded-lg font-medium transition-all duration-200 flex items-center"
               >
                 <CheckCircle className="w-5 h-5 mr-2" />
                 Confirm

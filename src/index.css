@@ -77,6 +77,18 @@ body {
 }
 
 /* Page transition animations */
+/* The resting frames below use `transform: none` rather than an explicit
+   `rotateY(0)` — visually identical (zero rotation either way), but a
+   non-`none` transform value is what CSS uses to decide whether an element
+   creates a containing block for `position: fixed` descendants. Since
+   `.page-enter`'s 100% frame is left applied indefinitely (animation-fill-mode:
+   forwards) for as long as the user stays on a page, using `rotateY(0)` there
+   silently turned every routed page's #page-content into a containing block —
+   trapping every fixed-position overlay nested in that page's content
+   (modals, full-screen viewers) inside #page-content's box instead of the
+   real viewport, clipping them behind anything portaled straight to
+   document.body (e.g. the mobile bottom nav). `none` keeps the same visual
+   transition while resting in a state that doesn't create one. */
 @keyframes page-enter {
   0% {
     transform: rotateY(-90deg);
@@ -84,7 +96,7 @@ body {
     opacity: 0;
   }
   100% {
-    transform: rotateY(0);
+    transform: none;
     transform-origin: right;
     opacity: 1;
   }
@@ -92,7 +104,7 @@ body {
 
 @keyframes page-exit {
   0% {
-    transform: rotateY(0);
+    transform: none;
     transform-origin: left;
     opacity: 1;
   }

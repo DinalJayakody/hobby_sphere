@@ -13,7 +13,6 @@ const GroupsPage: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
-  const [pendingJoinIds, setPendingJoinIds] = useState<Set<string>>(new Set());
 
   const { managedGroups, suggestedGroups, searchGroups, joinGroup } = useData();
 
@@ -30,12 +29,12 @@ const GroupsPage: React.FC = () => {
   const handleJoin = async (e: React.MouseEvent, groupId: string) => {
     e.stopPropagation();
     setJoiningId(groupId);
-    const status = await joinGroup(groupId);
-    if (status === "PENDING_APPROVAL") setPendingJoinIds((prev) => new Set(prev).add(groupId));
+    // joinGroup() itself optimistically marks the group's joinRequestStatus
+    // as PENDING (or currentUserRole as MEMBER for public groups) on
+    // suggestedGroups, so that state survives independently of this refetch.
+    await joinGroup(groupId);
     setJoiningId(null);
-    // Refresh both lists so a publicly-joined group moves from "Discover"
-    // into "Your Groups" — a pending private request isn't membership yet,
-    // so it stays in Discover, tracked as pending via pendingJoinIds instead.
+    // Refresh so a publicly-joined group moves from "Discover" into "Your Groups".
     await Promise.all([searchGroups(search)]);
   };
 
@@ -109,7 +108,7 @@ const GroupsPage: React.FC = () => {
         </aside>
 
         {/* RIGHT CONTENT */}
-        <main className="flex-1 p-4 sm:p-5 pb-20 md:pb-5">
+        <main className="flex-1 p-4 sm:p-5 pb-24 md:pb-5">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-ink">Discover Groups</h2>
@@ -123,7 +122,7 @@ const GroupsPage: React.FC = () => {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                 {suggestedGroups.map((group, index) => {
                   const alreadyIn = group.currentUserRole != null;
-                  const isPending = pendingJoinIds.has(group.id);
+                  const isPending = group.joinRequestStatus === "PENDING";
                   return (
                     <motion.div
                       key={group.id}

@@ -12,9 +12,10 @@ interface TabsProps {
   role: any;
   activeTab: GroupTab;
   onTabChange: (tab: GroupTab) => void;
+  onGroupUpdated?: (updated: any) => void;
 }
 
-const Tabs: React.FC<TabsProps> = ({ group, role, activeTab, onTabChange }) => {
+const Tabs: React.FC<TabsProps> = ({ group, role, activeTab, onTabChange, onGroupUpdated }) => {
   // Roles come back from the backend as uppercase ("SUPER_ADMIN" / "ADMIN" /
   // "MEMBER") — comparing against lowercase "admin" here meant these tabs
   // never showed for real admins even though AdminPanel (checked correctly
@@ -49,9 +50,9 @@ const Tabs: React.FC<TabsProps> = ({ group, role, activeTab, onTabChange }) => {
         <Suspense fallback={<div className="p-6 bg-surface rounded-xl animate-pulse h-40" />}>
           <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
             {activeTab === "feed" && <Feed groupId={group.id} isMember={role != null} />}
-            {activeTab === "members" && <Members groupId={group.id} isAdmin={isAdmin} />}
+            {activeTab === "members" && <Members groupId={group.id} role={role} />}
             {activeTab === "analytics" && isAdmin && <Analytics groupId={group.id} />}
-            {activeTab === "settings" && isAdmin && <Settings group={group} />}
+            {activeTab === "settings" && isAdmin && <Settings group={group} onUpdated={onGroupUpdated} />}
           </motion.div>
         </Suspense>
       </div>

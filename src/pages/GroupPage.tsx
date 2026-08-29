@@ -55,6 +55,11 @@ const GroupPage: React.FC = () => {
         const roleData = data?.role ?? data?.currentUserRole ?? null;
         if (groupData) setGroup(groupData);
         setRole(roleData);
+        // Restore "Request Pending" across mounts/reloads — without this the
+        // button silently falls back to "Join Group" even though a request
+        // is still awaiting admin review.
+        const joinRequestStatus = data?.joinRequestStatus ?? groupData?.joinRequestStatus ?? null;
+        setJoinStatus(roleData ? "joined" : joinRequestStatus === "PENDING" ? "pending" : "idle");
       })
       .catch((err) => {
         console.error("Failed to load group:", err);
@@ -146,7 +151,13 @@ const GroupPage: React.FC = () => {
 
           {/* Tabs (Feed / Members / Analytics / Settings) */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            <Tabs group={group} role={role} activeTab={activeTab} onTabChange={setActiveTab} />
+            <Tabs
+              group={group}
+              role={role}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onGroupUpdated={(updated) => setGroup((prev) => (prev ? { ...prev, ...updated } : prev))}
+            />
           </motion.div>
         </div>
       </div>

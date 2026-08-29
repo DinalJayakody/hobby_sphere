@@ -3,6 +3,7 @@ import { Bell, User, Shield, LogOut, Palette, FileText, Eye, MapPin, Globe, User
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
+import ChangePasswordModal from "../components/modals/ChangePasswordModal";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 import { useAccountSettings } from "../context/AccountSettingsContext";
@@ -98,12 +99,13 @@ const POST_PRIVACY_OPTIONS: { value: PostPrivacyPreference; label: string }[] = 
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { clearData } = useData();
   const { toast } = useToast();
   const { settings, updateSettings } = useAccountSettings();
   const { pushNotificationsEnabled, setPushNotificationsEnabled } = usePreferences();
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -122,7 +124,7 @@ const Settings: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-sky-200 dark:from-navy-900 dark:to-surface">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 sm:py-10">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 pt-16 pb-24 md:py-10">
         <motion.h1
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -256,7 +258,7 @@ const Settings: React.FC = () => {
             <h2 className="text-lg font-semibold text-ink-muted mb-3">Security</h2>
 
             <button
-              onClick={() => navigate("/ForgotPassword", { state: { email: user?.email } })}
+              onClick={() => setShowChangePassword(true)}
               className="flex items-center justify-between py-3 border-b border-border hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-xl px-2 transition w-full text-left"
             >
               <div className="flex items-center">
@@ -295,6 +297,8 @@ const Settings: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      <ChangePasswordModal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} />
     </div>
   );
 };
