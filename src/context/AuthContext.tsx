@@ -86,7 +86,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       console.log("🔎 Fetching user details with token:", axios.defaults.headers.common['Authorization']);
 
-      const response = await axiosInstance.get<User>('/api/users/userDetail');
+      // Timeout so an unreachable backend can't leave the app stuck on the
+      // startup loading screen forever.
+      const response = await axiosInstance.get<User>('/api/users/userDetail', { timeout: 15000 });
 
       setUser(response.data);
     } catch (error: any) {
